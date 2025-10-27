@@ -1,0 +1,27 @@
+# Directorio de Python compilado y entorno virtual
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+
+# Archivos de la base de datos local
+db.sqlite3
+
+# Archivos de configuración sensibles
+# ¡IMPORTANTE! NUNCA subas archivos que contengan claves secretas (SECRET_KEY)
+# Si no usas variables de entorno, al menos asegúrate de que el archivo 'settings.py'
+# solo contenga la clave SECRETA fuera de este archivo, o crea un archivo local_settings.py
+# que no subas, y que contenga variables que no quieres compartir.
+# Ejemplos (ajusta según tu estructura):
+# local_settings.py
+# .env
+
+# Archivos generados por Django (opcional)
+/static_collected/
+/media/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
