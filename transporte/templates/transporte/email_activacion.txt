@@ -1,0 +1,9 @@
+Hola {{ usuario.username }},
+
+Gracias por registrarte en el sistema del Corredor Bioceánico Capricornio.
+
+Por favor, haz clic en el siguiente enlace para activar tu cuenta:
+
+{{ link_activacion }}
+
+Si no solicitaste este registro, simplemente ignora este mensaje.

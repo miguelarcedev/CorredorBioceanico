@@ -1,0 +1,36 @@
+{% extends 'transporte/base.html' %}
+
+{% block content %}
+<h3 class="mb-4">Panel principal</h3>
+
+<a href="{% url 'viaje_crear' %}" class="btn btn-primary mb-3">+ Nuevo viaje</a>
+
+{% if viajes %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Chofer</th>
+            <th>Vehículo</th>
+            <th>Estado</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in viajes %}
+        <tr>
+            <td>{{ v.origen }}</td>
+            <td>{{ v.destino }}</td>
+            <td>{{ v.chofer }}</td>
+            <td>{{ v.vehiculo.patente }}</td>
+            <td><span class="badge bg-info">{{ v.estado }}</span></td>
+            <td><a href="{% url 'viaje_detalle' v.id %}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No hay viajes registrados.</div>
+{% endif %}
+{% endblock %}

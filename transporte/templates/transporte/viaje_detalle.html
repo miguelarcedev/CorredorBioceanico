@@ -1,0 +1,20 @@
+{% extends 'transporte/base.html' %}
+
+{% block content %}
+<h3>Detalle del viaje</h3>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <p><strong>Origen:</strong> {{ viaje.origen }}</p>
+        <p><strong>Destino:</strong> {{ viaje.destino }}</p>
+        <p><strong>Chofer:</strong> {{ viaje.chofer }}</p>
+        <p><strong>Vehículo:</strong> {{ viaje.vehiculo.patente }} ({{ viaje.vehiculo.marca }} {{ viaje.vehiculo.modelo }})</p>
+        <p><strong>Carga:</strong> {{ viaje.carga.tipo }} - {{ viaje.carga.peso_aprox }} tn</p>
+        <p><strong>Estado:</strong> {{ viaje.estado }}</p>
+        <p><strong>Fecha salida:</strong> {{ viaje.fecha_salida|date:"d/m/Y H:i" }}</p>
+        <p><strong>Fecha llegada estimada:</strong> {{ viaje.fecha_llegada_estimada|date:"d/m/Y H:i" }}</p>
+    </div>
+</div>
+
+<a href="{% url 'viaje_list' %}" class="btn btn-secondary mt-3">Volver</a>
+{% endblock %}

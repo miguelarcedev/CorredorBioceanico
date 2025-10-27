@@ -1,0 +1,16 @@
+{% extends 'transporte/base.html' %}
+{% block content %}
+<h3 class="mb-4">Registrar nuevo viaje</h3>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success w-100">Guardar viaje</button>
+        </form>
+    </div>
+</div>
+
+<a href="{% url 'viaje_list' %}" class="btn btn-secondary mt-3">Volver</a>
+{% endblock %}
