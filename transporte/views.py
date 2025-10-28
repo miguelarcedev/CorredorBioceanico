@@ -140,3 +140,25 @@ def actualizar_ubicacion(request, viaje_id):
         return redirect('viaje_detalle', viaje_id=viaje.id)
 
     return render(request, 'transporte/actualizar_ubicacion.html', {'viaje': viaje})
+
+
+# transporte/views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from .models import Viaje
+
+@csrf_exempt
+def actualizar_ubicacion_api(request, viaje_id):
+    if request.method == 'POST':
+        try:
+            lat = float(request.POST.get('lat'))
+            lon = float(request.POST.get('lon'))
+            viaje = Viaje.objects.get(id=viaje_id)
+            viaje.ubicacion_actual = f"{lat},{lon}"
+            viaje.ultima_actualizacion = timezone.now()
+            viaje.save()
+            return JsonResponse({'status': 'ok', 'mensaje': 'Ubicación actualizada'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'mensaje': str(e)})
+    return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido'})

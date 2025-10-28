@@ -20,4 +20,6 @@ urlpatterns = [
 
     path('viaje/nuevo/', views.viaje_crear, name='viaje_crear'),
 
+    path('viaje/<uuid:viaje_id>/actualizar_ubicacion_api/', views.actualizar_ubicacion_api, name='actualizar_ubicacion_api'),
+
 ]
