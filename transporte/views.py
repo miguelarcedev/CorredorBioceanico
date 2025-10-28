@@ -125,3 +125,14 @@ def viaje_crear(request):
         form = ViajeForm(empresa=empresa)
 
     return render(request, 'transporte/viaje_crear.html', {'form': form})
+
+@login_required
+def actualizar_ubicacion(request, viaje_id):
+    viaje = get_object_or_404(Viaje, id=viaje_id)
+    if request.method == 'POST':
+        ubicacion = request.POST.get('ubicacion')
+        viaje.ubicacion_actual = ubicacion
+        viaje.save(update_fields=['ubicacion_actual'])
+        messages.success(request, "Ubicación actualizada correctamente.")
+        return redirect('viaje_detalle', viaje_id=viaje.id)
+    return render(request, 'transporte/actualizar_ubicacion.html', {'viaje': viaje})

@@ -6,6 +6,8 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('viajes/', views.viaje_list, name='viaje_list'),
     path('viaje/<uuid:viaje_id>/', views.viaje_detalle, name='viaje_detalle'),
+    path('viaje/<uuid:viaje_id>/ubicacion/', views.actualizar_ubicacion, name='actualizar_ubicacion'),
+
 
     # Autenticación
     path('login/', auth_views.LoginView.as_view(template_name='transporte/login.html'), name='login'),

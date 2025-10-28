@@ -1,0 +1,12 @@
+{% extends 'transporte/base.html' %}
+{% block content %}
+<h4>Actualizar ubicación del viaje</h4>
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="ubicacion" class="form-label">Nueva ubicación (ejemplo: San Salvador de Jujuy)</label>
+        <input type="text" id="ubicacion" name="ubicacion" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-success">Actualizar</button>
+</form>
+{% endblock %}

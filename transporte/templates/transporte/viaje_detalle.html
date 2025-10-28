@@ -1,20 +1,22 @@
 {% extends 'transporte/base.html' %}
-
 {% block content %}
 <h3>Detalle del viaje</h3>
 
-<div class="card mt-3">
-    <div class="card-body">
-        <p><strong>Origen:</strong> {{ viaje.origen }}</p>
-        <p><strong>Destino:</strong> {{ viaje.destino }}</p>
-        <p><strong>Chofer:</strong> {{ viaje.chofer }}</p>
-        <p><strong>Vehículo:</strong> {{ viaje.vehiculo.patente }} ({{ viaje.vehiculo.marca }} {{ viaje.vehiculo.modelo }})</p>
-        <p><strong>Carga:</strong> {{ viaje.carga.tipo }} - {{ viaje.carga.peso_aprox }} tn</p>
-        <p><strong>Estado:</strong> {{ viaje.estado }}</p>
-        <p><strong>Fecha salida:</strong> {{ viaje.fecha_salida|date:"d/m/Y H:i" }}</p>
-        <p><strong>Fecha llegada estimada:</strong> {{ viaje.fecha_llegada_estimada|date:"d/m/Y H:i" }}</p>
-    </div>
-</div>
+<table class="table">
+    <tr><th>Origen</th><td>{{ viaje.origen }}</td></tr>
+    <tr><th>Destino</th><td>{{ viaje.destino }}</td></tr>
+    <tr><th>Chofer</th><td>{{ viaje.chofer }}</td></tr>
+    <tr><th>Vehículo</th><td>{{ viaje.vehiculo }}</td></tr>
+    <tr><th>Estado</th><td>{{ viaje.estado }}</td></tr>
+    <tr><th>Ubicación actual</th><td>{{ viaje.ubicacion_actual|default:"No registrada" }}</td></tr>
+</table>
 
-<a href="{% url 'viaje_list' %}" class="btn btn-secondary mt-3">Volver</a>
+{% if viaje.codigo_qr %}
+<div class="text-center mt-4">
+    <p><strong>Escanee para ver el estado del viaje:</strong></p>
+    <img src="{{ viaje.codigo_qr.url }}" alt="Código QR del viaje" width="200">
+</div>
+{% endif %}
+
+<a href="{% url 'viaje_list' %}" class="btn btn-secondary mt-4">Volver</a>
 {% endblock %}

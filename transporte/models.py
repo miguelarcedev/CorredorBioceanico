@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
+import qrcode
+from io import BytesIO
+from django.core.files import File
+from django.urls import reverse
 
 
 # ---------------------------
@@ -89,10 +93,24 @@ class Viaje(models.Model):
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='viajes')
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name='viajes')
     estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
-    codigo_qr = models.CharField(max_length=100, blank=True, unique=True)
+    ubicacion_actual = models.CharField(max_length=200, blank=True, null=True)
+    codigo_qr = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
 
     def __str__(self):
         return f"Viaje {self.id} - {self.origen} → {self.destino}"
+    
+    def save(self, *args, **kwargs):
+        # Guardamos primero para tener el ID disponible
+        super().save(*args, **kwargs)
+        if not self.codigo_qr:
+            # Generamos URL del detalle del viaje
+            url = f"http://127.0.0.1:8000{reverse('viaje_detalle', args=[self.id])}"
+            qr_img = qrcode.make(url)
+            buffer = BytesIO()
+            qr_img.save(buffer, format='PNG')
+            file_name = f'viaje_{self.id}.png'
+            self.codigo_qr.save(file_name, File(buffer), save=False)
+            super().save(update_fields=['codigo_qr'])
 
 
 # ---------------------------
