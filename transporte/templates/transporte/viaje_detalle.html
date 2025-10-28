@@ -18,5 +18,31 @@
 </div>
 {% endif %}
 
+<!-- 🚀 BOTÓN PARA ACTUALIZAR UBICACIÓN -->
+<div class="text-center mt-4">
+    <a href="{% url 'actualizar_ubicacion' viaje.id %}" class="btn btn-success">Actualizar ubicación</a>
+    
+</div>
+
+{% if viaje.ubicacion_actual %}
+<hr>
+<h5>Última ubicación registrada</h5>
+<div id="mapa_ubicacion" style="height: 400px; border-radius: 10px;"></div>
+<script>
+    const coords = "{{ viaje.ubicacion_actual }}".split(",");
+    if (coords.length === 2) {
+        const lat = parseFloat(coords[0]);
+        const lon = parseFloat(coords[1]);
+        const map = L.map('mapa_ubicacion').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([lat, lon]).addTo(map)
+            .bindPopup("Ubicación actual del vehículo")
+            .openPopup();
+    }
+</script>
+{% endif %}
+
 <a href="{% url 'viaje_list' %}" class="btn btn-secondary mt-4">Volver</a>
 {% endblock %}
