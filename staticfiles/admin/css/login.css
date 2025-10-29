@@ -21,7 +21,11 @@
 }
 
 .login #content {
+<<<<<<< HEAD
     padding: 20px 20px 0;
+=======
+    padding: 20px;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .login #container {

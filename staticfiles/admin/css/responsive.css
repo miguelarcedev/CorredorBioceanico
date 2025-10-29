@@ -43,7 +43,11 @@ input[type="submit"], button {
         justify-content: flex-start;
     }
 
+<<<<<<< HEAD
     #branding h1 {
+=======
+    #site-name {
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         margin: 0 0 8px;
         line-height: 1.2;
     }
@@ -171,9 +175,20 @@ input[type="submit"], button {
     /* Forms */
 
     label {
+<<<<<<< HEAD
         font-size: 0.875rem;
     }
 
+=======
+        font-size: 1rem;
+    }
+
+    /*
+    Minifiers remove the default (text) "type" attribute from "input" HTML
+    tags. Add input:not([type]) to make the CSS stylesheet work the same.
+    */
+    .form-row input:not([type]),
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     .form-row input[type=text],
     .form-row input[type=password],
     .form-row input[type=email],
@@ -187,7 +202,11 @@ input[type="submit"], button {
         margin: 0;
         padding: 6px 8px;
         min-height: 2.25rem;
+<<<<<<< HEAD
         font-size: 0.875rem;
+=======
+        font-size: 1rem;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     }
 
     .form-row select {
@@ -237,6 +256,7 @@ input[type="submit"], button {
         padding: 7px;
     }
 
+<<<<<<< HEAD
     /* Related widget */
 
     .related-widget-wrapper {
@@ -253,6 +273,8 @@ input[type="submit"], button {
         margin-left: 10px;
     }
 
+=======
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     /* Selector */
 
     .selector {
@@ -265,12 +287,17 @@ input[type="submit"], button {
         align-items: center;
     }
 
+<<<<<<< HEAD
     .selector .selector-filter label {
         margin: 0 8px 0 0;
     }
 
     .selector .selector-filter input {
         width: auto;
+=======
+    .selector .selector-filter input {
+        width: 100%;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         min-height: 0;
         flex: 1 1;
     }
@@ -288,6 +315,7 @@ input[type="submit"], button {
         margin-bottom: 5px;
     }
 
+<<<<<<< HEAD
     .selector ul.selector-chooser {
         width: 26px;
         height: 52px;
@@ -312,6 +340,9 @@ input[type="submit"], button {
     }
 
     a.selector-chooseall, a.selector-clearall {
+=======
+    .selector-chooseall, .selector-clearall {
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         align-self: center;
     }
 
@@ -333,10 +364,14 @@ input[type="submit"], button {
     }
 
     .stacked ul.selector-chooser {
+<<<<<<< HEAD
         width: 52px;
         height: 26px;
         padding: 0 2px;
         margin: 15px auto;
+=======
+        padding: 0 2px;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         transform: none;
     }
 
@@ -344,6 +379,7 @@ input[type="submit"], button {
         padding: 3px;
     }
 
+<<<<<<< HEAD
     .stacked .selector-add, .stacked .selector-remove {
         background-size: 20px auto;
     }
@@ -380,6 +416,8 @@ input[type="submit"], button {
         background-position: 0 -20px;
     }
 
+=======
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     .help-tooltip, .selector .help-icon {
         display: none;
     }
@@ -432,7 +470,11 @@ input[type="submit"], button {
         padding: 15px 20px;
     }
 
+<<<<<<< HEAD
     .login #branding h1 {
+=======
+    .login #site-name {
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         margin: 0;
     }
 
@@ -464,6 +506,7 @@ input[type="submit"], button {
 @media (max-width: 767px) {
     /* Layout */
 
+<<<<<<< HEAD
     #header, #content, #footer {
         padding: 15px;
     }
@@ -472,6 +515,12 @@ input[type="submit"], button {
         padding: 0;
     }
 
+=======
+    #header, #content {
+        padding: 15px;
+    }
+
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     div.breadcrumbs {
         padding: 10px 15px;
     }
@@ -582,10 +631,13 @@ input[type="submit"], button {
         padding-top: 15px;
     }
 
+<<<<<<< HEAD
     fieldset.collapsed .form-row {
         display: none;
     }
 
+=======
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     .aligned label {
         width: 100%;
         min-width: auto;
@@ -670,6 +722,10 @@ input[type="submit"], button {
 
     .related-widget-wrapper .selector {
         order: 1;
+<<<<<<< HEAD
+=======
+        flex: 1 0 auto;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     }
 
     .related-widget-wrapper > a {
@@ -684,15 +740,19 @@ input[type="submit"], button {
         align-self: center;
     }
 
+<<<<<<< HEAD
     select + .related-widget-wrapper-link,
     .related-widget-wrapper-link + .related-widget-wrapper-link {
         margin-left: 15px;
     }
 
+=======
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     /* Selector */
 
     .selector {
         flex-direction: column;
+<<<<<<< HEAD
     }
 
     .selector > * {
@@ -701,6 +761,12 @@ input[type="submit"], button {
 
     .selector-available, .selector-chosen {
         margin-bottom: 0;
+=======
+        gap: 10px 0;
+    }
+
+    .selector-available, .selector-chosen {
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         flex: 1 1 auto;
     }
 
@@ -709,12 +775,19 @@ input[type="submit"], button {
     }
 
     .selector ul.selector-chooser {
+<<<<<<< HEAD
         display: block;
         float: none;
         width: 52px;
         height: 26px;
         padding: 0 2px;
         margin: 15px auto 20px;
+=======
+        display: flex;
+        width: 60px;
+        height: 30px;
+        padding: 0 2px;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         transform: none;
     }
 
@@ -726,6 +799,7 @@ input[type="submit"], button {
         background-position: 0 0;
     }
 
+<<<<<<< HEAD
     .active.selector-remove:focus, .active.selector-remove:hover {
         background-position: 0 -20px;
     }
@@ -736,6 +810,18 @@ input[type="submit"], button {
 
     .active.selector-add:focus, .active.selector-add:hover {
         background-position: 0 -60px;
+=======
+    :enabled.selector-remove:focus, :enabled.selector-remove:hover {
+        background-position: 0 -24px;
+    }
+
+    .selector-add  {
+        background-position: 0 -48px;
+    }
+
+    :enabled.selector-add:focus, :enabled.selector-add:hover {
+        background-position: 0 -72px;
+>>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     }
 
     /* Inlines */
