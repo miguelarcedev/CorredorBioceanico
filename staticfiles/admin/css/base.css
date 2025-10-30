@@ -13,10 +13,7 @@ html[data-theme="light"],
     --body-fg: #333;
     --body-bg: #fff;
     --body-quiet-color: #666;
-<<<<<<< HEAD
-=======
     --body-medium-color: #444;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     --body-loud-color: #000;
 
     --header-color: #ffc;
@@ -26,19 +23,11 @@ html[data-theme="light"],
 
     --breadcrumbs-fg: #c4dce8;
     --breadcrumbs-link-fg: var(--body-bg);
-<<<<<<< HEAD
-    --breadcrumbs-bg: var(--primary);
-
-    --link-fg: #417893;
-    --link-hover-color: #036;
-    --link-selected-fg: #5b80b2;
-=======
     --breadcrumbs-bg: #264b5d;
 
     --link-fg: #417893;
     --link-hover-color: #036;
     --link-selected-fg: var(--secondary);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 
     --hairline-color: #e8e8e8;
     --border-color: #ccc;
@@ -54,17 +43,10 @@ html[data-theme="light"],
     --selected-row: #ffc;
 
     --button-fg: #fff;
-<<<<<<< HEAD
-    --button-bg: var(--primary);
-    --button-hover-bg: #609ab6;
-    --default-button-bg: var(--secondary);
-    --default-button-hover-bg: #205067;
-=======
     --button-bg: var(--secondary);
     --button-hover-bg: #205067;
     --default-button-bg: #205067;
     --default-button-hover-bg: var(--secondary);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     --close-button-bg: #747474;
     --close-button-hover-bg: #333;
     --delete-button-bg: #ba2121;
@@ -75,11 +57,6 @@ html[data-theme="light"],
     --object-tools-hover-bg: var(--close-button-hover-bg);
 
     --font-family-primary:
-<<<<<<< HEAD
-        -apple-system,
-        BlinkMacSystemFont,
-=======
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
         "Segoe UI",
         system-ui,
         Roboto,
@@ -108,11 +85,8 @@ html[data-theme="light"],
         "Segoe UI Emoji",
         "Segoe UI Symbol",
         "Noto Color Emoji";
-<<<<<<< HEAD
-=======
 
     color-scheme: light;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 html, body {
@@ -176,10 +150,6 @@ h1 {
     margin: 0 0 20px;
     font-weight: 300;
     font-size: 1.25rem;
-<<<<<<< HEAD
-    color: var(--body-quiet-color);
-=======
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 h2 {
@@ -195,11 +165,7 @@ h2.subhead {
 h3 {
     font-size: 0.875rem;
     margin: .8em 0 .3em 0;
-<<<<<<< HEAD
-    color: var(--body-quiet-color);
-=======
     color: var(--body-medium-color);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     font-weight: bold;
 }
 
@@ -207,10 +173,7 @@ h4 {
     font-size: 0.75rem;
     margin: 1em 0 .8em 0;
     padding-bottom: 3px;
-<<<<<<< HEAD
-=======
     color: var(--body-medium-color);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 h5 {
@@ -257,13 +220,10 @@ fieldset {
     border-top: 1px solid var(--hairline-color);
 }
 
-<<<<<<< HEAD
-=======
 details summary {
     cursor: pointer;
 }
 
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 blockquote {
     font-size: 0.6875rem;
     color: #777;
@@ -360,11 +320,7 @@ td, th {
 }
 
 th {
-<<<<<<< HEAD
-    font-weight: 600;
-=======
     font-weight: 500;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     text-align: left;
 }
 
@@ -385,11 +341,7 @@ tfoot td {
 }
 
 thead th.required {
-<<<<<<< HEAD
-    color: var(--body-loud-color);
-=======
     font-weight: bold;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 tr.alt {
@@ -537,10 +489,6 @@ textarea {
     vertical-align: top;
 }
 
-<<<<<<< HEAD
-input[type=text], input[type=password], input[type=email], input[type=url],
-input[type=number], input[type=tel], textarea, select, .vTextField {
-=======
 /*
 Minifiers remove the default (text) "type" attribute from "input" HTML tags.
 Add input:not([type]) to make the CSS stylesheet work the same.
@@ -548,7 +496,6 @@ Add input:not([type]) to make the CSS stylesheet work the same.
 input:not([type]), input[type=text], input[type=password], input[type=email],
 input[type=url], input[type=number], input[type=tel], textarea, select,
 .vTextField {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 5px 6px;
@@ -557,11 +504,6 @@ input[type=url], input[type=number], input[type=tel], textarea, select,
     background-color: var(--body-bg);
 }
 
-<<<<<<< HEAD
-input[type=text]:focus, input[type=password]:focus, input[type=email]:focus,
-input[type=url]:focus, input[type=number]:focus, input[type=tel]:focus,
-textarea:focus, select:focus, .vTextField:focus {
-=======
 /*
 Minifiers remove the default (text) "type" attribute from "input" HTML tags.
 Add input:not([type]) to make the CSS stylesheet work the same.
@@ -569,7 +511,6 @@ Add input:not([type]) to make the CSS stylesheet work the same.
 input:not([type]):focus, input[type=text]:focus, input[type=password]:focus,
 input[type=email]:focus, input[type=url]:focus, input[type=number]:focus,
 input[type=tel]:focus, textarea:focus, select:focus, .vTextField:focus {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     border-color: var(--body-quiet-color);
 }
 
@@ -659,11 +600,7 @@ input[type=button][disabled].default {
     font-weight: 400;
     font-size: 0.8125rem;
     text-align: left;
-<<<<<<< HEAD
-    background: var(--primary);
-=======
     background: var(--header-bg);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     color: var(--header-link-color);
 }
 
@@ -799,14 +736,11 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover {
     background: url(../img/icon-viewlink.svg) 0 1px no-repeat;
 }
 
-<<<<<<< HEAD
-=======
 .hidelink {
     padding-left: 16px;
     background: url(../img/icon-hidelink.svg) 0 1px no-repeat;
 }
 
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 .addlink {
     padding-left: 16px;
     background: url(../img/icon-addlink.svg) 0 1px no-repeat;
@@ -916,13 +850,6 @@ a.deletelink:focus, a.deletelink:hover {
     height: 100%;
 }
 
-<<<<<<< HEAD
-#container > div {
-    flex-shrink: 0;
-}
-
-=======
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 #container > .main {
     display: flex;
     flex: 1 0 auto;
@@ -967,16 +894,10 @@ a.deletelink:focus, a.deletelink:hover {
     margin-right: -300px;
 }
 
-<<<<<<< HEAD
-#footer {
-    clear: both;
-    padding: 10px;
-=======
 @media (forced-colors: active) {
   #content-related {
       border: 1px solid;
   }
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 /* COLUMN TYPES */
@@ -1014,10 +935,6 @@ a.deletelink:focus, a.deletelink:hover {
     padding: 10px 40px;
     background: var(--header-bg);
     color: var(--header-color);
-<<<<<<< HEAD
-    overflow: hidden;
-=======
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 #header a:link, #header a:visited, #logout-form button {
@@ -1028,24 +945,17 @@ a.deletelink:focus, a.deletelink:hover {
     text-decoration: underline;
 }
 
-<<<<<<< HEAD
-=======
 @media (forced-colors: active) {
   #header {
       border-bottom: 1px solid;
   }
 }
 
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 #branding {
     display: flex;
 }
 
-<<<<<<< HEAD
-#branding h1 {
-=======
 #site-name {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     padding: 0;
     margin: 0;
     margin-inline-end: 20px;
@@ -1054,11 +964,7 @@ a.deletelink:focus, a.deletelink:hover {
     color: var(--header-branding-color);
 }
 
-<<<<<<< HEAD
-#branding h1 a:link, #branding h1 a:visited {
-=======
 #site-name a:link, #site-name a:visited {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     color: var(--accent);
 }
 
@@ -1215,10 +1121,7 @@ a.deletelink:focus, a.deletelink:hover {
     margin: 0;
     border-top: 1px solid var(--hairline-color);
     width: 100%;
-<<<<<<< HEAD
-=======
     box-sizing: border-box;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .paginator a:link, .paginator a:visited {
@@ -1262,8 +1165,6 @@ a.deletelink:focus, a.deletelink:hover {
 .base-svgs {
     display: none;
 }
-<<<<<<< HEAD
-=======
 
 .visually-hidden {
     position: absolute;
@@ -1277,4 +1178,3 @@ a.deletelink:focus, a.deletelink:hover {
     color: var(--body-fg);
     background-color: var(--body-bg);
 }
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5

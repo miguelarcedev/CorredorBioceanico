@@ -1,28 +1,6 @@
 /* SELECTOR (FILTER INTERFACE) */
 
 .selector {
-<<<<<<< HEAD
-    width: 800px;
-    float: left;
-    display: flex;
-}
-
-.selector select {
-    width: 380px;
-    height: 17.2em;
-    flex: 1 0 auto;
-}
-
-.selector-available, .selector-chosen {
-    width: 380px;
-    text-align: center;
-    margin-bottom: 5px;
-    display: flex;
-    flex-direction: column;
-}
-
-.selector-available h2, .selector-chosen h2 {
-=======
     display: flex;
     flex: 1;
     gap: 0 10px;
@@ -42,18 +20,14 @@
 }
 
 .selector-available-title, .selector-chosen-title {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     border: 1px solid var(--border-color);
     border-radius: 4px 4px 0 0;
 }
 
-<<<<<<< HEAD
-=======
 .selector .helptext {
     font-size: 0.6875rem;
 }
 
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 .selector-chosen .list-footer-display {
     border: 1px solid var(--border-color);
     border-top: none;
@@ -69,16 +43,6 @@
     color: var(--breadcrumbs-fg);
 }
 
-<<<<<<< HEAD
-.selector-chosen h2 {
-    background: var(--primary);
-    color: var(--header-link-color);
-}
-
-.selector .selector-available h2 {
-    background: var(--darkened-bg);
-    color: var(--body-quiet-color);
-=======
 .selector-chosen-title {
     background: var(--secondary);
     color: var(--header-link-color);
@@ -98,7 +62,6 @@
 
 .selector-available-title label {
     width: 100%;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .selector .selector-filter {
@@ -109,11 +72,8 @@
     font-size: 0.625rem;
     margin: 0;
     text-align: left;
-<<<<<<< HEAD
-=======
     display: flex;
     gap: 8px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .selector .selector-filter label,
@@ -128,30 +88,16 @@
     min-width: auto;
 }
 
-<<<<<<< HEAD
-.selector .selector-available input,
-.selector .selector-chosen input {
-    width: 320px;
-    margin-left: 8px;
-=======
 .selector-filter input {
     flex-grow: 1;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .selector ul.selector-chooser {
     align-self: center;
-<<<<<<< HEAD
-    width: 22px;
-    background-color: var(--selected-bg);
-    border-radius: 10px;
-    margin: 0 5px;
-=======
     width: 30px;
     background-color: var(--selected-bg);
     border-radius: 10px;
     margin: 0;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     padding: 0;
     transform: translateY(-17px);
 }
@@ -178,27 +124,13 @@
 }
 
 .selector-add, .selector-remove {
-<<<<<<< HEAD
-    width: 16px;
-    height: 16px;
-=======
     width: 24px;
     height: 24px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     display: block;
     text-indent: -3000px;
     overflow: hidden;
     cursor: default;
     opacity: 0.55;
-<<<<<<< HEAD
-}
-
-.active.selector-add, .active.selector-remove {
-    opacity: 1;
-}
-
-.active.selector-add:hover, .active.selector-remove:hover {
-=======
     border: none;
 }
 
@@ -207,33 +139,10 @@
 }
 
 :enabled.selector-add:hover, :enabled.selector-remove:hover {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     cursor: pointer;
 }
 
 .selector-add {
-<<<<<<< HEAD
-    background: url(../img/selector-icons.svg) 0 -96px no-repeat;
-}
-
-.active.selector-add:focus, .active.selector-add:hover {
-    background-position: 0 -112px;
-}
-
-.selector-remove {
-    background: url(../img/selector-icons.svg) 0 -64px no-repeat;
-}
-
-.active.selector-remove:focus, .active.selector-remove:hover {
-    background-position: 0 -80px;
-}
-
-a.selector-chooseall, a.selector-clearall {
-    display: inline-block;
-    height: 16px;
-    text-align: left;
-    margin: 1px auto 3px;
-=======
     background: url(../img/selector-icons.svg) 0 -144px no-repeat;
     background-size: 24px auto;
 }
@@ -256,31 +165,12 @@ a.selector-chooseall, a.selector-clearall {
     height: 16px;
     text-align: left;
     margin: 0 auto;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     overflow: hidden;
     font-weight: bold;
     line-height: 16px;
     color: var(--body-quiet-color);
     text-decoration: none;
     opacity: 0.55;
-<<<<<<< HEAD
-}
-
-a.active.selector-chooseall:focus, a.active.selector-clearall:focus,
-a.active.selector-chooseall:hover, a.active.selector-clearall:hover {
-    color: var(--link-fg);
-}
-
-a.active.selector-chooseall, a.active.selector-clearall {
-    opacity: 1;
-}
-
-a.active.selector-chooseall:hover, a.active.selector-clearall:hover {
-    cursor: pointer;
-}
-
-a.selector-chooseall {
-=======
     border: none;
 }
 
@@ -298,35 +188,22 @@ a.selector-chooseall {
 }
 
 .selector-chooseall {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     padding: 0 18px 0 0;
     background: url(../img/selector-icons.svg) right -160px no-repeat;
     cursor: default;
 }
 
-<<<<<<< HEAD
-a.active.selector-chooseall:focus, a.active.selector-chooseall:hover {
-    background-position: 100% -176px;
-}
-
-a.selector-clearall {
-=======
 :enabled.selector-chooseall:focus, :enabled.selector-chooseall:hover {
     background-position: 100% -176px;
 }
 
 .selector-clearall {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     padding: 0 0 0 18px;
     background: url(../img/selector-icons.svg) 0 -128px no-repeat;
     cursor: default;
 }
 
-<<<<<<< HEAD
-a.active.selector-clearall:focus, a.active.selector-clearall:hover {
-=======
 :enabled.selector-clearall:focus, :enabled.selector-clearall:hover {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     background-position: 0 -144px;
 }
 
@@ -356,14 +233,9 @@ a.active.selector-clearall:focus, a.active.selector-clearall:hover {
 }
 
 .stacked ul.selector-chooser {
-<<<<<<< HEAD
-    height: 22px;
-    width: 50px;
-=======
     display: flex;
     height: 30px;
     width: 64px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     margin: 0 0 10px 40%;
     background-color: #eee;
     border-radius: 10px;
@@ -380,19 +252,6 @@ a.active.selector-clearall:focus, a.active.selector-clearall:hover {
 }
 
 .stacked .selector-add {
-<<<<<<< HEAD
-    background: url(../img/selector-icons.svg) 0 -32px no-repeat;
-    cursor: default;
-}
-
-.stacked .active.selector-add {
-    background-position: 0 -32px;
-    cursor: pointer;
-}
-
-.stacked .active.selector-add:focus, .stacked .active.selector-add:hover {
-    background-position: 0 -48px;
-=======
     background: url(../img/selector-icons.svg) 0 -48px no-repeat;
     background-size: 24px auto;
     cursor: default;
@@ -405,35 +264,22 @@ a.active.selector-clearall:focus, a.active.selector-clearall:hover {
 
 .stacked :enabled.selector-add:focus, .stacked :enabled.selector-add:hover {
     background-position: 0 -72px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     cursor: pointer;
 }
 
 .stacked .selector-remove {
     background: url(../img/selector-icons.svg) 0 0 no-repeat;
-<<<<<<< HEAD
-    cursor: default;
-}
-
-.stacked .active.selector-remove {
-=======
     background-size: 24px auto;
     cursor: default;
 }
 
 .stacked :enabled.selector-remove {
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     background-position: 0 0px;
     cursor: pointer;
 }
 
-<<<<<<< HEAD
-.stacked .active.selector-remove:focus, .stacked .active.selector-remove:hover {
-    background-position: 0 -16px;
-=======
 .stacked :enabled.selector-remove:focus, .stacked :enabled.selector-remove:hover {
     background-position: 0 -24px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     cursor: pointer;
 }
 
@@ -489,49 +335,30 @@ table p.datetime {
     position: relative;
     display: inline-block;
     vertical-align: middle;
-<<<<<<< HEAD
-    height: 16px;
-    width: 16px;
-=======
     height: 24px;
     width: 24px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     overflow: hidden;
 }
 
 .datetimeshortcuts .clock-icon {
     background: url(../img/icon-clock.svg) 0 0 no-repeat;
-<<<<<<< HEAD
-=======
     background-size: 24px auto;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .datetimeshortcuts a:focus .clock-icon,
 .datetimeshortcuts a:hover .clock-icon {
-<<<<<<< HEAD
-    background-position: 0 -16px;
-=======
     background-position: 0 -24px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .datetimeshortcuts .date-icon {
     background: url(../img/icon-calendar.svg) 0 0 no-repeat;
-<<<<<<< HEAD
-=======
     background-size: 24px auto;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     top: -1px;
 }
 
 .datetimeshortcuts a:focus .date-icon,
 .datetimeshortcuts a:hover .date-icon {
-<<<<<<< HEAD
-    background-position: 0 -16px;
-=======
     background-position: 0 -24px;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .timezonewarning {
@@ -643,11 +470,7 @@ span.clearable-file-input label {
 }
 
 .calendar td.selected a {
-<<<<<<< HEAD
-    background: var(--primary);
-=======
     background: var(--secondary);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     color: var(--button-fg);
 }
 
@@ -715,44 +538,15 @@ span.clearable-file-input label {
     background: url(../img/calendar-icons.svg) 0 0 no-repeat;
 }
 
-<<<<<<< HEAD
-.calendarbox .calendarnav-previous:focus,
-.calendarbox .calendarnav-previous:hover {
-    background-position: 0 -15px;
-}
-
-.calendarnav-next {
-    right: 10px;
-    background: url(../img/calendar-icons.svg) 0 -30px no-repeat;
-}
-
-.calendarbox .calendarnav-next:focus,
-.calendarbox .calendarnav-next:hover {
-    background-position: 0 -45px;
-=======
 .calendarnav-next {
     right: 10px;
     background: url(../img/calendar-icons.svg) 0 -15px no-repeat;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .calendar-cancel {
     margin: 0;
     padding: 4px 0;
     font-size: 0.75rem;
-<<<<<<< HEAD
-    background: #eee;
-    border-top: 1px solid var(--border-color);
-    color: var(--body-fg);
-}
-
-.calendar-cancel:focus, .calendar-cancel:hover {
-    background: #ddd;
-}
-
-.calendar-cancel a {
-    color: black;
-=======
     background: var(--close-button-bg);
     border-top: 1px solid var(--border-color);
     color: var(--button-fg);
@@ -764,7 +558,6 @@ span.clearable-file-input label {
 
 .calendar-cancel a {
     color: var(--button-fg);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
     display: block;
 }
 
@@ -784,16 +577,10 @@ ul.timelist, .timelist li {
     float: right;
     text-indent: -9999px;
     background: url(../img/inline-delete.svg) 0 0 no-repeat;
-<<<<<<< HEAD
-    width: 16px;
-    height: 16px;
-    border: 0px none;
-=======
     width: 1.5rem;
     height: 1.5rem;
     border: 0px none;
     margin-bottom: .25rem;
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 .inline-deletelink:focus, .inline-deletelink:hover {
@@ -802,28 +589,6 @@ ul.timelist, .timelist li {
 
 /* RELATED WIDGET WRAPPER */
 .related-widget-wrapper {
-<<<<<<< HEAD
-    float: left;       /* display properly in form rows with multiple fields */
-    overflow: hidden;  /* clear floated contents */
-}
-
-.related-widget-wrapper-link {
-    opacity: 0.3;
-}
-
-.related-widget-wrapper-link:link {
-    opacity: .8;
-}
-
-.related-widget-wrapper-link:link:focus,
-.related-widget-wrapper-link:link:hover {
-    opacity: 1;
-}
-
-select + .related-widget-wrapper-link,
-.related-widget-wrapper-link + .related-widget-wrapper-link {
-    margin-left: 7px;
-=======
     display: flex;
     gap: 0 10px;
     flex-grow: 1;
@@ -839,7 +604,6 @@ select + .related-widget-wrapper-link,
 .related-widget-wrapper-link:link {
     opacity: 1;
     filter: grayscale(0);
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 }
 
 /* GIS MAPS */
