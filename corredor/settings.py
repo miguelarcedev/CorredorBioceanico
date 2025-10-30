@@ -87,3 +87,4 @@ DEFAULT_FROM_EMAIL = 'noreply@corredorbioceanico.com'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
