@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'tu_clave_secreta_aqui'
 
-DEBUG = False  # o True sólo para pruebas
-ALLOWED_HOSTS = ['corredor.now-dns.net', 'localhost', '127.0.0.1']
+DEBUG = True  # o True sólo para pruebas
+ALLOWED_HOSTS = ['*']
 
 
 INSTALLED_APPS = [
