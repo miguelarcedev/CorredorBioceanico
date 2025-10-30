@@ -5,8 +5,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'tu_clave_secreta_aqui'
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+
+DEBUG = False  # o True sólo para pruebas
+ALLOWED_HOSTS = ['corredor.now-dns.net', 'localhost', '127.0.0.1']
 
 
 INSTALLED_APPS = [
@@ -65,6 +66,8 @@ AUTH_USER_MODEL = 'transporte.Usuario'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = []
 
 
 
