@@ -102,15 +102,12 @@
     background: var(--selected-row);
 }
 
-<<<<<<< HEAD
-=======
 @media (forced-colors: active) {
     #nav-sidebar .current-model {
         background-color: SelectedItem;
     }
 }
 
->>>>>>> 30e062f68a925bd33825e219fa06f566926e42f5
 .main > #nav-sidebar + .content {
     max-width: calc(100% - 23px);
 }
