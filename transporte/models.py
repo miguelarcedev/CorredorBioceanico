@@ -154,3 +154,13 @@ class ControlFrontera(models.Model):
     def __str__(self):
         return f"Control en frontera para {self.viaje.id}"
 
+
+
+class RegistroUbicacion(models.Model):
+    viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE, related_name='registros')
+    lat = models.FloatField()
+    lon = models.FloatField()
+    fecha_hora = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.viaje.id} - {self.fecha_hora:%H:%M:%S}"
