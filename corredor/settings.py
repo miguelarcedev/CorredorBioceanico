@@ -64,9 +64,8 @@ AUTH_USER_MODEL = 'transporte.Usuario'
 
 # Archivos estáticos
 
-#STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
-STATIC_ROOT = r'C:\SisInf\Corredor\staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 LOGIN_URL = 'login'
