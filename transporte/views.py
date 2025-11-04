@@ -188,3 +188,27 @@ def monitor_viaje(request, viaje_id):
     viaje = get_object_or_404(Viaje, id=viaje_id)
     return render(request, 'transporte/monitor_viaje.html', {'viaje': viaje})
 
+
+
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from .models import Viaje, RegistroUbicacion
+
+def monitoreo_viaje(request, viaje_id):
+    """Muestra el mapa con el recorrido en tiempo real."""
+    viaje = get_object_or_404(Viaje, id=viaje_id)
+    return render(request, 'transporte/monitoreo_viaje.html', {'viaje': viaje})
+
+
+def obtener_ubicaciones(request, viaje_id):
+    """Devuelve las ubicaciones guardadas en formato JSON."""
+    ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('timestamp')
+    data = [
+        {
+            'lat': u.lat,
+            'lon': u.lon,
+            'timestamp': u.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for u in ubicaciones
+    ]
+    return JsonResponse({'ubicaciones': data})

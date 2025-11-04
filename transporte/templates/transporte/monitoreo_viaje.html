@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="text-center mb-3">Monitoreo del viaje {{ viaje.id }}</h2>
+  <div id="map" style="height: 500px; border-radius: 10px;"></div>
+  <p class="text-muted mt-2 text-center">Actualización automática cada 15 segundos</p>
+</div>
+
+<!-- Leaflet -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map = L.map('map').setView([-24.1858, -65.2995], 10); // San Salvador de Jujuy (por defecto)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+}).addTo(map);
+
+let polyline = null;
+let marker = null;
+
+function cargarUbicaciones() {
+  fetch("{% url 'obtener_ubicaciones' viaje.id %}")
+    .then(response => response.json())
+    .then(data => {
+      const ubicaciones = data.ubicaciones;
+      if (ubicaciones.length === 0) return;
+
+      const puntos = ubicaciones.map(u => [u.lat, u.lon]);
+      const ultima = puntos[puntos.length - 1];
+
+      // Eliminar polilínea anterior
+      if (polyline) {
+        map.removeLayer(polyline);
+      }
+      polyline = L.polyline(puntos, { color: 'blue' }).addTo(map);
+
+      // Mover marcador
+      if (marker) {
+        marker.setLatLng(ultima);
+      } else {
+        marker = L.marker(ultima).addTo(map);
+      }
+
+      marker.bindPopup("Última ubicación registrada").openPopup();
+      map.setView(ultima, 13);
+    })
+    .catch(error => console.error("Error al cargar ubicaciones:", error));
+}
+
+// Carga inicial
+cargarUbicaciones();
+
+// Actualiza cada 15 segundos
+setInterval(cargarUbicaciones, 15000);
+</script>
+{% endblock %}
