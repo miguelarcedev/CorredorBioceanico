@@ -129,17 +129,11 @@ def viaje_crear(request):
 @login_required
 def actualizar_ubicacion(request, viaje_id):
     viaje = get_object_or_404(Viaje, id=viaje_id)
-
-    if request.method == 'POST':
-        lat = request.POST.get('lat')
-        lon = request.POST.get('lon')
-        if lat and lon:
-            viaje.ubicacion_actual = f"{lat}, {lon}"
-            viaje.save(update_fields=['ubicacion_actual'])
-            messages.success(request, "Ubicación actualizada correctamente.")
-        return redirect('viaje_detalle', viaje_id=viaje.id)
-
     return render(request, 'transporte/actualizar_ubicacion.html', {'viaje': viaje})
+
+
+
+
 
 
 # transporte/views.py
@@ -156,18 +150,16 @@ def actualizar_ubicacion_api(request, viaje_id):
             lon = float(request.POST.get('lon'))
             viaje = Viaje.objects.get(id=viaje_id)
 
-            # Actualizamos ubicación actual en Viaje
             viaje.ubicacion_actual = f"{lat},{lon}"
-            viaje.ultima_actualizacion = timezone.now()
-            viaje.save(update_fields=['ubicacion_actual', 'ultima_actualizacion'])
+            viaje.save(update_fields=['ubicacion_actual'])
 
-            # Guardamos registro histórico
             RegistroUbicacion.objects.create(viaje=viaje, lat=lat, lon=lon)
 
-            return JsonResponse({'status': 'ok', 'mensaje': 'Ubicación actualizada'})
+            return JsonResponse({'status': 'ok'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'mensaje': str(e)})
     return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido'})
+
 
 
 # transporte/views.py
