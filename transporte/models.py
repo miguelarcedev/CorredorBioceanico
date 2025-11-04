@@ -104,7 +104,7 @@ class Viaje(models.Model):
         super().save(*args, **kwargs)
         if not self.codigo_qr:
             # Generamos URL del detalle del viaje
-            url = f"http://127.0.0.1:8000{reverse('viaje_detalle', args=[self.id])}"
+            url = f"https://corredor.now-dns.net{reverse('viaje_detalle', args=[self.id])}"
             qr_img = qrcode.make(url)
             buffer = BytesIO()
             qr_img.save(buffer, format='PNG')
@@ -154,3 +154,19 @@ class ControlFrontera(models.Model):
     def __str__(self):
         return f"Control en frontera para {self.viaje.id}"
 
+
+# transporte/models.py
+from django.db import models
+from django.utils import timezone
+
+class RegistroUbicacion(models.Model):
+    viaje = models.ForeignKey('Viaje', on_delete=models.CASCADE, related_name='registros')
+    lat = models.FloatField()
+    lon = models.FloatField()
+    fecha_hora = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha_hora']
+
+    def __str__(self):
+        return f"{self.viaje.id} @ {self.fecha_hora:%Y-%m-%d %H:%M:%S}"

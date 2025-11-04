@@ -146,7 +146,7 @@ def actualizar_ubicacion(request, viaje_id):
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from .models import Viaje
+from .models import Viaje, RegistroUbicacion
 
 @csrf_exempt
 def actualizar_ubicacion_api(request, viaje_id):
@@ -155,10 +155,43 @@ def actualizar_ubicacion_api(request, viaje_id):
             lat = float(request.POST.get('lat'))
             lon = float(request.POST.get('lon'))
             viaje = Viaje.objects.get(id=viaje_id)
+
+            # Actualizamos ubicación actual en Viaje
             viaje.ubicacion_actual = f"{lat},{lon}"
             viaje.ultima_actualizacion = timezone.now()
-            viaje.save()
+            viaje.save(update_fields=['ubicacion_actual', 'ultima_actualizacion'])
+
+            # Guardamos registro histórico
+            RegistroUbicacion.objects.create(viaje=viaje, lat=lat, lon=lon)
+
             return JsonResponse({'status': 'ok', 'mensaje': 'Ubicación actualizada'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'mensaje': str(e)})
     return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido'})
+
+
+# transporte/views.py
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse
+
+def registros_api(request, viaje_id):
+    # GET: devuelve todos los registros del viaje en JSON
+    try:
+        viaje = Viaje.objects.get(id=viaje_id)
+    except Viaje.DoesNotExist:
+        return JsonResponse({'status':'error','mensaje':'Viaje no encontrado'}, status=404)
+
+    registros = viaje.registros.all().values('lat', 'lon', 'fecha_hora')
+    # Serializamos a lista para JS
+    data = list(registros)
+    return JsonResponse({'status':'ok', 'registros': data}, encoder=DjangoJSONEncoder)
+
+
+
+# transporte/views.py
+from django.shortcuts import render, get_object_or_404
+
+def monitor_viaje(request, viaje_id):
+    viaje = get_object_or_404(Viaje, id=viaje_id)
+    return render(request, 'transporte/monitor_viaje.html', {'viaje': viaje})

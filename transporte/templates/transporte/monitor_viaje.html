@@ -1,0 +1,72 @@
+{% extends 'transporte/base.html' %}
+{% block content %}
+<h4>Monitor en tiempo real - Viaje {{ viaje.id }}</h4>
+<p class="text-muted">Este mapa consulta el servidor cada 5 s y dibuja la ruta completa.</p>
+
+<div id="map" style="height: 600px; border-radius: 8px;"></div>
+<div class="mt-2"><small id="status">Esperando datos...</small></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const map = L.map('map').setView([-24.1858, -65.2995], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let polyline = null;
+    let marker = null;
+
+    const statusBox = document.getElementById('status');
+    const registrosUrl = "{% url 'registros_api' viaje.id %}";
+
+    // Función que obtiene registros y actualiza mapa
+    function actualizarMapa() {
+        fetch(registrosUrl)
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.status !== 'ok') {
+                    statusBox.innerText = 'Error al obtener registros';
+                    return;
+                }
+                const regs = data.registros;
+                if (!regs || regs.length === 0) {
+                    statusBox.innerText = 'Sin registros todavía...';
+                    return;
+                }
+
+                // Convertir a array de coordenadas [lat, lon]
+                const coords = regs.map(r => [parseFloat(r.lat), parseFloat(r.lon)]);
+
+                // Actualizar polyline
+                if (polyline) {
+                    polyline.setLatLngs(coords);
+                } else {
+                    polyline = L.polyline(coords, { color: 'blue', weight: 4 }).addTo(map);
+                }
+
+                // Actualizar marcador en última posición
+                const last = coords[coords.length - 1];
+                if (marker) {
+                    marker.setLatLng(last);
+                } else {
+                    marker = L.marker(last).addTo(map).bindPopup("Última posición").openPopup();
+                }
+
+                // Ajustar vista para incluir ruta completa
+                const bounds = L.latLngBounds(coords);
+                map.fitBounds(bounds.pad(0.2));
+
+                statusBox.innerText = 'Última actualización: ' + new Date().toLocaleTimeString();
+            })
+            .catch(err => {
+                console.error(err);
+                statusBox.innerText = 'Error de conexión: ' + err;
+            });
+    }
+
+    // Primera carga y luego cada 5 segundos
+    actualizarMapa();
+    setInterval(actualizarMapa, 5000);
+});
+</script>
+{% endblock %}
