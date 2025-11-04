@@ -200,6 +200,7 @@ def monitoreo_viaje(request, viaje_id):
     return render(request, 'transporte/monitoreo_viaje.html', {'viaje': viaje})
 
 
+
 def obtener_ubicaciones(request, viaje_id):
     """Devuelve las ubicaciones guardadas en formato JSON."""
     ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('timestamp')
