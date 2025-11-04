@@ -195,3 +195,4 @@ from django.shortcuts import render, get_object_or_404
 def monitor_viaje(request, viaje_id):
     viaje = get_object_or_404(Viaje, id=viaje_id)
     return render(request, 'transporte/monitor_viaje.html', {'viaje': viaje})
+
