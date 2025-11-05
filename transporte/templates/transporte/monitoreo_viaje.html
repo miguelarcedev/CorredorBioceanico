@@ -169,23 +169,34 @@ function iniciarSimulacionDemo() {
   document.getElementById("tablaUbicaciones").innerHTML = "";
 
   demoInterval = setInterval(async () => {
-    if (demoIndex < demoRuta.length) {
-      const punto = demoRuta[demoIndex];
-      const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
-      polyline.addLatLng(punto);
-      if (!marker) {
-        marker = L.marker(punto).addTo(map);
-      } else {
-        moverMarcadorSuave(marker, anterior, punto);
-      }
-      map.setView(punto, 15);
-      await enviarUbicacionDemo(punto[0], punto[1]);
-      demoIndex++;
-      await cargarUbicaciones(); // actualiza la tabla y trazado
+  if (demoIndex < demoRuta.length) {
+    const punto = demoRuta[demoIndex];
+    const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
+
+    polyline.addLatLng(punto);
+
+    if (!marker) {
+      marker = L.marker(punto).addTo(map);
     } else {
-      detenerSimulacionDemo();
+      moverMarcadorSuave(marker, anterior, punto);
     }
-  }, 2000);
+
+    map.setView(punto, 15);
+
+    // Enviamos la ubicación simulada al servidor
+    await enviarUbicacionDemo(punto[0], punto[1]);
+
+    // Esperamos medio segundo antes de refrescar la tabla
+    setTimeout(() => {
+      cargarUbicaciones(); // Actualiza mapa + tabla
+    }, 500);
+
+    demoIndex++;
+  } else {
+    detenerSimulacionDemo();
+  }
+}, 2000);
+
 }
 
 function detenerSimulacionDemo() {
