@@ -202,14 +202,14 @@ def monitoreo_viaje(request, viaje_id):
 
 
 def obtener_ubicaciones(request, viaje_id):
-    """Devuelve las ubicaciones guardadas en formato JSON."""
-    ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('timestamp')
+    ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('fecha_hora')
     data = [
         {
             'lat': u.lat,
             'lon': u.lon,
-            'timestamp': u.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            'timestamp': u.fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
         }
         for u in ubicaciones
     ]
     return JsonResponse({'ubicaciones': data})
+
