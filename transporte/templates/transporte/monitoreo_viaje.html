@@ -1,60 +1,110 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
 <div class="container mt-4">
-  <h2 class="text-center mb-3">Monitoreo del viaje {{ viaje.id }}</h2>
+  <h2>Monitoreo del viaje {{ viaje.id }}</h2>
+
+  <div class="mb-3">
+    <button id="toggleModeBtn" class="btn btn-primary">Cambiar a modo demo</button>
+  </div>
+
   <div id="map" style="height: 500px; border-radius: 10px;"></div>
-  <p class="text-muted mt-2 text-center">Actualización automática cada 15 segundos</p>
 </div>
 
-<!-- Leaflet -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha512-o9N1j0wqzU+kl6tQv4SkV7wEDTT2qL/9p2PqkaVh1I0Jlgp7k7yC6odc4j8xxyZbS+5o2fIFp3HkG8SkDg=="
+        crossorigin=""></script>
 
 <script>
-let map = L.map('map').setView([-24.1858, -65.2995], 10); // San Salvador de Jujuy (por defecto)
+let map = L.map('map').setView([-24.1858, -65.2995], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
+  maxZoom: 19
 }).addTo(map);
 
-let polyline = null;
+let polyline = L.polyline([], { color: 'blue' }).addTo(map);
 let marker = null;
+let modoDemo = false;
+let demoInterval = null;
 
-function cargarUbicaciones() {
-  fetch("{% url 'obtener_ubicaciones' viaje.id %}")
-    .then(response => response.json())
-    .then(data => {
-      const ubicaciones = data.ubicaciones;
-      if (ubicaciones.length === 0) return;
+// Ruta simulada de ejemplo (Jujuy hacia el sur)
+const demoRuta = [
+  [-24.1858, -65.2995],
+  [-24.1865, -65.2980],
+  [-24.1872, -65.2968],
+  [-24.1880, -65.2954],
+  [-24.1890, -65.2940],
+  [-24.1900, -65.2925],
+  [-24.1915, -65.2910],
+  [-24.1930, -65.2895]
+];
 
-      const puntos = ubicaciones.map(u => [u.lat, u.lon]);
-      const ultima = puntos[puntos.length - 1];
+// Función para cargar ubicaciones reales desde el servidor
+async function cargarUbicaciones() {
+  if (modoDemo) return; // Si estamos en modo demo, no cargar reales
 
-      // Eliminar polilínea anterior
-      if (polyline) {
-        map.removeLayer(polyline);
-      }
-      polyline = L.polyline(puntos, { color: 'blue' }).addTo(map);
+  const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
+  const data = await resp.json();
 
-      // Mover marcador
-      if (marker) {
-        marker.setLatLng(ultima);
-      } else {
-        marker = L.marker(ultima).addTo(map);
-      }
+  const puntos = data.ubicaciones.map(u => [u.lat, u.lon]);
 
-      marker.bindPopup("Última ubicación registrada").openPopup();
-      map.setView(ultima, 13);
-    })
-    .catch(error => console.error("Error al cargar ubicaciones:", error));
+  if (puntos.length > 0) {
+    polyline.setLatLngs(puntos);
+    if (!marker) {
+      marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+    } else {
+      marker.setLatLng(puntos[puntos.length - 1]);
+    }
+    map.setView(puntos[puntos.length - 1], 15);
+  }
 }
 
-// Carga inicial
+// Cargar ubicaciones reales cada 10 segundos
+setInterval(cargarUbicaciones, 10000);
 cargarUbicaciones();
 
-// Actualiza cada 15 segundos
-setInterval(cargarUbicaciones, 15000);
+// Función para activar/desactivar el modo demo
+document.getElementById('toggleModeBtn').addEventListener('click', () => {
+  modoDemo = !modoDemo;
+  const btn = document.getElementById('toggleModeBtn');
+
+  if (modoDemo) {
+    btn.textContent = "Cambiar a modo real";
+    iniciarSimulacionDemo();
+  } else {
+    btn.textContent = "Cambiar a modo demo";
+    detenerSimulacionDemo();
+  }
+});
+
+// --- Lógica de simulación demo ---
+let demoIndex = 0;
+
+function iniciarSimulacionDemo() {
+  polyline.setLatLngs([]);
+  if (marker) map.removeLayer(marker);
+  marker = null;
+  demoIndex = 0;
+
+  demoInterval = setInterval(() => {
+    if (demoIndex < demoRuta.length) {
+      const punto = demoRuta[demoIndex];
+      polyline.addLatLng(punto);
+      if (!marker) {
+        marker = L.marker(punto).addTo(map);
+      } else {
+        marker.setLatLng(punto);
+      }
+      map.setView(punto, 15);
+      demoIndex++;
+    } else {
+      detenerSimulacionDemo();
+    }
+  }, 2000);
+}
+
+function detenerSimulacionDemo() {
+  clearInterval(demoInterval);
+  demoInterval = null;
+  cargarUbicaciones(); // volver a mostrar reales
+}
 </script>
 {% endblock %}
