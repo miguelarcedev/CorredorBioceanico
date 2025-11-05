@@ -172,29 +172,30 @@ function iniciarSimulacionDemo() {
     const punto = demoRuta[demoIndex];
     const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
 
+    // Mueve el camión en el mapa
     polyline.addLatLng(punto);
-
     if (!marker) {
       marker = L.marker(punto).addTo(map);
     } else {
       moverMarcadorSuave(marker, anterior, punto);
     }
-
     map.setView(punto, 15);
 
-    // Enviamos la ubicación simulada al servidor
-    await enviarUbicacionDemo(punto[0], punto[1]);
+    // Envía al backend y luego actualiza tabla
+    const resp = await enviarUbicacionDemo(punto[0], punto[1]);
+    console.log("Ubicación demo enviada:", resp);
 
-    // Esperamos medio segundo antes de refrescar la tabla
-    setTimeout(() => {
-      cargarUbicaciones(); // Actualiza mapa + tabla
-    }, 500);
+    // Esperamos 1 segundo y actualizamos todo
+    setTimeout(async () => {
+      await cargarUbicaciones();
+    }, 1000);
 
     demoIndex++;
   } else {
     detenerSimulacionDemo();
   }
-}, 2000);
+}, 2500);
+
 
 }
 
