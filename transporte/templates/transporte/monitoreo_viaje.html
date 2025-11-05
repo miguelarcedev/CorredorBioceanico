@@ -43,7 +43,6 @@ async function cargarUbicaciones() {
 
   const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
   const data = await resp.json();
-
   const puntos = data.ubicaciones.map(u => [u.lat, u.lon]);
 
   if (puntos.length > 0) {
@@ -78,13 +77,28 @@ document.getElementById('toggleModeBtn').addEventListener('click', () => {
 // --- Lógica de simulación demo ---
 let demoIndex = 0;
 
+async function enviarUbicacionDemo(lat, lon) {
+  try {
+    await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ lat: lat, lon: lon })
+    });
+  } catch (error) {
+    console.error("Error enviando ubicación demo:", error);
+  }
+}
+
 function iniciarSimulacionDemo() {
   polyline.setLatLngs([]);
   if (marker) map.removeLayer(marker);
   marker = null;
   demoIndex = 0;
 
-  demoInterval = setInterval(() => {
+  demoInterval = setInterval(async () => {
     if (demoIndex < demoRuta.length) {
       const punto = demoRuta[demoIndex];
       polyline.addLatLng(punto);
@@ -94,6 +108,7 @@ function iniciarSimulacionDemo() {
         marker.setLatLng(punto);
       }
       map.setView(punto, 15);
+      await enviarUbicacionDemo(punto[0], punto[1]); // Guardar en BD
       demoIndex++;
     } else {
       detenerSimulacionDemo();
@@ -107,4 +122,5 @@ function detenerSimulacionDemo() {
   cargarUbicaciones(); // volver a mostrar reales
 }
 </script>
+
 {% endblock %}

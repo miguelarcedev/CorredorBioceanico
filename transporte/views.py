@@ -142,7 +142,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from .models import Viaje, RegistroUbicacion
 
-@csrf_exempt
+""" @csrf_exempt
 def actualizar_ubicacion_api(request, viaje_id):
     if request.method == 'POST':
         try:
@@ -158,7 +158,30 @@ def actualizar_ubicacion_api(request, viaje_id):
             return JsonResponse({'status': 'ok'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'mensaje': str(e)})
-    return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido'})
+    return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido'}) """
+
+
+# views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
+@csrf_exempt
+def actualizar_ubicacion_api(request, viaje_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        lat = data.get('lat')
+        lon = data.get('lon')
+
+        if lat is not None and lon is not None:
+            RegistroUbicacion.objects.create(
+                viaje_id=viaje_id,
+                lat=lat,
+                lon=lon
+            )
+            return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'status': 'error'}, status=400)
 
 
 
