@@ -104,23 +104,40 @@ async function cargarUbicaciones() {
     const data = await resp.json();
     console.log("Ubicaciones recibidas:", data);
 
+    const ubicaciones = data.ubicaciones;
+    if (!ubicaciones || ubicaciones.length === 0) return;
 
-    actualizarTabla(data.ubicaciones);
+    // Limpiamos tabla antes de actualizar
+    const tbody = document.querySelector("#tabla-ubicaciones tbody");
+    tbody.innerHTML = "";
 
-    if (!lastPoint || lastPoint[0] !== puntos[puntos.length - 1][0] || lastPoint[1] !== puntos[puntos.length - 1][1]) {
+    // Tomamos solo las últimas 10 ubicaciones (para que no se llene demasiado)
+    const ultimas = ubicaciones.slice(-10);
+
+    // Agregamos filas
+    ultimas.forEach(u => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${new Date(u.fecha_hora).toLocaleTimeString()}</td>
+      `;
+      tbody.appendChild(fila);
+    });
+
+    // Actualizamos el trazado en el mapa
+    const puntos = ultimas.map(u => [u.lat, u.lon]);
+    if (puntos.length > 1) {
       polyline.setLatLngs(puntos);
-      if (!marker) {
-        marker = L.marker(puntos[puntos.length - 1]).addTo(map);
-      } else {
-        moverMarcadorSuave(marker, lastPoint, puntos[puntos.length - 1]);
-      }
+      marker.setLatLng(puntos[puntos.length - 1]);
       map.setView(puntos[puntos.length - 1], 15);
-      lastPoint = puntos[puntos.length - 1];
     }
-  } catch (e) {
-    console.error("Error cargando ubicaciones:", e);
+
+  } catch (err) {
+    console.error("Error cargando ubicaciones:", err);
   }
 }
+
 setInterval(cargarUbicaciones, 5000);
 cargarUbicaciones();
 
@@ -187,6 +204,13 @@ function iniciarSimulacionDemo() {
     // Esperamos 1 segundo y actualizamos todo
     setTimeout(async () => {
       await cargarUbicaciones();
+const tbody = document.querySelector("#tabla-ubicaciones tbody");
+const ultimaFila = tbody.lastElementChild;
+if (ultimaFila) {
+  ultimaFila.classList.add("bg-green-100", "transition", "duration-500");
+  setTimeout(() => ultimaFila.classList.remove("bg-green-100"), 2000);
+}
+
     }, 1000);
 
     demoIndex++;
