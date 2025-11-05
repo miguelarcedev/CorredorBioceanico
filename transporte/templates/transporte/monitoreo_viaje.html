@@ -1,33 +1,57 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid mt-4">
   <h2>Monitoreo del viaje {{ viaje.id }}</h2>
 
-  <div class="mb-3">
+  <div class="d-flex justify-content-between mb-3">
     <button id="toggleModeBtn" class="btn btn-primary">Cambiar a modo demo</button>
+    <span id="modo-indicador" class="badge bg-success">Modo real</span>
   </div>
 
-  <div id="map" style="height: 500px; border-radius: 10px;"></div>
+  <div class="row">
+    <!-- MAPA -->
+    <div class="col-md-8">
+      <div id="map" style="height: 500px; border-radius: 10px;"></div>
+    </div>
+
+    <!-- TABLA DE UBICACIONES -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">Últimas ubicaciones</div>
+        <div class="card-body p-0">
+          <table class="table table-striped table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Latitud</th>
+                <th>Longitud</th>
+                <th>Hora</th>
+              </tr>
+            </thead>
+            <tbody id="tablaUbicaciones">
+              <tr><td colspan="4" class="text-center">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha512-o9N1j0wqzU+kl6tQv4SkV7wEDTT2qL/9p2PqkaVh1I0Jlgp7k7yC6odc4j8xxyZbS+5o2fIFp3HkG8SkDg=="
-        crossorigin="">
-</script>
+        crossorigin=""></script>
 
 <script>
 let map = L.map('map').setView([-24.1858, -65.2995], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
 let polyline = L.polyline([], { color: 'blue' }).addTo(map);
 let marker = null;
 let modoDemo = false;
 let demoInterval = null;
-let lastPoint = null; // para detectar nuevos puntos
+let lastPoint = null;
 
-// Ruta simulada (de ejemplo)
 const demoRuta = [
   [-24.1858, -65.2995],
   [-24.1865, -65.2980],
@@ -40,34 +64,20 @@ const demoRuta = [
 ];
 
 // ===============================
-//   FUNCIONES DE MODO REAL
+//   FUNCIONES GENERALES
 // ===============================
-async function cargarUbicaciones() {
-  if (modoDemo) return;
-
-  try {
-    const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
-    const data = await resp.json();
-    const puntos = data.ubicaciones.map(u => [u.lat, u.lon]);
-
-    if (puntos.length === 0) return;
-
-    // Si hay nuevos puntos, agregarlos al trazado
-    if (!lastPoint || (lastPoint[0] !== puntos[puntos.length - 1][0] || lastPoint[1] !== puntos[puntos.length - 1][1])) {
-      polyline.setLatLngs(puntos);
-
-      if (!marker) {
-        marker = L.marker(puntos[puntos.length - 1]).addTo(map);
-      } else {
-        moverMarcadorSuave(marker, lastPoint, puntos[puntos.length - 1]);
-      }
-
-      map.setView(puntos[puntos.length - 1], 15);
-      lastPoint = puntos[puntos.length - 1];
-    }
-  } catch (e) {
-    console.error("Error cargando ubicaciones:", e);
-  }
+function actualizarTabla(ubicaciones) {
+  const tbody = document.getElementById("tablaUbicaciones");
+  tbody.innerHTML = "";
+  ubicaciones.slice(-10).reverse().forEach((u, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${u.timestamp}</td>
+      </tr>`;
+  });
 }
 
 // Movimiento suave del marcador
@@ -76,7 +86,6 @@ function moverMarcadorSuave(marker, start, end, duracion = 1000) {
     marker.setLatLng(end);
     return;
   }
-
   const steps = 20;
   let i = 0;
   const interval = setInterval(() => {
@@ -87,7 +96,33 @@ function moverMarcadorSuave(marker, start, end, duracion = 1000) {
   }, duracion / steps);
 }
 
-// Actualización periódica (modo real)
+// ===============================
+//   MODO REAL
+// ===============================
+async function cargarUbicaciones() {
+  if (modoDemo) return;
+  try {
+    const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
+    const data = await resp.json();
+    const puntos = data.ubicaciones.map(u => [u.lat, u.lon]);
+    if (puntos.length === 0) return;
+
+    actualizarTabla(data.ubicaciones);
+
+    if (!lastPoint || lastPoint[0] !== puntos[puntos.length - 1][0] || lastPoint[1] !== puntos[puntos.length - 1][1]) {
+      polyline.setLatLngs(puntos);
+      if (!marker) {
+        marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+      } else {
+        moverMarcadorSuave(marker, lastPoint, puntos[puntos.length - 1]);
+      }
+      map.setView(puntos[puntos.length - 1], 15);
+      lastPoint = puntos[puntos.length - 1];
+    }
+  } catch (e) {
+    console.error("Error cargando ubicaciones:", e);
+  }
+}
 setInterval(cargarUbicaciones, 5000);
 cargarUbicaciones();
 
@@ -97,18 +132,22 @@ cargarUbicaciones();
 document.getElementById('toggleModeBtn').addEventListener('click', () => {
   modoDemo = !modoDemo;
   const btn = document.getElementById('toggleModeBtn');
+  const badge = document.getElementById('modo-indicador');
 
   if (modoDemo) {
     btn.textContent = "Cambiar a modo real";
+    badge.textContent = "Modo demo";
+    badge.className = "badge bg-warning text-dark";
     iniciarSimulacionDemo();
   } else {
     btn.textContent = "Cambiar a modo demo";
+    badge.textContent = "Modo real";
+    badge.className = "badge bg-success";
     detenerSimulacionDemo();
   }
 });
 
 let demoIndex = 0;
-
 async function enviarUbicacionDemo(lat, lon) {
   try {
     await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
@@ -127,22 +166,22 @@ function iniciarSimulacionDemo() {
   marker = null;
   lastPoint = null;
   demoIndex = 0;
+  document.getElementById("tablaUbicaciones").innerHTML = "";
 
   demoInterval = setInterval(async () => {
     if (demoIndex < demoRuta.length) {
       const punto = demoRuta[demoIndex];
       const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
-
       polyline.addLatLng(punto);
       if (!marker) {
         marker = L.marker(punto).addTo(map);
       } else {
         moverMarcadorSuave(marker, anterior, punto);
       }
-
       map.setView(punto, 15);
-      await enviarUbicacionDemo(punto[0], punto[1]); // Guardar en BD
+      await enviarUbicacionDemo(punto[0], punto[1]);
       demoIndex++;
+      await cargarUbicaciones(); // actualiza la tabla y trazado
     } else {
       detenerSimulacionDemo();
     }
@@ -152,9 +191,7 @@ function iniciarSimulacionDemo() {
 function detenerSimulacionDemo() {
   clearInterval(demoInterval);
   demoInterval = null;
-  cargarUbicaciones(); // volver a mostrar reales
+  cargarUbicaciones();
 }
 </script>
-
-
 {% endblock %}
