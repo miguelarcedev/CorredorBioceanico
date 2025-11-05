@@ -99,12 +99,11 @@ function moverMarcadorSuave(marker, start, end, duracion = 1000) {
 //   MODO REAL
 // ===============================
 async function cargarUbicaciones() {
-  if (modoDemo) return;
   try {
     const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
     const data = await resp.json();
-    const puntos = data.ubicaciones.map(u => [u.lat, u.lon]);
-    if (puntos.length === 0) return;
+    console.log("Ubicaciones recibidas:", data);
+
 
     actualizarTabla(data.ubicaciones);
 
