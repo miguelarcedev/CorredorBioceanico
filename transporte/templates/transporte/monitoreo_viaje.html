@@ -109,7 +109,7 @@ async function cargarUbicaciones() {
     if (!ubicaciones || ubicaciones.length === 0) return;
 
     // Limpiamos tabla antes de actualizar
-    const tbody = document.querySelector("#tablaUbicaciones");
+    const tbody = document.querySelector("tablaUbicaciones");
 
     tbody.innerHTML = "";
 
@@ -206,7 +206,7 @@ function iniciarSimulacionDemo() {
     // Esperamos 1 segundo y actualizamos todo
     setTimeout(async () => {
       await cargarUbicaciones();
-const tbody = document.querySelector("#tablaUbicaciones");
+const tbody = document.querySelector("tablaUbicaciones");
 
 const ultimaFila = tbody.lastElementChild;
 if (ultimaFila) {
