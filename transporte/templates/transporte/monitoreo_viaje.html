@@ -67,6 +67,7 @@ const demoRuta = [
 // ===============================
 function actualizarTabla(ubicaciones) {
   const tbody = document.getElementById("tablaUbicaciones");
+
   tbody.innerHTML = "";
   ubicaciones.slice(-10).reverse().forEach((u, i) => {
     tbody.innerHTML += `
@@ -108,7 +109,8 @@ async function cargarUbicaciones() {
     if (!ubicaciones || ubicaciones.length === 0) return;
 
     // Limpiamos tabla antes de actualizar
-    const tbody = document.querySelector("#tabla-ubicaciones tbody");
+    const tbody = document.querySelector("#tablaUbicaciones");
+
     tbody.innerHTML = "";
 
     // Tomamos solo las últimas 10 ubicaciones (para que no se llene demasiado)
@@ -204,7 +206,8 @@ function iniciarSimulacionDemo() {
     // Esperamos 1 segundo y actualizamos todo
     setTimeout(async () => {
       await cargarUbicaciones();
-const tbody = document.querySelector("#tabla-ubicaciones tbody");
+const tbody = document.querySelector("#tablaUbicaciones");
+
 const ultimaFila = tbody.lastElementChild;
 if (ultimaFila) {
   ultimaFila.classList.add("bg-green-100", "transition", "duration-500");
