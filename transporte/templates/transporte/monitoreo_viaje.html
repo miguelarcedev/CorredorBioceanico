@@ -109,33 +109,39 @@ async function cargarUbicaciones() {
     if (!ubicaciones || ubicaciones.length === 0) return;
 
     // Limpiamos tabla antes de actualizar
-    const tbody = document.querySelector("#tablaUbicaciones");
+const tbody = document.querySelector("#tablaUbicaciones");
+tbody.innerHTML = "";
 
-    tbody.innerHTML = "";
+// Tomamos solo las últimas 10 ubicaciones (para que no se llene demasiado)
+const ultimas = ubicaciones.slice(-10);
 
-    // Tomamos solo las últimas 10 ubicaciones (para que no se llene demasiado)
-    const ultimas = ubicaciones.slice(-10);
-
-    // Agregamos filas
-    ultimas.forEach((u, i) => {
+// Agregamos filas
+ultimas.forEach((u, i) => {
   const fila = document.createElement("tr");
   fila.innerHTML = `
     <td>${i + 1}</td>
     <td>${u.lat.toFixed(5)}</td>
     <td>${u.lon.toFixed(5)}</td>
-    <td>${new Date(u.fecha_hora).toLocaleTimeString()}</td>
-     `;
-    tbody.appendChild(fila);
-    });
+    <td>${new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()}</td>
+  `;
+  tbody.appendChild(fila);
+});
+
+// Actualizamos el trazado en el mapa
+const puntos = ultimas.map(u => [u.lat, u.lon]);
+if (puntos.length > 1) {
+  polyline.setLatLngs(puntos);
+
+  if (!marker) {
+    marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+  } else {
+    marker.setLatLng(puntos[puntos.length - 1]);
+  }
+
+  map.setView(puntos[puntos.length - 1], 15);
+}
 
 
-    // Actualizamos el trazado en el mapa
-    const puntos = ultimas.map(u => [u.lat, u.lon]);
-    if (puntos.length > 1) {
-      polyline.setLatLngs(puntos);
-      marker.setLatLng(puntos[puntos.length - 1]);
-      map.setView(puntos[puntos.length - 1], 15);
-    }
 
   } catch (err) {
     console.error("Error cargando ubicaciones:", err);
