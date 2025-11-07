@@ -48,7 +48,6 @@ let polyline = L.polyline([], { color: 'blue' }).addTo(map);
 let marker = null;
 let modoDemo = false;
 let demoInterval = null;
-let lastPoint = null;
 
 const demoRuta = [
   [-24.1858, -65.2995],
@@ -61,30 +60,26 @@ const demoRuta = [
   [-24.1930, -65.2895],
 ];
 
-// ======================================================
+// ===============================
 //   FUNCIONES GENERALES
-// ======================================================
+// ===============================
 function actualizarTabla(ubicaciones) {
   const tbody = document.getElementById("tablaUbicaciones");
   tbody.innerHTML = "";
 
-  // Modo demo = orden cronológico normal
-  // Modo real = orden descendente (último primero)
-  const lista = modoDemo ? ubicaciones.slice(-10) : ubicaciones.slice(-10).reverse();
-
-  lista.forEach((u, i) => {
+  // Mostrar las últimas 10 ubicaciones, de más reciente a más antigua
+  ubicaciones.slice(-10).reverse().forEach((u, i) => {
     const hora = u.fecha_hora
-      ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
+      ? new Date(u.fecha_hora).toLocaleTimeString()
       : "—";
 
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${u.lat.toFixed(5)}</td>
-      <td>${u.lon.toFixed(5)}</td>
-      <td>${hora}</td>
-    `;
-    tbody.appendChild(fila);
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${hora}</td>
+      </tr>`;
   });
 }
 
@@ -104,32 +99,33 @@ function moverMarcadorSuave(marker, start, end, duracion = 1000) {
   }, duracion / steps);
 }
 
-// ======================================================
+// ===============================
 //   MODO REAL
-// ======================================================
+// ===============================
 async function cargarUbicaciones() {
   try {
     const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
     const data = await resp.json();
+    console.log("Ubicaciones recibidas:", data);
 
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
 
     actualizarTabla(ubicaciones);
 
-    // Actualizar mapa
     const puntos = ubicaciones.map(u => [u.lat, u.lon]);
-    if (puntos.length > 0) {
+    if (puntos.length > 1) {
       polyline.setLatLngs(puntos);
-      const ultimo = puntos[puntos.length - 1];
 
       if (!marker) {
-        marker = L.marker(ultimo).addTo(map);
+        marker = L.marker(puntos[puntos.length - 1]).addTo(map);
       } else {
-        marker.setLatLng(ultimo);
+        marker.setLatLng(puntos[puntos.length - 1]);
       }
-      map.setView(ultimo, 15);
+
+      map.setView(puntos[puntos.length - 1], 15);
     }
+
   } catch (err) {
     console.error("Error cargando ubicaciones:", err);
   }
@@ -138,9 +134,9 @@ async function cargarUbicaciones() {
 setInterval(cargarUbicaciones, 5000);
 cargarUbicaciones();
 
-// ======================================================
+// ===============================
 //   MODO DEMO
-// ======================================================
+// ===============================
 document.getElementById('toggleModeBtn').addEventListener('click', () => {
   modoDemo = !modoDemo;
   const btn = document.getElementById('toggleModeBtn');
@@ -167,7 +163,7 @@ async function enviarUbicacionDemo(lat, lon) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lat: lat, lon: lon })
     });
-    return resp.ok;
+    return await resp.json();
   } catch (error) {
     console.error("Error enviando ubicación demo:", error);
   }
@@ -177,7 +173,6 @@ function iniciarSimulacionDemo() {
   polyline.setLatLngs([]);
   if (marker) map.removeLayer(marker);
   marker = null;
-  lastPoint = null;
   demoIndex = 0;
   document.getElementById("tablaUbicaciones").innerHTML = "";
 
@@ -186,15 +181,27 @@ function iniciarSimulacionDemo() {
       const punto = demoRuta[demoIndex];
       const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
 
+      // Mueve el camión en el mapa
       polyline.addLatLng(punto);
-      if (!marker) marker = L.marker(punto).addTo(map);
-      else moverMarcadorSuave(marker, anterior, punto);
+      if (!marker) {
+        marker = L.marker(punto).addTo(map);
+      } else {
+        moverMarcadorSuave(marker, anterior, punto);
+      }
       map.setView(punto, 15);
 
+      // Envía al backend y luego actualiza tabla
       await enviarUbicacionDemo(punto[0], punto[1]);
+      setTimeout(async () => {
+        await cargarUbicaciones();
 
-      // Refrescamos tabla luego de un breve retraso
-      setTimeout(cargarUbicaciones, 800);
+        const tbody = document.querySelector("#tablaUbicaciones");
+        const primeraFila = tbody.querySelector("tr");
+        if (primeraFila) {
+          primeraFila.classList.add("table-success");
+          setTimeout(() => primeraFila.classList.remove("table-success"), 1500);
+        }
+      }, 800);
 
       demoIndex++;
     } else {

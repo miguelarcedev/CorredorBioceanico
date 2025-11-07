@@ -166,23 +166,48 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 
+# ======================================================
+#   API: Actualizar (enviar) nueva ubicación
+# ======================================================
 @csrf_exempt
 def actualizar_ubicacion_api(request, viaje_id):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        lat = data.get('lat')
-        lon = data.get('lon')
+    """
+    Recibe una nueva ubicación (lat, lon) en formato JSON y la guarda en la BD.
+    Retorna estado y la ubicación registrada con timestamp.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            lat = data.get("lat")
+            lon = data.get("lon")
 
-        if lat is not None and lon is not None:
-            RegistroUbicacion.objects.create(
-                viaje_id=viaje_id,
+            if lat is None or lon is None:
+                return JsonResponse({"error": "Faltan parámetros lat/lon"}, status=400)
+
+            viaje = Viaje.objects.get(pk=viaje_id)
+
+            ubicacion = RegistroUbicacion.objects.create(
+                viaje=viaje,
                 lat=lat,
-                lon=lon
+                lon=lon,
+                fecha_hora=timezone.now()
             )
-            return JsonResponse({'status': 'ok'})
 
-    return JsonResponse({'status': 'error'}, status=400)
+            return JsonResponse({
+                "status": "ok",
+                "ubicacion": {
+                    "lat": ubicacion.lat,
+                    "lon": ubicacion.lon,
+                    "fecha_hora": ubicacion.fecha_hora.isoformat(),
+                }
+            })
 
+        except Viaje.DoesNotExist:
+            return JsonResponse({"error": "Viaje no encontrado"}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
 # transporte/views.py
@@ -225,18 +250,20 @@ def monitoreo_viaje(request, viaje_id):
 
 
 def obtener_ubicaciones(request, viaje_id):
+    """
+    Devuelve las ubicaciones asociadas al viaje en formato JSON.
+    Incluye fecha y hora en formato ISO para el frontend.
+    """
     ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('fecha_hora')
     data = {
         "ubicaciones": [
             {
                 "lat": u.lat,
                 "lon": u.lon,
-                # Formato ISO: "2025-10-31T21:45:12Z"
-                "fecha_hora": u.fecha_hora.isoformat()
+                "fecha_hora": u.fecha_hora.isoformat() if u.fecha_hora else None,
             }
             for u in ubicaciones
         ]
     }
-
     return JsonResponse(data)
 
