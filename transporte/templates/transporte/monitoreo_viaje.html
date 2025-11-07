@@ -25,11 +25,12 @@
                 <th>#</th>
                 <th>Latitud</th>
                 <th>Longitud</th>
+                <th>Dirección</th>
                 <th>Hora</th>
               </tr>
             </thead>
             <tbody id="tablaUbicaciones">
-              <tr><td colspan="4" class="text-center">Cargando...</td></tr>
+              <tr><td colspan="5" class="text-center">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -49,6 +50,7 @@ let marker = null;
 let modoDemo = false;
 let demoInterval = null;
 
+// Ruta de simulación demo
 const demoRuta = [
   [-24.1858, -65.2995],
   [-24.1865, -65.2980],
@@ -61,26 +63,44 @@ const demoRuta = [
 ];
 
 // ===============================
-//   FUNCIONES GENERALES
+//   FUNCIONES AUXILIARES
 // ===============================
-function actualizarTabla(ubicaciones) {
+
+// Convierte coordenadas a dirección textual
+async function obtenerDireccion(lat, lon) {
+  try {
+    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+    const data = await resp.json();
+    return data.display_name || "—";
+  } catch {
+    return "—";
+  }
+}
+
+// Actualiza la tabla de ubicaciones
+async function actualizarTabla(ubicaciones) {
   const tbody = document.getElementById("tablaUbicaciones");
   tbody.innerHTML = "";
 
-  // Mostrar las últimas 10 ubicaciones, de más reciente a más antigua
-  ubicaciones.slice(-10).reverse().forEach((u, i) => {
-    const hora = u.fecha_hora
-      ? new Date(u.fecha_hora).toLocaleTimeString()
-      : "—";
+  const ultimas = ubicaciones.slice(-10).reverse();
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${u.lat.toFixed(5)}</td>
-        <td>${u.lon.toFixed(5)}</td>
-        <td>${hora}</td>
-      </tr>`;
-  });
+  for (let i = 0; i < ultimas.length; i++) {
+    const u = ultimas[i];
+    const hora = u.fecha_hora ? new Date(u.fecha_hora).toLocaleTimeString() : "—";
+
+    // Obtenemos dirección
+    const direccion = await obtenerDireccion(u.lat, u.lon);
+
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${u.lat.toFixed(5)}</td>
+      <td>${u.lon.toFixed(5)}</td>
+      <td>${direccion}</td>
+      <td>${hora}</td>
+    `;
+    tbody.appendChild(fila);
+  }
 }
 
 // Movimiento suave del marcador
@@ -111,7 +131,7 @@ async function cargarUbicaciones() {
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
 
-    actualizarTabla(ubicaciones);
+    await actualizarTabla(ubicaciones);
 
     const puntos = ubicaciones.map(u => [u.lat, u.lon]);
     if (puntos.length > 1) {
@@ -131,7 +151,7 @@ async function cargarUbicaciones() {
   }
 }
 
-setInterval(cargarUbicaciones, 5000);
+setInterval(cargarUbicaciones, 8000);
 cargarUbicaciones();
 
 // ===============================
@@ -158,12 +178,11 @@ document.getElementById('toggleModeBtn').addEventListener('click', () => {
 let demoIndex = 0;
 async function enviarUbicacionDemo(lat, lon) {
   try {
-    const resp = await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+    await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lat: lat, lon: lon })
     });
-    return await resp.json();
   } catch (error) {
     console.error("Error enviando ubicación demo:", error);
   }
@@ -181,7 +200,6 @@ function iniciarSimulacionDemo() {
       const punto = demoRuta[demoIndex];
       const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
 
-      // Mueve el camión en el mapa
       polyline.addLatLng(punto);
       if (!marker) {
         marker = L.marker(punto).addTo(map);
@@ -190,7 +208,6 @@ function iniciarSimulacionDemo() {
       }
       map.setView(punto, 15);
 
-      // Envía al backend y luego actualiza tabla
       await enviarUbicacionDemo(punto[0], punto[1]);
       setTimeout(async () => {
         await cargarUbicaciones();
@@ -207,7 +224,7 @@ function iniciarSimulacionDemo() {
     } else {
       detenerSimulacionDemo();
     }
-  }, 2500);
+  }, 3000);
 }
 
 function detenerSimulacionDemo() {
