@@ -26,11 +26,10 @@
                 <th>Latitud</th>
                 <th>Longitud</th>
                 <th>Hora</th>
-                <th>Dirección</th>
               </tr>
             </thead>
             <tbody id="tablaUbicaciones">
-              <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+              <tr><td colspan="4" class="text-center">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -49,8 +48,6 @@ let polyline = L.polyline([], { color: 'blue' }).addTo(map);
 let marker = null;
 let modoDemo = false;
 let demoInterval = null;
-let lastPoint = null;
-let cacheDirecciones = {}; // Cache para no repetir consultas
 
 const demoRuta = [
   [-24.1858, -65.2995],
@@ -63,32 +60,27 @@ const demoRuta = [
   [-24.1930, -65.2895],
 ];
 
-// ========== FUNCIONES ==========
+// ===============================
+//   FUNCIONES GENERALES
+// ===============================
+function actualizarTabla(ubicaciones) {
+  const tbody = document.getElementById("tablaUbicaciones");
+  tbody.innerHTML = "";
 
-// Obtener dirección corta
-async function obtenerDireccion(lat, lon) {
-  const clave = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-  if (cacheDirecciones[clave]) return cacheDirecciones[clave];
+  // Mostrar las últimas 10 ubicaciones, de más reciente a más antigua
+  ubicaciones.slice(-10).reverse().forEach((u, i) => {
+    const hora = u.fecha_hora
+      ? new Date(u.fecha_hora).toLocaleTimeString()
+      : "—";
 
-  try {
-    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-    const data = await resp.json();
-
-    let direccion = "—";
-    if (data.address) {
-      const { road, suburb, city, town, village } = data.address;
-      direccion = road || suburb || city || town || village || "—";
-      const localidad = city || town || village || "";
-      if (localidad && localidad !== direccion) {
-        direccion = `${direccion}, ${localidad}`;
-      }
-    }
-
-    cacheDirecciones[clave] = direccion;
-    return direccion;
-  } catch {
-    return "—";
-  }
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${hora}</td>
+      </tr>`;
+  });
 }
 
 // Movimiento suave del marcador
@@ -119,38 +111,18 @@ async function cargarUbicaciones() {
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
 
-    const tbody = document.querySelector("#tablaUbicaciones");
-    tbody.innerHTML = "";
+    actualizarTabla(ubicaciones);
 
-    const ultimas = ubicaciones.slice(-10);
-
-    for (let i = 0; i < ultimas.length; i++) {
-      const u = ultimas[i];
-      const hora = u.fecha_hora
-        ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
-        : "—";
-
-      const direccion = await obtenerDireccion(u.lat, u.lon);
-
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${u.lat.toFixed(5)}</td>
-        <td>${u.lon.toFixed(5)}</td>
-        <td>${hora}</td>
-        <td>${direccion}</td>
-      `;
-      tbody.appendChild(fila);
-    }
-
-    const puntos = ultimas.map(u => [u.lat, u.lon]);
+    const puntos = ubicaciones.map(u => [u.lat, u.lon]);
     if (puntos.length > 1) {
       polyline.setLatLngs(puntos);
+
       if (!marker) {
         marker = L.marker(puntos[puntos.length - 1]).addTo(map);
       } else {
         marker.setLatLng(puntos[puntos.length - 1]);
       }
+
       map.setView(puntos[puntos.length - 1], 15);
     }
 
@@ -184,14 +156,14 @@ document.getElementById('toggleModeBtn').addEventListener('click', () => {
 });
 
 let demoIndex = 0;
-
 async function enviarUbicacionDemo(lat, lon) {
   try {
-    await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+    const resp = await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lat: lat, lon: lon })
     });
+    return await resp.json();
   } catch (error) {
     console.error("Error enviando ubicación demo:", error);
   }
@@ -209,6 +181,7 @@ function iniciarSimulacionDemo() {
       const punto = demoRuta[demoIndex];
       const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
 
+      // Mueve el camión en el mapa
       polyline.addLatLng(punto);
       if (!marker) {
         marker = L.marker(punto).addTo(map);
@@ -217,8 +190,18 @@ function iniciarSimulacionDemo() {
       }
       map.setView(punto, 15);
 
+      // Envía al backend y luego actualiza tabla
       await enviarUbicacionDemo(punto[0], punto[1]);
-      await cargarUbicaciones();
+      setTimeout(async () => {
+        await cargarUbicaciones();
+
+        const tbody = document.querySelector("#tablaUbicaciones");
+        const primeraFila = tbody.querySelector("tr");
+        if (primeraFila) {
+          primeraFila.classList.add("table-success");
+          setTimeout(() => primeraFila.classList.remove("table-success"), 1500);
+        }
+      }, 800);
 
       demoIndex++;
     } else {
