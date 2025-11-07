@@ -68,7 +68,8 @@ function actualizarTabla(ubicaciones) {
   const tbody = document.getElementById("tablaUbicaciones");
   tbody.innerHTML = "";
 
-  ubicaciones.slice(-10).reverse().forEach((u, i) => {
+    ubicaciones.slice(-10).forEach((u, i) => {
+
     const hora = u.fecha_hora
       ? new Date(u.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       : "—";
