@@ -25,8 +25,8 @@
                 <th>#</th>
                 <th>Latitud</th>
                 <th>Longitud</th>
-                <th>Dirección</th>
                 <th>Hora</th>
+                <th>Dirección</th>
               </tr>
             </thead>
             <tbody id="tablaUbicaciones">
@@ -49,8 +49,9 @@ let polyline = L.polyline([], { color: 'blue' }).addTo(map);
 let marker = null;
 let modoDemo = false;
 let demoInterval = null;
+let lastPoint = null;
+let cacheDirecciones = {}; // Cache para no repetir consultas
 
-// Ruta de simulación demo
 const demoRuta = [
   [-24.1858, -65.2995],
   [-24.1865, -65.2980],
@@ -62,44 +63,31 @@ const demoRuta = [
   [-24.1930, -65.2895],
 ];
 
-// ===============================
-//   FUNCIONES AUXILIARES
-// ===============================
+// ========== FUNCIONES ==========
 
-// Convierte coordenadas a dirección textual
+// Obtener dirección corta
 async function obtenerDireccion(lat, lon) {
+  const clave = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+  if (cacheDirecciones[clave]) return cacheDirecciones[clave];
+
   try {
-    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
     const data = await resp.json();
-    return data.display_name || "—";
+
+    let direccion = "—";
+    if (data.address) {
+      const { road, suburb, city, town, village } = data.address;
+      direccion = road || suburb || city || town || village || "—";
+      const localidad = city || town || village || "";
+      if (localidad && localidad !== direccion) {
+        direccion = `${direccion}, ${localidad}`;
+      }
+    }
+
+    cacheDirecciones[clave] = direccion;
+    return direccion;
   } catch {
     return "—";
-  }
-}
-
-// Actualiza la tabla de ubicaciones
-async function actualizarTabla(ubicaciones) {
-  const tbody = document.getElementById("tablaUbicaciones");
-  tbody.innerHTML = "";
-
-  const ultimas = ubicaciones.slice(-10).reverse();
-
-  for (let i = 0; i < ultimas.length; i++) {
-    const u = ultimas[i];
-    const hora = u.fecha_hora ? new Date(u.fecha_hora).toLocaleTimeString() : "—";
-
-    // Obtenemos dirección
-    const direccion = await obtenerDireccion(u.lat, u.lon);
-
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${u.lat.toFixed(5)}</td>
-      <td>${u.lon.toFixed(5)}</td>
-      <td>${direccion}</td>
-      <td>${hora}</td>
-    `;
-    tbody.appendChild(fila);
   }
 }
 
@@ -131,18 +119,38 @@ async function cargarUbicaciones() {
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
 
-    await actualizarTabla(ubicaciones);
+    const tbody = document.querySelector("#tablaUbicaciones");
+    tbody.innerHTML = "";
 
-    const puntos = ubicaciones.map(u => [u.lat, u.lon]);
+    const ultimas = ubicaciones.slice(-10);
+
+    for (let i = 0; i < ultimas.length; i++) {
+      const u = ultimas[i];
+      const hora = u.fecha_hora
+        ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
+        : "—";
+
+      const direccion = await obtenerDireccion(u.lat, u.lon);
+
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${hora}</td>
+        <td>${direccion}</td>
+      `;
+      tbody.appendChild(fila);
+    }
+
+    const puntos = ultimas.map(u => [u.lat, u.lon]);
     if (puntos.length > 1) {
       polyline.setLatLngs(puntos);
-
       if (!marker) {
         marker = L.marker(puntos[puntos.length - 1]).addTo(map);
       } else {
         marker.setLatLng(puntos[puntos.length - 1]);
       }
-
       map.setView(puntos[puntos.length - 1], 15);
     }
 
@@ -151,7 +159,7 @@ async function cargarUbicaciones() {
   }
 }
 
-setInterval(cargarUbicaciones, 8000);
+setInterval(cargarUbicaciones, 5000);
 cargarUbicaciones();
 
 // ===============================
@@ -176,6 +184,7 @@ document.getElementById('toggleModeBtn').addEventListener('click', () => {
 });
 
 let demoIndex = 0;
+
 async function enviarUbicacionDemo(lat, lon) {
   try {
     await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
@@ -209,22 +218,13 @@ function iniciarSimulacionDemo() {
       map.setView(punto, 15);
 
       await enviarUbicacionDemo(punto[0], punto[1]);
-      setTimeout(async () => {
-        await cargarUbicaciones();
-
-        const tbody = document.querySelector("#tablaUbicaciones");
-        const primeraFila = tbody.querySelector("tr");
-        if (primeraFila) {
-          primeraFila.classList.add("table-success");
-          setTimeout(() => primeraFila.classList.remove("table-success"), 1500);
-        }
-      }, 800);
+      await cargarUbicaciones();
 
       demoIndex++;
     } else {
       detenerSimulacionDemo();
     }
-  }, 3000);
+  }, 2500);
 }
 
 function detenerSimulacionDemo() {
