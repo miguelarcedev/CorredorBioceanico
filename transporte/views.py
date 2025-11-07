@@ -226,13 +226,17 @@ def monitoreo_viaje(request, viaje_id):
 
 def obtener_ubicaciones(request, viaje_id):
     ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('fecha_hora')
-    data = [
-        {
-            'lat': u.lat,
-            'lon': u.lon,
-            'timestamp': u.fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
-        }
-        for u in ubicaciones
-    ]
-    return JsonResponse({'ubicaciones': data})
+    data = {
+        "ubicaciones": [
+            {
+                "lat": u.lat,
+                "lon": u.lon,
+                # Formato ISO: "2025-10-31T21:45:12Z"
+                "fecha_hora": u.fecha_hora.isoformat()
+            }
+            for u in ubicaciones
+        ]
+    }
+
+    return JsonResponse(data)
 

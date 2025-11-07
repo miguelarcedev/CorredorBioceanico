@@ -40,7 +40,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-
 <script>
 let map = L.map('map').setView([-24.1858, -65.2995], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -67,15 +66,19 @@ const demoRuta = [
 // ===============================
 function actualizarTabla(ubicaciones) {
   const tbody = document.getElementById("tablaUbicaciones");
-
   tbody.innerHTML = "";
+
   ubicaciones.slice(-10).reverse().forEach((u, i) => {
+    const hora = u.fecha_hora
+      ? new Date(u.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      : "—";
+
     tbody.innerHTML += `
       <tr>
         <td>${i + 1}</td>
         <td>${u.lat.toFixed(5)}</td>
         <td>${u.lon.toFixed(5)}</td>
-        <td>${u.timestamp}</td>
+        <td>${hora}</td>
       </tr>`;
   });
 }
@@ -108,45 +111,21 @@ async function cargarUbicaciones() {
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
 
-    // Limpiamos tabla antes de actualizar
-const tbody = document.querySelector("#tablaUbicaciones");
-tbody.innerHTML = "";
+    actualizarTabla(ubicaciones);
 
-// Tomamos solo las últimas 10 ubicaciones (para que no se llene demasiado)
-const ultimas = ubicaciones.slice(-10);
+    // Actualizamos el trazado en el mapa
+    const puntos = ubicaciones.map(u => [u.lat, u.lon]);
+    if (puntos.length > 1) {
+      polyline.setLatLngs(puntos);
 
-// Agregamos filas
-ultimas.forEach((u, i) => {
-  const fila = document.createElement("tr");
-  const hora = u.fecha_hora
-    ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
-    : "—";
+      if (!marker) {
+        marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+      } else {
+        marker.setLatLng(puntos[puntos.length - 1]);
+      }
 
-  fila.innerHTML = `
-    <td>${i + 1}</td>
-    <td>${u.lat.toFixed(5)}</td>
-    <td>${u.lon.toFixed(5)}</td>
-    <td>${hora}</td>
-  `;
-  tbody.appendChild(fila);
-});
-
-
-// Actualizamos el trazado en el mapa
-const puntos = ultimas.map(u => [u.lat, u.lon]);
-if (puntos.length > 1) {
-  polyline.setLatLngs(puntos);
-
-  if (!marker) {
-    marker = L.marker(puntos[puntos.length - 1]).addTo(map);
-  } else {
-    marker.setLatLng(puntos[puntos.length - 1]);
-  }
-
-  map.setView(puntos[puntos.length - 1], 15);
-}
-
-
+      map.setView(puntos[puntos.length - 1], 15);
+    }
 
   } catch (err) {
     console.error("Error cargando ubicaciones:", err);
@@ -199,43 +178,39 @@ function iniciarSimulacionDemo() {
   document.getElementById("tablaUbicaciones").innerHTML = "";
 
   demoInterval = setInterval(async () => {
-  if (demoIndex < demoRuta.length) {
-    const punto = demoRuta[demoIndex];
-    const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
+    if (demoIndex < demoRuta.length) {
+      const punto = demoRuta[demoIndex];
+      const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
 
-    // Mueve el camión en el mapa
-    polyline.addLatLng(punto);
-    if (!marker) {
-      marker = L.marker(punto).addTo(map);
+      // Mueve el camión en el mapa
+      polyline.addLatLng(punto);
+      if (!marker) {
+        marker = L.marker(punto).addTo(map);
+      } else {
+        moverMarcadorSuave(marker, anterior, punto);
+      }
+      map.setView(punto, 15);
+
+      // Envía al backend y luego actualiza tabla
+      await enviarUbicacionDemo(punto[0], punto[1]);
+      console.log("Ubicación demo enviada:", punto);
+
+      // Esperamos 1 segundo y actualizamos todo
+      setTimeout(async () => {
+        await cargarUbicaciones();
+        const tbody = document.querySelector("#tablaUbicaciones");
+        const ultimaFila = tbody.lastElementChild;
+        if (ultimaFila) {
+          ultimaFila.classList.add("bg-success-subtle");
+          setTimeout(() => ultimaFila.classList.remove("bg-success-subtle"), 2000);
+        }
+      }, 1000);
+
+      demoIndex++;
     } else {
-      moverMarcadorSuave(marker, anterior, punto);
+      detenerSimulacionDemo();
     }
-    map.setView(punto, 15);
-
-    // Envía al backend y luego actualiza tabla
-    const resp = await enviarUbicacionDemo(punto[0], punto[1]);
-    console.log("Ubicación demo enviada:", resp);
-
-    // Esperamos 1 segundo y actualizamos todo
-    setTimeout(async () => {
-      await cargarUbicaciones();
-const tbody = document.querySelector("#tablaUbicaciones");
-
-const ultimaFila = tbody.lastElementChild;
-if (ultimaFila) {
-  ultimaFila.classList.add("bg-green-100", "transition", "duration-500");
-  setTimeout(() => ultimaFila.classList.remove("bg-green-100"), 2000);
-}
-
-    }, 1000);
-
-    demoIndex++;
-  } else {
-    detenerSimulacionDemo();
-  }
-}, 2500);
-
-
+  }, 2500);
 }
 
 function detenerSimulacionDemo() {
