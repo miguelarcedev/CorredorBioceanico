@@ -61,26 +61,30 @@ const demoRuta = [
   [-24.1930, -65.2895],
 ];
 
-// ===============================
+// ======================================================
 //   FUNCIONES GENERALES
-// ===============================
+// ======================================================
 function actualizarTabla(ubicaciones) {
   const tbody = document.getElementById("tablaUbicaciones");
   tbody.innerHTML = "";
 
-    ubicaciones.slice(-10).forEach((u, i) => {
+  // Modo demo = orden cronológico normal
+  // Modo real = orden descendente (último primero)
+  const lista = modoDemo ? ubicaciones.slice(-10) : ubicaciones.slice(-10).reverse();
 
+  lista.forEach((u, i) => {
     const hora = u.fecha_hora
-      ? new Date(u.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
       : "—";
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${u.lat.toFixed(5)}</td>
-        <td>${u.lon.toFixed(5)}</td>
-        <td>${hora}</td>
-      </tr>`;
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${u.lat.toFixed(5)}</td>
+      <td>${u.lon.toFixed(5)}</td>
+      <td>${hora}</td>
+    `;
+    tbody.appendChild(fila);
   });
 }
 
@@ -100,34 +104,32 @@ function moverMarcadorSuave(marker, start, end, duracion = 1000) {
   }, duracion / steps);
 }
 
-// ===============================
+// ======================================================
 //   MODO REAL
-// ===============================
+// ======================================================
 async function cargarUbicaciones() {
   try {
     const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
     const data = await resp.json();
-    console.log("Ubicaciones recibidas:", data);
 
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
 
     actualizarTabla(ubicaciones);
 
-    // Actualizamos el trazado en el mapa
+    // Actualizar mapa
     const puntos = ubicaciones.map(u => [u.lat, u.lon]);
-    if (puntos.length > 1) {
+    if (puntos.length > 0) {
       polyline.setLatLngs(puntos);
+      const ultimo = puntos[puntos.length - 1];
 
       if (!marker) {
-        marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+        marker = L.marker(ultimo).addTo(map);
       } else {
-        marker.setLatLng(puntos[puntos.length - 1]);
+        marker.setLatLng(ultimo);
       }
-
-      map.setView(puntos[puntos.length - 1], 15);
+      map.setView(ultimo, 15);
     }
-
   } catch (err) {
     console.error("Error cargando ubicaciones:", err);
   }
@@ -136,9 +138,9 @@ async function cargarUbicaciones() {
 setInterval(cargarUbicaciones, 5000);
 cargarUbicaciones();
 
-// ===============================
+// ======================================================
 //   MODO DEMO
-// ===============================
+// ======================================================
 document.getElementById('toggleModeBtn').addEventListener('click', () => {
   modoDemo = !modoDemo;
   const btn = document.getElementById('toggleModeBtn');
@@ -160,11 +162,12 @@ document.getElementById('toggleModeBtn').addEventListener('click', () => {
 let demoIndex = 0;
 async function enviarUbicacionDemo(lat, lon) {
   try {
-    await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+    const resp = await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lat: lat, lon: lon })
     });
+    return resp.ok;
   } catch (error) {
     console.error("Error enviando ubicación demo:", error);
   }
@@ -183,29 +186,15 @@ function iniciarSimulacionDemo() {
       const punto = demoRuta[demoIndex];
       const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
 
-      // Mueve el camión en el mapa
       polyline.addLatLng(punto);
-      if (!marker) {
-        marker = L.marker(punto).addTo(map);
-      } else {
-        moverMarcadorSuave(marker, anterior, punto);
-      }
+      if (!marker) marker = L.marker(punto).addTo(map);
+      else moverMarcadorSuave(marker, anterior, punto);
       map.setView(punto, 15);
 
-      // Envía al backend y luego actualiza tabla
       await enviarUbicacionDemo(punto[0], punto[1]);
-      console.log("Ubicación demo enviada:", punto);
 
-      // Esperamos 1 segundo y actualizamos todo
-      setTimeout(async () => {
-        await cargarUbicaciones();
-        const tbody = document.querySelector("#tablaUbicaciones");
-        const ultimaFila = tbody.lastElementChild;
-        if (ultimaFila) {
-          ultimaFila.classList.add("bg-success-subtle");
-          setTimeout(() => ultimaFila.classList.remove("bg-success-subtle"), 2000);
-        }
-      }, 1000);
+      // Refrescamos tabla luego de un breve retraso
+      setTimeout(cargarUbicaciones, 800);
 
       demoIndex++;
     } else {
