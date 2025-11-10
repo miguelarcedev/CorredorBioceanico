@@ -7,10 +7,9 @@
     <div>
       <button id="toggleModeBtn" class="btn btn-primary">Cambiar a modo demo</button>
       <select id="rutaSelect" class="form-select d-inline-block w-auto ms-2">
-        <option value="ruta1">San Salvador → Perico</option>
-        <option value="ruta2">San Salvador → Yala</option>
-        <option value="ruta3">Perico → El Carmen</option>
-        <option value="ruta4">San Salvador → Tilcara</option>
+        <option value="jujuy-perico">Jujuy → Perico</option>
+        <option value="jujuy-yala">Jujuy → Yala</option>
+        <option value="jujuy-palpalá">Jujuy → Palpalá</option>
       </select>
     </div>
     <span id="modo-indicador" class="badge bg-success">Modo real</span>
@@ -22,7 +21,7 @@
       <div id="map" style="height: 500px; border-radius: 10px;"></div>
     </div>
 
-    <!-- TABLA -->
+    <!-- TABLA DE UBICACIONES -->
     <div class="col-md-4">
       <div class="card shadow-sm">
         <div class="card-header bg-primary text-white">Últimas ubicaciones</div>
@@ -49,7 +48,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
-let map = L.map('map').setView([-24.1858, -65.2995], 11);
+let map = L.map('map').setView([-24.1858, -65.2995], 12);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
 let polyline = L.polyline([], { color: 'blue' }).addTo(map);
@@ -59,141 +58,74 @@ let demoInterval = null;
 let demoRuta = [];
 let demoIndex = 0;
 
-// ===============================
-//   RUTAS REALES DE JUJUY
-// ===============================
-const rutas = {
-  ruta1: [ // San Salvador → Perico
-    [-24.1858, -65.2995],
-    [-24.2650, -65.2180],
-    [-24.3410, -65.1260],
-    [-24.3790, -65.0600],
-    [-24.3810, -65.0480],
-    [-24.3825, -65.0415]
-  ],
-  ruta2: [ // San Salvador → Yala
-    [-24.1858, -65.2995],
-    [-24.1425, -65.3080],
-    [-24.1068, -65.3105],
-    [-24.0790, -65.3160],
-    [-24.0550, -65.3330]
-  ],
-  ruta3: [ // Perico → El Carmen
-    [-24.3825, -65.0415],
-    [-24.4140, -65.0935],
-    [-24.4390, -65.1300],
-    [-24.4430, -65.1650],
-    [-24.4350, -65.1980]
-  ],
-  ruta4: [ // San Salvador → Tilcara
-    [-24.1858, -65.2995],
-    [-23.9725, -65.3455],
-    [-23.7900, -65.3950],
-    [-23.6490, -65.4080],
-    [-23.5780, -65.3920],
-    [-23.5735, -65.3940]
-  ]
-};
-
-// ===============================
-//   FUNCIONES GENERALES
-// ===============================
-function moverMarcadorSuave(marker, start, end, duracion = 1000) {
-  if (!start) {
-    marker.setLatLng(end);
-    return;
+// === Función: obtener ruta real desde OpenStreetMap / OSRM ===
+async function obtenerRutaReal(origen, destino) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${origen[1]},${origen[0]};${destino[1]},${destino[0]}?overview=full&geometries=geojson`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (data.routes && data.routes.length > 0) {
+    return data.routes[0].geometry.coordinates.map(p => [p[1], p[0]]);
+  } else {
+    alert("No se encontró una ruta válida.");
+    return [];
   }
-  const steps = 20;
-  let i = 0;
-  const interval = setInterval(() => {
-    const lat = start[0] + (end[0] - start[0]) * (i / steps);
-    const lon = start[1] + (end[1] - start[1]) * (i / steps);
-    marker.setLatLng([lat, lon]);
-    if (i++ >= steps) clearInterval(interval);
-  }, duracion / steps);
 }
 
+// === Tabla de ubicaciones ===
+function actualizarTabla(ubicaciones) {
+  const tbody = document.getElementById("tablaUbicaciones");
+  tbody.innerHTML = "";
+  ubicaciones.slice(-10).reverse().forEach((u, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${u.timestamp || "—"}</td>
+      </tr>`;
+  });
+}
+
+// === Cargar ubicaciones reales desde el backend ===
 async function cargarUbicaciones() {
   try {
     const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
     const data = await resp.json();
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
+    actualizarTabla(ubicaciones.map(u => ({
+      lat: u.lat,
+      lon: u.lon,
+      timestamp: new Date(u.fecha_hora).toLocaleTimeString()
+    })));
 
-    const tbody = document.querySelector("#tablaUbicaciones");
-    tbody.innerHTML = "";
-
-    const ultimas = ubicaciones.slice(-10);
-    for (let i = 0; i < ultimas.length; i++) {
-      const u = ultimas[i];
-      const hora = u.fecha_hora
-        ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
-        : "—";
-
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${u.lat.toFixed(5)}</td>
-        <td>${u.lon.toFixed(5)}</td>
-        <td>${hora}</td>
-      `;
-      tbody.appendChild(fila);
-    }
-
-    const puntos = ultimas.map(u => [u.lat, u.lon]);
-    if (puntos.length > 1) {
+    const puntos = ubicaciones.map(u => [u.lat, u.lon]);
+    if (puntos.length > 0) {
       polyline.setLatLngs(puntos);
       if (!marker) marker = L.marker(puntos[puntos.length - 1]).addTo(map);
-      else marker.setLatLng(puntos[puntos.length - 1]);
+      marker.setLatLng(puntos[puntos.length - 1]);
       map.setView(puntos[puntos.length - 1], 14);
     }
-
   } catch (err) {
     console.error("Error cargando ubicaciones:", err);
   }
 }
 
-setInterval(cargarUbicaciones, 5000);
+setInterval(() => { if (!modoDemo) cargarUbicaciones(); }, 5000);
 cargarUbicaciones();
 
-// ===============================
-//   MODO DEMO
-// ===============================
-document.getElementById('toggleModeBtn').addEventListener('click', () => {
-  modoDemo = !modoDemo;
-  const btn = document.getElementById('toggleModeBtn');
-  const badge = document.getElementById('modo-indicador');
-  const selectRuta = document.getElementById('rutaSelect');
-
-  if (modoDemo) {
-    btn.textContent = "Cambiar a modo real";
-    badge.textContent = "Modo demo";
-    badge.className = "badge bg-warning text-dark";
-    demoRuta = rutas[selectRuta.value];
-    iniciarSimulacionDemo();
-    selectRuta.disabled = true;
-  } else {
-    btn.textContent = "Cambiar a modo demo";
-    badge.textContent = "Modo real";
-    badge.className = "badge bg-success";
-    detenerSimulacionDemo();
-    selectRuta.disabled = false;
-  }
-});
-
+// === DEMO: enviar ubicaciones simuladas ===
 async function enviarUbicacionDemo(lat, lon) {
-  try {
-    await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lat: lat, lon: lon })
-    });
-  } catch (error) {
-    console.error("Error enviando ubicación demo:", error);
-  }
+  await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lat: lat, lon: lon })
+  });
 }
 
+// === Simulación demo con ruta real ===
 function iniciarSimulacionDemo() {
+  if (!demoRuta.length) return alert("Primero selecciona una ruta válida.");
   polyline.setLatLngs([]);
   if (marker) map.removeLayer(marker);
   marker = null;
@@ -203,19 +135,14 @@ function iniciarSimulacionDemo() {
   demoInterval = setInterval(async () => {
     if (demoIndex < demoRuta.length) {
       const punto = demoRuta[demoIndex];
-      const anterior = demoIndex > 0 ? demoRuta[demoIndex - 1] : punto;
-
       polyline.addLatLng(punto);
       if (!marker) marker = L.marker(punto).addTo(map);
-      else moverMarcadorSuave(marker, anterior, punto);
-      map.setView(punto, 13);
-
+      else marker.setLatLng(punto);
+      map.setView(punto, 14);
       await enviarUbicacionDemo(punto[0], punto[1]);
-      await cargarUbicaciones();
-
       demoIndex++;
     } else detenerSimulacionDemo();
-  }, 2500);
+  }, 1500);
 }
 
 function detenerSimulacionDemo() {
@@ -223,5 +150,40 @@ function detenerSimulacionDemo() {
   demoInterval = null;
   cargarUbicaciones();
 }
+
+// === Botón de cambio de modo ===
+document.getElementById('toggleModeBtn').addEventListener('click', () => {
+  modoDemo = !modoDemo;
+  const btn = document.getElementById('toggleModeBtn');
+  const badge = document.getElementById('modo-indicador');
+
+  if (modoDemo) {
+    btn.textContent = "Cambiar a modo real";
+    badge.textContent = "Modo demo";
+    badge.className = "badge bg-warning text-dark";
+
+    // Obtener ruta seleccionada
+    const seleccion = document.getElementById('rutaSelect').value;
+    let origen, destino;
+    if (seleccion === "jujuy-perico") {
+      origen = [-24.1858, -65.2995]; destino = [-24.3825, -65.0415];
+    } else if (seleccion === "jujuy-yala") {
+      origen = [-24.1858, -65.2995]; destino = [-24.1030, -65.3210];
+    } else {
+      origen = [-24.1858, -65.2995]; destino = [-24.2567, -65.2090];
+    }
+
+    obtenerRutaReal(origen, destino).then(coords => {
+      demoRuta = coords;
+      iniciarSimulacionDemo();
+    });
+
+  } else {
+    btn.textContent = "Cambiar a modo demo";
+    badge.textContent = "Modo real";
+    badge.className = "badge bg-success";
+    detenerSimulacionDemo();
+  }
+});
 </script>
 {% endblock %}
