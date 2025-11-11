@@ -275,3 +275,40 @@ def obtener_ubicaciones(request, viaje_id):
     }
     return JsonResponse(data)
 
+
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from .models import Viaje, ViajeDemo, RutaDemo, RegistroUbicacion
+from datetime import datetime
+
+# -----------------------------
+# MONITOREO REAL
+# -----------------------------
+def monitoreo_real(request):
+    viajes = Viaje.objects.filter(estado__in=["EN_CURSO", "PROGRAMADO"])
+    return render(request, "monitoreo_real.html", {"viajes": viajes})
+
+
+# -----------------------------
+# MONITOREO DEMO
+# -----------------------------
+def monitoreo_demo(request):
+    viajes = ViajeDemo.objects.all()
+    return render(request, "monitoreo_demo.html", {"viajes": viajes})
+
+
+# -----------------------------
+# API para devolver las coordenadas demo
+# -----------------------------
+def api_ruta_demo(request, viaje_id):
+    viaje = get_object_or_404(ViajeDemo, id=viaje_id)
+    rutas = RutaDemo.objects.filter(viaje=viaje).order_by("orden")
+    data = [
+        {
+            "lat": r.latitud,
+            "lon": r.longitud,
+            "orden": r.orden,
+        }
+        for r in rutas
+    ]
+    return JsonResponse({"ruta": data})

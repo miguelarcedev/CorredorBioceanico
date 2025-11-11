@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="text-primary mb-4">📡 Monitoreo en Tiempo Real</h3>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="viajeReal" class="form-label">Seleccionar viaje en curso:</label>
+      <select id="viajeReal" class="form-select">
+        <option value="">-- Elegir un viaje --</option>
+        {% for v in viajes %}
+        <option value="{{ v.id }}">{{ v.origen }} → {{ v.destino }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div id="map" style="height: 500px; border-radius: 10px;"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map = L.map("map").setView([-24.1858, -65.2995], 10);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+</script>
+{% endblock %}

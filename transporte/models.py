@@ -155,10 +155,6 @@ class ControlFrontera(models.Model):
         return f"Control en frontera para {self.viaje.id}"
 
 
-# transporte/models.py
-from django.db import models
-from django.utils import timezone
-
 class RegistroUbicacion(models.Model):
     viaje = models.ForeignKey('Viaje', on_delete=models.CASCADE, related_name='registros')
     lat = models.FloatField()
@@ -170,3 +166,42 @@ class RegistroUbicacion(models.Model):
 
     def __str__(self):
         return f"{self.viaje.id} @ {self.fecha_hora:%Y-%m-%d %H:%M:%S}"
+
+
+# ---------------------------
+# MODO DEMO - VIAJES SIMULADOS
+# ---------------------------
+class ViajeDemo(models.Model):
+    """Viajes de demostración con rutas predefinidas."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=150, help_text="Ej: San Salvador → Perico")
+    descripcion = models.TextField(blank=True, null=True)
+    activo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"[DEMO] {self.nombre}"
+
+
+class RutaDemo(models.Model):
+    """Coordenadas predefinidas para simular el recorrido de un viaje demo."""
+    viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='rutas')
+    orden = models.PositiveIntegerField(help_text="Orden del punto en la ruta")
+    latitud = models.FloatField()
+    longitud = models.FloatField()
+
+    class Meta:
+        ordering = ['orden']
+
+    def __str__(self):
+        return f"Ruta {self.orden} ({self.latitud}, {self.longitud}) - {self.viaje.nombre}"
+
+
+class PosicionDemo(models.Model):
+    """Posiciones simuladas generadas durante la demostración."""
+    viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='posiciones')
+    latitud = models.FloatField()
+    longitud = models.FloatField()
+    fecha_hora = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[DEMO] {self.viaje.nombre} ({self.latitud}, {self.longitud})"

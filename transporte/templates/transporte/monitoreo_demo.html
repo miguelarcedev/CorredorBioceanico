@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="text-primary mb-4">🧭 Modo Demo - Simulación de Rutas</h3>
+
+  <!-- Selector de viaje demo -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="viajeDemo" class="form-label">Seleccionar viaje demo:</label>
+      <select id="viajeDemo" class="form-select">
+        <option value="">-- Elegir un viaje --</option>
+        {% for v in viajes %}
+        <option value="{{ v.id }}">{{ v.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6 d-flex align-items-end">
+      <button id="btnIniciarDemo" class="btn btn-success w-100" disabled>
+        Iniciar simulación
+      </button>
+    </div>
+  </div>
+
+  <!-- Mapa -->
+  <div id="map" style="height: 500px; border-radius: 10px; margin-bottom: 30px;"></div>
+
+  <!-- Tabla de posiciones -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">Últimas posiciones simuladas</div>
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Latitud</th>
+            <th>Longitud</th>
+            <th>Hora</th>
+          </tr>
+        </thead>
+        <tbody id="tablaDemo">
+          <tr><td colspan="4" class="text-center">Esperando simulación...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map = L.map("map").setView([-24.1858, -65.2995], 10);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+let marcador = null;
+let ruta = [];
+let index = 0;
+let intervalo = null;
+
+const selectViaje = document.getElementById("viajeDemo");
+const btnIniciar = document.getElementById("btnIniciarDemo");
+const tabla = document.getElementById("tablaDemo");
+
+selectViaje.addEventListener("change", () => {
+  btnIniciar.disabled = !selectViaje.value;
+  tabla.innerHTML = `<tr><td colspan="4" class="text-center">Esperando simulación...</td></tr>`;
+});
+
+btnIniciar.addEventListener("click", async () => {
+  clearInterval(intervalo);
+  index = 0;
+  ruta = [];
+  tabla.innerHTML = "";
+
+  const viajeId = selectViaje.value;
+  if (!viajeId) return;
+
+  const response = await fetch(`/api/demo/${viajeId}/`);
+  const data = await response.json();
+  ruta = data.ruta;
+
+  if (!ruta.length) {
+    alert("No hay coordenadas para este viaje demo.");
+    return;
+  }
+
+  const first = ruta[0];
+  map.setView([first.lat, first.lon], 12);
+  marcador = L.marker([first.lat, first.lon]).addTo(map);
+
+  intervalo = setInterval(() => {
+    if (index >= ruta.length) {
+      clearInterval(intervalo);
+      alert("✅ Simulación completada.");
+      return;
+    }
+
+    const punto = ruta[index];
+    marcador.setLatLng([punto.lat, punto.lon]);
+
+    // Actualizar tabla
+    const fila = document.createElement("tr");
+    const horaSimulada = new Date(Date.now() + index * 2000).toLocaleTimeString();
+    fila.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${punto.lat.toFixed(5)}</td>
+      <td>${punto.lon.toFixed(5)}</td>
+      <td>${horaSimulada}</td>
+    `;
+    tabla.appendChild(fila);
+
+    // Mantener solo las últimas 15 filas visibles
+    if (tabla.rows.length > 15) {
+      tabla.deleteRow(0);
+    }
+
+    index++;
+  }, 2000);
+});
+</script>
+{% endblock %}
