@@ -1,19 +1,7 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
 <div class="container-fluid mt-4">
-  <h2>Monitoreo del viaje {{ viaje.id }}</h2>
-
-  <div class="d-flex justify-content-between mb-3">
-    <div>
-      <button id="toggleModeBtn" class="btn btn-primary">Cambiar a modo demo</button>
-      <select id="rutaSelect" class="form-select d-inline-block w-auto ms-2">
-        <option value="jujuy-perico">Jujuy → Perico</option>
-        <option value="jujuy-yala">Jujuy → Yala</option>
-        <option value="jujuy-palpalá">Jujuy → Palpalá</option>
-      </select>
-    </div>
-    <span id="modo-indicador" class="badge bg-success">Modo real</span>
-  </div>
+  <h2>Simulación del viaje {{ viaje.id }} (modo demo)</h2>
 
   <div class="row">
     <!-- MAPA -->
@@ -24,7 +12,7 @@
     <!-- TABLA DE UBICACIONES -->
     <div class="col-md-4">
       <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">Últimas ubicaciones</div>
+        <div class="card-header bg-warning text-dark">Ubicaciones simuladas</div>
         <div class="card-body p-0">
           <table class="table table-striped table-hover mb-0">
             <thead class="table-light">
@@ -36,154 +24,115 @@
               </tr>
             </thead>
             <tbody id="tablaUbicaciones">
-              <tr><td colspan="4" class="text-center">Cargando...</td></tr>
+              <tr><td colspan="4" class="text-center">Esperando inicio...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+      <button id="iniciarDemo" class="btn btn-primary w-100 mt-3">Iniciar simulación</button>
     </div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
 <script>
-let map = L.map('map').setView([-24.1858, -65.2995], 12);
+let map = L.map('map').setView([-24.1858, -65.2995], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-let polyline = L.polyline([], { color: 'blue' }).addTo(map);
+let polyline = L.polyline([], { color: 'orange' }).addTo(map);
 let marker = null;
-let modoDemo = false;
 let demoInterval = null;
-let demoRuta = [];
-let demoIndex = 0;
 
-// === Función: obtener ruta real desde OpenStreetMap / OSRM ===
-async function obtenerRutaReal(origen, destino) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${origen[1]},${origen[0]};${destino[1]},${destino[0]}?overview=full&geometries=geojson`;
-  const resp = await fetch(url);
-  const data = await resp.json();
-  if (data.routes && data.routes.length > 0) {
-    return data.routes[0].geometry.coordinates.map(p => [p[1], p[0]]);
-  } else {
-    alert("No se encontró una ruta válida.");
-    return [];
+const demoRuta = [
+  [-24.1858, -65.2995],
+  [-24.1865, -65.2980],
+  [-24.1872, -65.2968],
+  [-24.1880, -65.2954],
+  [-24.1890, -65.2940],
+  [-24.1900, -65.2925],
+  [-24.1915, -65.2910],
+  [-24.1930, -65.2895],
+];
+
+async function enviarUbicacionDemo(lat, lon) {
+  try {
+    await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat, lon })
+    });
+  } catch (error) {
+    console.error("Error enviando ubicación demo:", error);
   }
 }
 
-// === Tabla de ubicaciones ===
-function actualizarTabla(ubicaciones) {
-  const tbody = document.getElementById("tablaUbicaciones");
-  tbody.innerHTML = "";
-  ubicaciones.slice(-10).reverse().forEach((u, i) => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${u.lat.toFixed(5)}</td>
-        <td>${u.lon.toFixed(5)}</td>
-        <td>${u.timestamp || "—"}</td>
-      </tr>`;
-  });
-}
-
-// === Cargar ubicaciones reales desde el backend ===
 async function cargarUbicaciones() {
   try {
     const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
     const data = await resp.json();
     const ubicaciones = data.ubicaciones;
     if (!ubicaciones || ubicaciones.length === 0) return;
-    actualizarTabla(ubicaciones.map(u => ({
-      lat: u.lat,
-      lon: u.lon,
-      timestamp: new Date(u.fecha_hora).toLocaleTimeString()
-    })));
+
+    const tbody = document.getElementById("tablaUbicaciones");
+    tbody.innerHTML = "";
+
+    ubicaciones.slice(-10).forEach((u, i) => {
+      const fila = document.createElement("tr");
+      const hora = u.fecha_hora
+        ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
+        : "—";
+      fila.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${hora}</td>
+      `;
+      tbody.appendChild(fila);
+    });
 
     const puntos = ubicaciones.map(u => [u.lat, u.lon]);
-    if (puntos.length > 0) {
-      polyline.setLatLngs(puntos);
-      if (!marker) marker = L.marker(puntos[puntos.length - 1]).addTo(map);
-      marker.setLatLng(puntos[puntos.length - 1]);
-      map.setView(puntos[puntos.length - 1], 14);
-    }
+    polyline.setLatLngs(puntos);
+    if (!marker) marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+    else marker.setLatLng(puntos[puntos.length - 1]);
+    map.setView(puntos[puntos.length - 1], 15);
+
   } catch (err) {
     console.error("Error cargando ubicaciones:", err);
   }
 }
 
-setInterval(() => { if (!modoDemo) cargarUbicaciones(); }, 5000);
-cargarUbicaciones();
+document.getElementById("iniciarDemo").addEventListener("click", () => {
+  if (demoInterval) {
+    clearInterval(demoInterval);
+    demoInterval = null;
+    alert("Simulación detenida.");
+    return;
+  }
 
-// === DEMO: enviar ubicaciones simuladas ===
-async function enviarUbicacionDemo(lat, lon) {
-  await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lat: lat, lon: lon })
-  });
-}
-
-// === Simulación demo con ruta real ===
-function iniciarSimulacionDemo() {
-  if (!demoRuta.length) return alert("Primero selecciona una ruta válida.");
+  let i = 0;
   polyline.setLatLngs([]);
   if (marker) map.removeLayer(marker);
   marker = null;
-  demoIndex = 0;
-  document.getElementById("tablaUbicaciones").innerHTML = "";
+  document.getElementById("tablaUbicaciones").innerHTML = "<tr><td colspan='4' class='text-center'>Iniciando...</td></tr>";
 
   demoInterval = setInterval(async () => {
-    if (demoIndex < demoRuta.length) {
-      const punto = demoRuta[demoIndex];
-      polyline.addLatLng(punto);
-      if (!marker) marker = L.marker(punto).addTo(map);
-      else marker.setLatLng(punto);
-      map.setView(punto, 14);
-      await enviarUbicacionDemo(punto[0], punto[1]);
-      demoIndex++;
-    } else detenerSimulacionDemo();
-  }, 1500);
-}
-
-function detenerSimulacionDemo() {
-  clearInterval(demoInterval);
-  demoInterval = null;
-  cargarUbicaciones();
-}
-
-// === Botón de cambio de modo ===
-document.getElementById('toggleModeBtn').addEventListener('click', () => {
-  modoDemo = !modoDemo;
-  const btn = document.getElementById('toggleModeBtn');
-  const badge = document.getElementById('modo-indicador');
-
-  if (modoDemo) {
-    btn.textContent = "Cambiar a modo real";
-    badge.textContent = "Modo demo";
-    badge.className = "badge bg-warning text-dark";
-
-    // Obtener ruta seleccionada
-    const seleccion = document.getElementById('rutaSelect').value;
-    let origen, destino;
-    if (seleccion === "jujuy-perico") {
-      origen = [-24.1858, -65.2995]; destino = [-24.3825, -65.0415];
-    } else if (seleccion === "jujuy-yala") {
-      origen = [-24.1858, -65.2995]; destino = [-24.1030, -65.3210];
-    } else {
-      origen = [-24.1858, -65.2995]; destino = [-24.2567, -65.2090];
+    if (i >= demoRuta.length) {
+      clearInterval(demoInterval);
+      demoInterval = null;
+      return;
     }
 
-    obtenerRutaReal(origen, destino).then(coords => {
-      demoRuta = coords;
-      iniciarSimulacionDemo();
-    });
+    const punto = demoRuta[i];
+    await enviarUbicacionDemo(punto[0], punto[1]);
+    await cargarUbicaciones();
 
-  } else {
-    btn.textContent = "Cambiar a modo demo";
-    badge.textContent = "Modo real";
-    badge.className = "badge bg-success";
-    detenerSimulacionDemo();
-  }
+    polyline.addLatLng(punto);
+    if (!marker) marker = L.marker(punto).addTo(map);
+    else marker.setLatLng(punto);
+    map.setView(punto, 15);
+
+    i++;
+  }, 2500);
 });
 </script>
 {% endblock %}
