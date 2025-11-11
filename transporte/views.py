@@ -312,3 +312,34 @@ def api_ruta_demo(request, viaje_id):
         for r in rutas
     ]
     return JsonResponse({"ruta": data})
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import PosicionDemo
+import json
+
+@csrf_exempt
+def registrar_posicion_demo(request):
+    """
+    Guarda una posición de simulación (modo demo)
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            viaje_id = data.get('viaje_id')
+            lat = data.get('lat')
+            lon = data.get('lon')
+
+            if not all([viaje_id, lat, lon]):
+                return JsonResponse({'error': 'Datos incompletos'}, status=400)
+
+            PosicionDemo.objects.create(
+                viaje_id=viaje_id,
+                latitud=lat,
+                longitud=lon
+            )
+            return JsonResponse({'status': 'ok'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

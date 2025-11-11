@@ -196,12 +196,15 @@ class RutaDemo(models.Model):
         return f"Ruta {self.orden} ({self.latitud}, {self.longitud}) - {self.viaje.nombre}"
 
 
+
 class PosicionDemo(models.Model):
-    """Posiciones simuladas generadas durante la demostración."""
-    viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='posiciones')
+    viaje_id = models.CharField(max_length=50)  # ID simple del viaje demo (por ejemplo "v1")
     latitud = models.FloatField()
     longitud = models.FloatField()
-    fecha_hora = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['timestamp']
 
     def __str__(self):
-        return f"[DEMO] {self.viaje.nombre} ({self.latitud}, {self.longitud})"
+        return f"Demo {self.viaje_id}: ({self.latitud}, {self.longitud}) @ {self.timestamp:%H:%M:%S}"

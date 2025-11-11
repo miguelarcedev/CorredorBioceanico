@@ -22,6 +22,7 @@ urlpatterns = [
     path("monitoreo/demo/", views.monitoreo_demo, name="monitoreo_demo"),
     path("api/demo/<uuid:viaje_id>/", views.api_ruta_demo, name="api_ruta_demo"),
 
+    path('api/demo/registrar/', views.registrar_posicion_demo, name='registrar_posicion_demo'),
 
     # Autenticación
     path('login/', auth_views.LoginView.as_view(template_name='transporte/login.html'), name='login'),

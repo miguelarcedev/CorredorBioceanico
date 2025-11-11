@@ -77,6 +77,8 @@ let currentPolyline = null;
 let currentMarker = null;
 let animationHandle = null;
 let animPoints = [];      // array de [lat, lon] que recorreremos
+let currentViajeId = null;
+
 let animIdx = 0;
 let interpolationHandle = null;
 
@@ -117,6 +119,8 @@ async function seleccionarViaje(viaje) {
   tablaPos.innerHTML = `<tr><td colspan="4" class="text-center">Cargando ruta...</td></tr>`;
 
   try {
+    currentViajeId = viaje.id;
+
     // llamamos al servicio OSRM para obtener la geometría completa
     const lon1 = viaje.origen[1], lat1 = viaje.origen[0];
     const lon2 = viaje.destino[1], lat2 = viaje.destino[0];
@@ -206,15 +210,26 @@ function comenzarAnimacionSuave(points, stepDuration = 3000) {
         // registrar fila (usamos fecha simulada)
         const horaSim = new Date(Date.now()).toLocaleTimeString();
         const fila = document.createElement('tr');
-        fila.innerHTML = `
-          <td>${animIdx + 1}</td>
-          <td>${lat1.toFixed(5)}</td>
-          <td>${lon1.toFixed(5)}</td>
-          <td>${horaSim}</td>
-        `;
-        tablaPos.appendChild(fila);
-        // mantener máximo 20 filas visibles
-        if (tablaPos.rows.length > 20) tablaPos.deleteRow(0);
+fila.innerHTML = `
+  <td>${animIdx + 1}</td>
+  <td>${lat1.toFixed(5)}</td>
+  <td>${lon1.toFixed(5)}</td>
+  <td>${horaSim}</td>
+`;
+tablaPos.appendChild(fila);
+if (tablaPos.rows.length > 20) tablaPos.deleteRow(0);
+
+// 🔹 Enviar a backend para registrar
+fetch("{% url 'registrar_posicion_demo' %}", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    viaje_id: currentViajeId,
+    lat: lat1,
+    lon: lon1
+  })
+});
+
 
         clearInterval(interpolationHandle);
         interpolationHandle = null;
