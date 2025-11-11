@@ -286,7 +286,7 @@ from datetime import datetime
 # -----------------------------
 def monitoreo_real(request):
     viajes = Viaje.objects.filter(estado__in=["EN_CURSO", "PROGRAMADO"])
-    return render(request, "monitoreo_real.html", {"viajes": viajes})
+    return render(request, "transporte/monitoreo_real.html", {"viajes": viajes})
 
 
 # -----------------------------
@@ -294,7 +294,7 @@ def monitoreo_real(request):
 # -----------------------------
 def monitoreo_demo(request):
     viajes = ViajeDemo.objects.all()
-    return render(request, "monitoreo_demo.html", {"viajes": viajes})
+    return render(request, "transporte/monitoreo_demo.html", {"viajes": viajes})
 
 
 # -----------------------------
