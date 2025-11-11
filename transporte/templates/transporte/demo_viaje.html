@@ -1,0 +1,189 @@
+{% extends 'transporte/base.html' %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2>Monitoreo del viaje {{ viaje.id }}</h2>
+
+  <div class="d-flex justify-content-between mb-3">
+    <div>
+      <button id="toggleModeBtn" class="btn btn-primary">Cambiar a modo demo</button>
+      <select id="rutaSelect" class="form-select d-inline-block w-auto ms-2">
+        <option value="jujuy-perico">Jujuy → Perico</option>
+        <option value="jujuy-yala">Jujuy → Yala</option>
+        <option value="jujuy-palpalá">Jujuy → Palpalá</option>
+      </select>
+    </div>
+    <span id="modo-indicador" class="badge bg-success">Modo real</span>
+  </div>
+
+  <div class="row">
+    <!-- MAPA -->
+    <div class="col-md-8">
+      <div id="map" style="height: 500px; border-radius: 10px;"></div>
+    </div>
+
+    <!-- TABLA DE UBICACIONES -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">Últimas ubicaciones</div>
+        <div class="card-body p-0">
+          <table class="table table-striped table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Latitud</th>
+                <th>Longitud</th>
+                <th>Hora</th>
+              </tr>
+            </thead>
+            <tbody id="tablaUbicaciones">
+              <tr><td colspan="4" class="text-center">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<script>
+let map = L.map('map').setView([-24.1858, -65.2995], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+let polyline = L.polyline([], { color: 'blue' }).addTo(map);
+let marker = null;
+let modoDemo = false;
+let demoInterval = null;
+let demoRuta = [];
+let demoIndex = 0;
+
+// === Función: obtener ruta real desde OpenStreetMap / OSRM ===
+async function obtenerRutaReal(origen, destino) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${origen[1]},${origen[0]};${destino[1]},${destino[0]}?overview=full&geometries=geojson`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (data.routes && data.routes.length > 0) {
+    return data.routes[0].geometry.coordinates.map(p => [p[1], p[0]]);
+  } else {
+    alert("No se encontró una ruta válida.");
+    return [];
+  }
+}
+
+// === Tabla de ubicaciones ===
+function actualizarTabla(ubicaciones) {
+  const tbody = document.getElementById("tablaUbicaciones");
+  tbody.innerHTML = "";
+  ubicaciones.slice(-10).reverse().forEach((u, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${u.timestamp || "—"}</td>
+      </tr>`;
+  });
+}
+
+// === Cargar ubicaciones reales desde el backend ===
+async function cargarUbicaciones() {
+  try {
+    const resp = await fetch("{% url 'obtener_ubicaciones' viaje.id %}");
+    const data = await resp.json();
+    const ubicaciones = data.ubicaciones;
+    if (!ubicaciones || ubicaciones.length === 0) return;
+    actualizarTabla(ubicaciones.map(u => ({
+      lat: u.lat,
+      lon: u.lon,
+      timestamp: new Date(u.fecha_hora).toLocaleTimeString()
+    })));
+
+    const puntos = ubicaciones.map(u => [u.lat, u.lon]);
+    if (puntos.length > 0) {
+      polyline.setLatLngs(puntos);
+      if (!marker) marker = L.marker(puntos[puntos.length - 1]).addTo(map);
+      marker.setLatLng(puntos[puntos.length - 1]);
+      map.setView(puntos[puntos.length - 1], 14);
+    }
+  } catch (err) {
+    console.error("Error cargando ubicaciones:", err);
+  }
+}
+
+setInterval(() => { if (!modoDemo) cargarUbicaciones(); }, 5000);
+cargarUbicaciones();
+
+// === DEMO: enviar ubicaciones simuladas ===
+async function enviarUbicacionDemo(lat, lon) {
+  await fetch("{% url 'actualizar_ubicacion_api' viaje.id %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lat: lat, lon: lon })
+  });
+}
+
+// === Simulación demo con ruta real ===
+function iniciarSimulacionDemo() {
+  if (!demoRuta.length) return alert("Primero selecciona una ruta válida.");
+  polyline.setLatLngs([]);
+  if (marker) map.removeLayer(marker);
+  marker = null;
+  demoIndex = 0;
+  document.getElementById("tablaUbicaciones").innerHTML = "";
+
+  demoInterval = setInterval(async () => {
+    if (demoIndex < demoRuta.length) {
+      const punto = demoRuta[demoIndex];
+      polyline.addLatLng(punto);
+      if (!marker) marker = L.marker(punto).addTo(map);
+      else marker.setLatLng(punto);
+      map.setView(punto, 14);
+      await enviarUbicacionDemo(punto[0], punto[1]);
+      demoIndex++;
+    } else detenerSimulacionDemo();
+  }, 1500);
+}
+
+function detenerSimulacionDemo() {
+  clearInterval(demoInterval);
+  demoInterval = null;
+  cargarUbicaciones();
+}
+
+// === Botón de cambio de modo ===
+document.getElementById('toggleModeBtn').addEventListener('click', () => {
+  modoDemo = !modoDemo;
+  const btn = document.getElementById('toggleModeBtn');
+  const badge = document.getElementById('modo-indicador');
+
+  if (modoDemo) {
+    btn.textContent = "Cambiar a modo real";
+    badge.textContent = "Modo demo";
+    badge.className = "badge bg-warning text-dark";
+
+    // Obtener ruta seleccionada
+    const seleccion = document.getElementById('rutaSelect').value;
+    let origen, destino;
+    if (seleccion === "jujuy-perico") {
+      origen = [-24.1858, -65.2995]; destino = [-24.3825, -65.0415];
+    } else if (seleccion === "jujuy-yala") {
+      origen = [-24.1858, -65.2995]; destino = [-24.1030, -65.3210];
+    } else {
+      origen = [-24.1858, -65.2995]; destino = [-24.2567, -65.2090];
+    }
+
+    obtenerRutaReal(origen, destino).then(coords => {
+      demoRuta = coords;
+      iniciarSimulacionDemo();
+    });
+
+  } else {
+    btn.textContent = "Cambiar a modo demo";
+    badge.textContent = "Modo real";
+    badge.className = "badge bg-success";
+    detenerSimulacionDemo();
+  }
+});
+</script>
+{% endblock %}

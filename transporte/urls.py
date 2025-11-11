@@ -14,9 +14,10 @@ urlpatterns = [
 
     path('viaje/<uuid:viaje_id>/actualizar_ubicacion/', views.actualizar_ubicacion, name='actualizar_ubicacion'),
     path('viaje/<uuid:viaje_id>/actualizar_ubicacion_api/', views.actualizar_ubicacion_api, name='actualizar_ubicacion_api'),
-
     path('viaje/<uuid:viaje_id>/monitoreo/', views.monitoreo_viaje, name='monitoreo_viaje'),
     path('viaje/<uuid:viaje_id>/obtener_ubicaciones/', views.obtener_ubicaciones, name='obtener_ubicaciones'),
+    path('viaje/<uuid:viaje_id>/demo/', views.demo_viaje, name='demo_viaje'),
+
 
 
 
