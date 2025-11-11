@@ -1,26 +1,125 @@
-{% extends 'transporte/base.html' %}
+{% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h3 class="text-primary mb-4">📡 Monitoreo en Tiempo Real</h3>
+  <h3 class="text-success mb-4">🛰️ Monitoreo en tiempo real</h3>
 
+  <!-- Selector de viaje -->
   <div class="row mb-3">
     <div class="col-md-6">
-      <label for="viajeReal" class="form-label">Seleccionar viaje en curso:</label>
-      <select id="viajeReal" class="form-select">
+      <label for="viajeSelect" class="form-label">Seleccionar viaje en curso:</label>
+      <select id="viajeSelect" class="form-select">
         <option value="">-- Elegir un viaje --</option>
         {% for v in viajes %}
-        <option value="{{ v.id }}">{{ v.origen }} → {{ v.destino }}</option>
+        <option value="{{ v.id }}">{{ v.origen }} → {{ v.destino }} ({{ v.vehiculo.patente }})</option>
         {% endfor %}
       </select>
     </div>
   </div>
 
-  <div id="map" style="height: 500px; border-radius: 10px;"></div>
+  <!-- Mapa -->
+  <div id="map" style="height: 500px; border-radius: 10px; margin-bottom: 30px;"></div>
+
+  <!-- Tabla de posiciones -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white">Últimas posiciones registradas</div>
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Latitud</th>
+            <th>Longitud</th>
+            <th>Hora</th>
+          </tr>
+        </thead>
+        <tbody id="tablaReal">
+          <tr><td colspan="4" class="text-center">Esperando selección de viaje...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let map = L.map("map").setView([-24.1858, -65.2995], 10);
+let map = L.map("map").setView([-24.1858, -65.2995], 8);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+let marcador = null;
+let linea = null;
+let intervalo = null;
+
+const selectViaje = document.getElementById("viajeSelect");
+const tabla = document.getElementById("tablaReal");
+
+// Actualizar posiciones desde el backend
+async function cargarUbicaciones(viajeId) {
+  try {
+    const resp = await fetch(`/viaje/${viajeId}/obtener_ubicaciones/`);
+    if (!resp.ok) throw new Error(`Error ${resp.status}`);
+    const data = await resp.json();
+    const ubicaciones = data.ubicaciones;
+
+    if (!ubicaciones || ubicaciones.length === 0) return;
+
+    // Dibujar trazado
+    const puntos = ubicaciones.map(u => [u.lat, u.lon]);
+    if (!linea) {
+      linea = L.polyline(puntos, { color: "green" }).addTo(map);
+    } else {
+      linea.setLatLngs(puntos);
+    }
+
+    // Mover marcador al último punto
+    const ultimo = puntos[puntos.length - 1];
+    if (!marcador) {
+      marcador = L.marker(ultimo).addTo(map);
+    } else {
+      marcador.setLatLng(ultimo);
+    }
+
+    map.setView(ultimo, 13);
+
+    // Actualizar tabla
+    tabla.innerHTML = "";
+    ubicaciones.slice(-15).reverse().forEach((u, i) => {
+      const hora = u.fecha_hora
+        ? new Date(u.fecha_hora.replace(" ", "T")).toLocaleTimeString()
+        : "—";
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${u.lat.toFixed(5)}</td>
+        <td>${u.lon.toFixed(5)}</td>
+        <td>${hora}</td>
+      `;
+      tabla.appendChild(fila);
+    });
+  } catch (err) {
+    console.error("Error cargando ubicaciones:", err);
+  }
+}
+
+// Evento: seleccionar viaje
+selectViaje.addEventListener("change", () => {
+  const viajeId = selectViaje.value;
+  if (!viajeId) return;
+
+  // Limpiar mapa y tabla
+  if (linea) {
+    map.removeLayer(linea);
+    linea = null;
+  }
+  if (marcador) {
+    map.removeLayer(marcador);
+    marcador = null;
+  }
+  tabla.innerHTML = `<tr><td colspan="4" class="text-center">Cargando datos...</td></tr>`;
+
+  // Iniciar actualización periódica
+  clearInterval(intervalo);
+  cargarUbicaciones(viajeId);
+  intervalo = setInterval(() => cargarUbicaciones(viajeId), 5000);
+});
 </script>
 {% endblock %}
