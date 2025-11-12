@@ -250,9 +250,9 @@ def monitoreo_viaje(request, viaje_id):
 from django.shortcuts import render, get_object_or_404
 from .models import Viaje
 
-def demo_viaje(request, viaje_id):
-    viaje = get_object_or_404(Viaje, id=viaje_id)
-    return render(request, 'transporte/demo_viaje.html', {'viaje': viaje})
+
+def demo_viaje(request):
+    return render(request, 'transporte/demo_viaje.html')
 
 
 
