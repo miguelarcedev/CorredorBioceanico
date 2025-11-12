@@ -210,12 +210,12 @@ function comenzarAnimacionSuave(points, stepDuration = 3000) {
         // registrar fila (usamos fecha simulada)
         const horaSim = new Date(Date.now()).toLocaleTimeString();
         const fila = document.createElement('tr');
-fila.innerHTML = `
-  <td>${animIdx + 1}</td>
-  <td>${lat1.toFixed(5)}</td>
-  <td>${lon1.toFixed(5)}</td>
-  <td>${horaSim}</td>
-`;
+        fila.innerHTML = `
+          <td>${animIdx + 1}</td>
+          <td>${lat1.toFixed(5)}</td>
+          <td>${lon1.toFixed(5)}</td>
+          <td>${horaSim}</td>
+          `;
 tablaPos.appendChild(fila);
 if (tablaPos.rows.length > 20) tablaPos.deleteRow(0);
 
