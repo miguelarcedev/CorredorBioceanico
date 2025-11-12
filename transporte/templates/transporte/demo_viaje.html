@@ -1,46 +1,52 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
 <div class="container-fluid mt-4">
-  <h2>Simulación profesional — Modo Demo (Rutas jujeñas)</h2>
+  <h2>Simulación de viajes - Modo Demo</h2>
 
-  <!-- GRID DE VIAJES -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="row g-2" id="gridViajes">
-        <!-- Las tarjetas se generan desde JS -->
-      </div>
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Viajes disponibles para simular</h5>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0 text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for viaje in viajes %}
+          <tr>
+            <td>{{ viaje.origen }}</td>
+            <td>{{ viaje.destino }}</td>
+            <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
+            <td>
+              <button class="btn btn-primary btn-sm btn-simular"
+                      data-origen="{{ viaje.origen }}"
+                      data-destino="{{ viaje.destino }}"
+                      data-lat1="{{ viaje.posiciones.first.latitud }}"
+                      data-lon1="{{ viaje.posiciones.first.longitud }}"
+                      data-lat2="{{ viaje.posiciones.last.latitud }}"
+                      data-lon2="{{ viaje.posiciones.last.longitud }}">
+                Simular
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-3">No hay viajes disponibles</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="row">
-    <!-- MAPA -->
-    <div class="col-md-8">
-      <div id="map" style="height: 620px; border-radius: 10px;"></div>
-    </div>
-
-    <!-- TABLA DE POSICIONES -->
-    <div class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-header bg-warning text-dark">Posiciones simuladas</div>
-        <div class="card-body p-0">
-          <table class="table table-striped table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>#</th>
-                <th>Latitud</th>
-                <th>Longitud</th>
-                <th>Hora</th>
-              </tr>
-            </thead>
-            <tbody id="tablaPosiciones">
-              <tr><td colspan="4" class="text-center">Seleccioná un viaje para comenzar</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="card-footer">
-          <small id="infoRuta">Ninguna ruta seleccionada.</small>
-        </div>
-      </div>
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white">Mapa del recorrido</div>
+    <div class="card-body p-0">
+      <div id="map" style="height: 550px; border-radius: 10px;"></div>
     </div>
   </div>
 </div>
@@ -49,237 +55,89 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
-/* ------------------------
-   CONFIG: lista de 10 viajes
-   (nombre + punto origen + punto destino)
-   Coordenadas aproximadas dentro de Jujuy — podés ajustarlas.
-   ------------------------ */
-const VIAJES_DEMO = [
-  { id: "v1", nombre: "San Salvador → Perico", origen: [-24.1858, -65.2995], destino: [-24.3825, -65.0415] },
-  { id: "v2", nombre: "Perico → San Pedro", origen: [-24.3825, -65.0415], destino: [-23.9300, -65.4000] },
-  { id: "v3", nombre: "San Pedro → Libertador", origen: [-23.9300, -65.4000], destino: [-23.5000, -64.4500] },
-  { id: "v4", nombre: "Libertador → Yuto", origen: [-23.5000, -64.4500], destino: [-23.8500, -64.8300] },
-  { id: "v5", nombre: "Yuto → Caimancito", origen: [-23.8500, -64.8300], destino: [-23.7500, -64.9200] },
-  { id: "v6", nombre: "Caimancito → Calilegua", origen: [-23.7500, -64.9200], destino: [-23.6500, -65.0000] },
-  { id: "v7", nombre: "San Salvador → Palpalá", origen: [-24.1858, -65.2995], destino: [-24.3100, -65.2000] },
-  { id: "v8", nombre: "Palpalá → El Carmen", origen: [-24.3100, -65.2000], destino: [-24.4430, -65.1650] },
-  { id: "v9", nombre: "El Carmen → Monterrico", origen: [-24.4430, -65.1650], destino: [-24.2567, -65.2090] },
-  { id: "v10", nombre: "Monterrico → Perico", origen: [-24.2567, -65.2090], destino: [-24.3825, -65.0415] },
-];
+const API_KEY = "TU_API_KEY_AQUI";  // ⚠️ Coloca aquí tu API Key de OpenRouteService
 
-/* ------------------------
-   Inicialización del mapa
-   ------------------------ */
-const map = L.map('map').setView([-24.1858, -65.2995], 10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+let map = L.map('map').setView([-24.1858, -65.2995], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
+}).addTo(map);
 
-let currentPolyline = null;
-let currentMarker = null;
-let animationHandle = null;
-let animPoints = [];      // array de [lat, lon] que recorreremos
-let currentViajeId = null;
+let polyline = null;
+let marker = null;
+let animInterval = null;
 
-let animIdx = 0;
-let interpolationHandle = null;
-
-/* ------------------------
-   UI: construir grid de viajes
-   ------------------------ */
-const grid = document.getElementById('gridViajes');
-
-function crearTarjetaViaje(v) {
-  const div = document.createElement('div');
-  div.className = 'col-6 col-md-4 col-lg-3';
-  div.innerHTML = `
-    <div class="card h-100" data-viaje-id="${v.id}" style="cursor:pointer;">
-      <div class="card-body p-2">
-        <h6 class="card-title mb-1">${v.nombre}</h6>
-        <p class="mb-1"><small>Origen: ${v.origen[0].toFixed(4)}, ${v.origen[1].toFixed(4)}</small></p>
-        <p class="mb-0"><small>Destino: ${v.destino[0].toFixed(4)}, ${v.destino[1].toFixed(4)}</small></p>
-      </div>
-    </div>
-  `;
-  div.addEventListener('click', () => seleccionarViaje(v));
-  return div;
+// ============================
+//   OBTENER RUTA REAL
+// ============================
+async function obtenerRutaReal(origen, destino) {
+  const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${API_KEY}&start=${origen[1]},${origen[0]}&end=${destino[1]},${destino[0]}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error("Error obteniendo ruta");
+  const data = await resp.json();
+  const coords = data.features[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+  return coords;
 }
 
-VIAJES_DEMO.forEach(v => grid.appendChild(crearTarjetaViaje(v)));
+// ============================
+//   ANIMAR VEHÍCULO
+// ============================
+function moverMarcadorSuave(marker, start, end, duracion = 3000) {
+  const steps = 30;
+  let i = 0;
+  const interval = setInterval(() => {
+    const lat = start[0] + (end[0] - start[0]) * (i / steps);
+    const lon = start[1] + (end[1] - start[1]) * (i / steps);
+    marker.setLatLng([lat, lon]);
+    if (i++ >= steps) clearInterval(interval);
+  }, duracion / steps);
+}
 
-/* ------------------------
-   Selección de viaje -> obtiene ruta OSRM y comienza animación
-   ------------------------ */
-const infoRuta = document.getElementById('infoRuta');
-const tablaPos = document.getElementById('tablaPosiciones');
-
-async function seleccionarViaje(viaje) {
-  // detener animaciones previas
-  detenerAnimacion();
-
-  infoRuta.textContent = `Cargando ruta: ${viaje.nombre} ...`;
-  tablaPos.innerHTML = `<tr><td colspan="4" class="text-center">Cargando ruta...</td></tr>`;
+// ============================
+//   SIMULAR VIAJE
+// ============================
+async function iniciarSimulacion(origen, destino) {
+  if (animInterval) clearInterval(animInterval);
+  if (polyline) map.removeLayer(polyline);
+  if (marker) map.removeLayer(marker);
 
   try {
-    currentViajeId = viaje.id;
+    const ruta = await obtenerRutaReal(origen, destino);
+    polyline = L.polyline(ruta, { color: 'blue' }).addTo(map);
+    map.fitBounds(polyline.getBounds());
+    marker = L.marker(ruta[0]).addTo(map);
 
-    // llamamos al servicio OSRM para obtener la geometría completa
-    const lon1 = viaje.origen[1], lat1 = viaje.origen[0];
-    const lon2 = viaje.destino[1], lat2 = viaje.destino[0];
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson&steps=false`;
-    const resp = await fetch(osrmUrl);
-    const data = await resp.json();
-
-    if (!data.routes || !data.routes.length) {
-      throw new Error('Ruta no encontrada en OSRM');
-    }
-
-    // extraemos coordenadas (geojson: [ [lon,lat], ... ])
-    const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-    const distancia_m = data.routes[0].distance || 0;
-    const distancia_km = (distancia_m / 1000).toFixed(1);
-
-    // dibujar polyline
-    if (currentPolyline) map.removeLayer(currentPolyline);
-    currentPolyline = L.polyline(coords, { color: '#ff6600', weight: 4, opacity: 0.85 }).addTo(map);
-    map.fitBounds(currentPolyline.getBounds(), { padding: [40,40] });
-
-    // preparar animPoints (podemos reducir densidad si son muchísimos puntos)
-    animPoints = coords;
-    animIdx = 0;
-
-    // limpiar tabla y mostrar info
-    tablaPos.innerHTML = "";
-    infoRuta.textContent = `${viaje.nombre} — distancia aprox. ${distancia_km} km — puntos: ${animPoints.length}`;
-
-    // agregar marcador en primer punto
-    const first = animPoints[0];
-    if (currentMarker) map.removeLayer(currentMarker);
-    currentMarker = L.marker(first, { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png' }) }).addTo(map);
-
-    // iniciar animación automática (sin botón)
-    comenzarAnimacionSuave(animPoints, 3000); // 3000 ms por segmento
+    let index = 0;
+    animInterval = setInterval(() => {
+      if (index < ruta.length - 1) {
+        moverMarcadorSuave(marker, ruta[index], ruta[index + 1]);
+        index++;
+      } else {
+        clearInterval(animInterval);
+      }
+    }, 3000);
   } catch (err) {
-    console.error(err);
-    infoRuta.textContent = `Error cargando ruta: ${err.message}`;
-    tablaPos.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error al obtener ruta</td></tr>`;
+    console.error("Error en la simulación:", err);
+    alert("No se pudo obtener la ruta real. Verifique su API Key o conexión.");
   }
 }
 
-/* ------------------------
-   Animación suave entre puntos
-   - animPoints: array [[lat,lon], ...]
-   - stepDuration: tiempo en ms para ir de un punto a siguiente (aca 3000)
-   ------------------------ */
-function comenzarAnimacionSuave(points, stepDuration = 3000) {
-  if (!points || points.length === 0) return;
-  animIdx = 0;
+// ============================
+//   EVENTO DE BOTONES
+// ============================
+document.querySelectorAll(".btn-simular").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const lat1 = parseFloat(btn.dataset.lat1);
+    const lon1 = parseFloat(btn.dataset.lon1);
+    const lat2 = parseFloat(btn.dataset.lat2);
+    const lon2 = parseFloat(btn.dataset.lon2);
 
-  // si hay muchísimos puntos, podes practicar un decimation:
-  // p.ej. si points.length > 2000, tomar cada 2º o 3º punto para no demorar.
-  // Acá lo dejamos completo.
-
-  // función que interpola desde points[i] a points[i+1] en stepDuration ms, usando substeps
-  function animarSiguiente() {
-    if (animIdx >= points.length - 1) {
-      // llegó al final
-      infoRuta.textContent += " — simulación finalizada";
+    if (isNaN(lat1) || isNaN(lat2)) {
+      alert("Este viaje no tiene posiciones válidas para simular.");
       return;
     }
 
-    const start = points[animIdx];
-    const end = points[animIdx + 1];
-    const substeps = Math.max(6, Math.floor(stepDuration / 50)); // ~50ms cada substep
-    let s = 0;
-    const lat0 = start[0], lon0 = start[1];
-    const lat1 = end[0], lon1 = end[1];
-
-    // tiempo total stepDuration, subdividido en substeps
-    const dt = stepDuration / substeps;
-
-    // limpiar posible interpolación previa
-    if (interpolationHandle) clearInterval(interpolationHandle);
-
-    interpolationHandle = setInterval(() => {
-      s++;
-      const t = s / substeps;
-      const lat = lat0 + (lat1 - lat0) * t;
-      const lon = lon0 + (lon1 - lon0) * t;
-      currentMarker.setLatLng([lat, lon]);
-
-      // cada vez que llegamos al final del substep (t===1), registramos la posición real en tabla
-      if (s >= substeps) {
-        // registrar fila (usamos fecha simulada)
-        const horaSim = new Date(Date.now()).toLocaleTimeString();
-        const fila = document.createElement('tr');
-        fila.innerHTML = `
-          <td>${animIdx + 1}</td>
-          <td>${lat1.toFixed(5)}</td>
-          <td>${lon1.toFixed(5)}</td>
-          <td>${horaSim}</td>
-          `;
-tablaPos.appendChild(fila);
-if (tablaPos.rows.length > 20) tablaPos.deleteRow(0);
-
-// 🔹 Enviar a backend para registrar
-fetch("{% url 'registrar_posicion_demo' %}", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    viaje_id: currentViajeId,
-    lat: lat1,
-    lon: lon1
-  })
+    await iniciarSimulacion([lat1, lon1], [lat2, lon2]);
+  });
 });
-
-
-        clearInterval(interpolationHandle);
-        interpolationHandle = null;
-        animIdx++;
-        // esperar 0 ms y lanzar siguiente (ya el intervalo se encarga del tiempo)
-        animarSiguiente();
-      }
-    }, dt);
-  }
-
-  // antes de arrancar, añadimos la primera fila (punto 1)
-  tablaPos.innerHTML = "";
-  const p0 = points[0];
-  const fila0 = document.createElement('tr');
-  fila0.innerHTML = `<td>1</td><td>${p0[0].toFixed(5)}</td><td>${p0[1].toFixed(5)}</td><td>${new Date().toLocaleTimeString()}</td>`;
-  tablaPos.appendChild(fila0);
-
-  // arrancamos la cadena
-  animarSiguiente();
-}
-
-/* ------------------------
-   Detener animación limpia
-   ------------------------ */
-function detenerAnimacion() {
-  if (animationHandle) {
-    clearInterval(animationHandle);
-    animationHandle = null;
-  }
-  if (interpolationHandle) {
-    clearInterval(interpolationHandle);
-    interpolationHandle = null;
-  }
-  if (currentMarker) {
-    map.removeLayer(currentMarker);
-    currentMarker = null;
-  }
-  if (currentPolyline) {
-    map.removeLayer(currentPolyline);
-    currentPolyline = null;
-  }
-  tablaPosiciones.innerHTML = `<tr><td colspan="4" class="text-center">Seleccioná un viaje para comenzar</td></tr>`;
-  infoRuta.textContent = 'Ninguna ruta seleccionada.';
-}
-
-/* ------------------------
-   Inicial: seleccionar primer viaje (opcional)
-   ------------------------ */
-// podés comentar esta línea si preferís que el usuario elija manualmente
-// seleccionarViaje(VIAJES_DEMO[0]);
-
 </script>
 {% endblock %}
