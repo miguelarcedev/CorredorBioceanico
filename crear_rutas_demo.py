@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 import uuid
 
 # Configurar entorno Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'corredor.settings')  # ⚠️ Cambia 'tu_proyecto' por el nombre de tu proyecto
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'corredor.settings')  # ⚠️ Cambia 'tu_proyecto' por el nombre real
 django.setup()
 
-from transporte.models import Empresa, Chofer, Vehiculo, Carga, Viaje, PosicionDemo
+from transporte.models import Empresa, Chofer, Vehiculo, Carga, ViajeDemo, PosicionDemo
+from django.utils import timezone
 
 # -------------------------------
 # DATOS BASE
@@ -41,7 +42,7 @@ empresa, _ = Empresa.objects.get_or_create(nombre=EMPRESA_NOMBRE, defaults={
     "cuit": "30-99999999-9",
     "direccion": "Av. Principal 123",
     "contacto": "contacto@demotrans.com",
-    "usuario_id": 1  # ⚠️ Debe existir un usuario con ID=1 (Administrador o Empresa)
+    "usuario_id": 1  # ⚠️ Asegúrate que exista un usuario con ID=1
 })
 
 chofer, _ = Chofer.objects.get_or_create(empresa=empresa, documento="99999999", defaults={
@@ -64,22 +65,22 @@ carga, _ = Carga.objects.get_or_create(empresa=empresa, tipo=CARGA_TIPO, default
 # -------------------------------
 # CREAR VIAJES DEMO
 # -------------------------------
-Viaje.objects.all().delete()
+ViajeDemo.objects.all().delete()
 PosicionDemo.objects.all().delete()
 
-print("Creando viajes demo...")
+print("Creando viajes demo...\n")
 
 viajes_creados = 0
 for i in range(10):
     origen, lat1, lon1 = localidades[i % len(localidades)]
     destino, lat2, lon2 = localidades[(i + 1) % len(localidades)]
 
-    viaje = Viaje.objects.create(
+    viaje_demo = ViajeDemo.objects.create(
         id=uuid.uuid4(),
         origen=origen,
         destino=destino,
-        fecha_salida=datetime.now(),
-        fecha_llegada_estimada=datetime.now() + timedelta(hours=2),
+        fecha_salida=timezone.now(),
+        fecha_llegada_estimada=timezone.now() + timedelta(hours=2),
         empresa=empresa,
         chofer=chofer,
         vehiculo=vehiculo,
@@ -87,10 +88,11 @@ for i in range(10):
         estado="PROGRAMADO"
     )
 
-    PosicionDemo.objects.create(viaje=viaje, latitud=lat1, longitud=lon1)
-    PosicionDemo.objects.create(viaje=viaje, latitud=lat2, longitud=lon2)
+    # Crear posiciones simuladas (inicio y fin)
+    PosicionDemo.objects.create(viaje=viaje_demo, latitud=lat1, longitud=lon1)
+    PosicionDemo.objects.create(viaje=viaje_demo, latitud=lat2, longitud=lon2)
 
+    print(f" → Viaje demo {viaje_demo.origen} → {viaje_demo.destino}")
     viajes_creados += 1
-    print(f" → Viaje {viaje.origen} → {viaje.destino}")
 
 print(f"\n✅ {viajes_creados} viajes demo creados correctamente.")
