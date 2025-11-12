@@ -251,8 +251,12 @@ from django.shortcuts import render, get_object_or_404
 from .models import Viaje
 
 
+from .models import ViajeDemo  # asegurate de importar el modelo correcto
+
 def demo_viaje(request):
-    return render(request, 'transporte/demo_viaje.html')
+    viajes = ViajeDemo.objects.filter(estado="PROGRAMADO")  # 👈 usamos el modelo demo
+    return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
+
 
 
 
