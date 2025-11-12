@@ -171,16 +171,6 @@ class RegistroUbicacion(models.Model):
 # ---------------------------
 # MODO DEMO - VIAJES SIMULADOS
 # ---------------------------
-class ViajeDemo(models.Model):
-    """Viajes de demostración con rutas predefinidas."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    nombre = models.CharField(max_length=150, help_text="Ej: San Salvador → Perico")
-    descripcion = models.TextField(blank=True, null=True)
-    activo = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"[DEMO] {self.nombre}"
-
 
 class RutaDemo(models.Model):
     """Coordenadas predefinidas para simular el recorrido de un viaje demo."""
@@ -197,8 +187,38 @@ class RutaDemo(models.Model):
 
 
 
+
+
+# ==========================================================
+# 🔹 MODO DEMO - SIMULACIÓN DE VIAJES
+# ==========================================================
+
+class ViajeDemo(models.Model):
+    """
+    Representa un viaje simulado entre dos puntos de Jujuy.
+    No interfiere con los viajes reales.
+    """
+    ESTADOS = [
+        ('PROGRAMADO', 'Programado'),
+        ('EN_CURSO', 'En curso'),
+        ('FINALIZADO', 'Finalizado'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    origen = models.CharField(max_length=150)
+    destino = models.CharField(max_length=150)
+    descripcion = models.TextField(blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
+
+    def __str__(self):
+        return f"Demo: {self.origen} → {self.destino} ({self.estado})"
+
+
 class PosicionDemo(models.Model):
-    viaje_id = models.CharField(max_length=50)  # ID simple del viaje demo (por ejemplo "v1")
+    """
+    Representa una posición GPS simulada para un viaje de demostración.
+    """
+    viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='posiciones')
     latitud = models.FloatField()
     longitud = models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -207,4 +227,4 @@ class PosicionDemo(models.Model):
         ordering = ['timestamp']
 
     def __str__(self):
-        return f"Demo {self.viaje_id}: ({self.latitud}, {self.longitud}) @ {self.timestamp:%H:%M:%S}"
+        return f"{self.viaje.origen} → {self.viaje.destino} @ {self.timestamp:%Y-%m-%d %H:%M:%S}"
