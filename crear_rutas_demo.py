@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Configurar entorno Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tu_proyecto.settings')  # ⚠️ Cambia 'tu_proyecto' por el nombre de tu proyecto
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'corredor.settings')  # ⚠️ Cambia 'tu_proyecto' por el nombre de tu proyecto
 django.setup()
 
 from transporte.models import Empresa, Chofer, Vehiculo, Carga, Viaje, PosicionDemo
