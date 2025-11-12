@@ -172,6 +172,25 @@ class RegistroUbicacion(models.Model):
 # MODO DEMO - VIAJES SIMULADOS
 # ---------------------------
 
+class ViajeDemo(models.Model):
+    """
+    Representa un viaje simulado entre dos puntos de Jujuy.
+    No interfiere con los viajes reales.
+    """
+    ESTADOS = [
+        ('PROGRAMADO', 'Programado'),
+        ('EN_CURSO', 'En curso'),
+        ('FINALIZADO', 'Finalizado'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    origen = models.CharField(max_length=150)
+    destino = models.CharField(max_length=150)
+    descripcion = models.TextField(blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
+
+    def __str__(self):
+        return f"Demo: {self.origen} → {self.destino} ({self.estado})"
 class RutaDemo(models.Model):
     """Coordenadas predefinidas para simular el recorrido de un viaje demo."""
     viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='rutas')
@@ -193,25 +212,7 @@ class RutaDemo(models.Model):
 # 🔹 MODO DEMO - SIMULACIÓN DE VIAJES
 # ==========================================================
 
-class ViajeDemo(models.Model):
-    """
-    Representa un viaje simulado entre dos puntos de Jujuy.
-    No interfiere con los viajes reales.
-    """
-    ESTADOS = [
-        ('PROGRAMADO', 'Programado'),
-        ('EN_CURSO', 'En curso'),
-        ('FINALIZADO', 'Finalizado'),
-    ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    origen = models.CharField(max_length=150)
-    destino = models.CharField(max_length=150)
-    descripcion = models.TextField(blank=True)
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
-
-    def __str__(self):
-        return f"Demo: {self.origen} → {self.destino} ({self.estado})"
 
 
 class PosicionDemo(models.Model):
