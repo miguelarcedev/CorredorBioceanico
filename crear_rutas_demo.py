@@ -79,14 +79,12 @@ for i in range(10):
         id=uuid.uuid4(),
         origen=origen,
         destino=destino,
-        fecha_salida=timezone.now(),
-        fecha_llegada_estimada=timezone.now() + timedelta(hours=2),
-        empresa=empresa,
-        chofer=chofer,
-        vehiculo=vehiculo,
-        carga=carga,
+        
         estado="PROGRAMADO"
     )
+
+
+
 
     # Crear posiciones simuladas (inicio y fin)
     PosicionDemo.objects.create(viaje=viaje_demo, latitud=lat1, longitud=lon1)
