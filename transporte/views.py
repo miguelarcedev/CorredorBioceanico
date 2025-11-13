@@ -253,10 +253,12 @@ from .models import Viaje
 
 from .models import ViajeDemo  # asegurate de importar el modelo correcto
 
-def demo_viaje(request):
-    viajes = ViajeDemo.objects.filter(estado="PROGRAMADO")  # 👈 usamos el modelo demo
-    return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
 
+from django.shortcuts import render
+
+def demo_viaje(request):
+    viajes = ViajeDemo.objects.all().prefetch_related("posiciones")
+    return render(request, 'transporte/demo_viaje.html', {'viajes': viajes})
 
 
 
@@ -299,6 +301,7 @@ def monitoreo_real(request):
 def monitoreo_demo(request):
     viajes = ViajeDemo.objects.all()
     return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
+
 
 
 # -----------------------------
@@ -349,6 +352,16 @@ def registrar_posicion_demo(request):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import make_aware
+from datetime import datetime, timedelta
+from .models import ViajeDemo, PosicionDemo
+
+# ================================
+#  API: obtener ruta entre puntos
+# ================================
 import requests
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -442,4 +455,3 @@ def lista_viajes_demo(request):
             ]
         } for v in viajes
     ], safe=False)
-
