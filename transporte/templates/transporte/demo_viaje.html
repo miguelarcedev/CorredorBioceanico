@@ -69,14 +69,16 @@ let animInterval = null;
 // ============================
 //   OBTENER RUTA REAL
 // ============================
-async function obtenerRutaReal(origen, destino) {
-  const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${API_KEY}&start=${origen[1]},${origen[0]}&end=${destino[1]},${destino[0]}`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error("Error obteniendo ruta");
-  const data = await resp.json();
-  const coords = data.features[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
-  return coords;
+async function obtenerRuta(start, end) {
+  const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
+  const data = await response.json();
+  if (data.error) {
+    console.error("Error obteniendo ruta:", data.error);
+    return null;
+  }
+  return data;
 }
+
 
 // ============================
 //   ANIMAR VEHÍCULO

@@ -347,3 +347,50 @@ def registrar_posicion_demo(request):
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def obtener_ruta(request):
+    """
+    Endpoint proxy que consulta OpenRouteService desde el servidor.
+    Uso:
+        /api/ruta/?start=-24.19,-65.30&end=-24.39,-65.12
+    """
+    start = request.GET.get("start")
+    end = request.GET.get("end")
+
+    if not start or not end:
+        return JsonResponse({"error": "Faltan parámetros start o end"}, status=400)
+
+    # Token de HeiGIT (NO visible en frontend)
+    API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImFlNmEzYWMxNTQ3MDRkYTE5ZGIwMzhiNzU4OGU4ZTY2IiwiaCI6Im11cm11cjY0In0="
+
+    try:
+        lat1, lon1 = map(float, start.split(","))
+        lat2, lon2 = map(float, end.split(","))
+    except Exception:
+        return JsonResponse({"error": "Formato inválido de coordenadas"}, status=400)
+
+    headers = {
+        "Authorization": API_KEY,
+        "Content-Type": "application/json; charset=utf-8",
+    }
+    data = {
+        "coordinates": [
+            [lon1, lat1],
+            [lon2, lat2],
+        ]
+    }
+
+    url = "https://api.openrouteservice.org/v2/directions/driving-car/json"
+
+    response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code != 200:
+        return JsonResponse({"error": "Error al consultar ruta externa", "detalle": response.text}, status=500)
+
+    return JsonResponse(response.json(), safe=False)

@@ -26,6 +26,7 @@ urlpatterns = [
 
     path('demo_viaje/', views.demo_viaje, name='demo_viaje'),
 
+    path("api/ruta/", views.obtener_ruta, name="api_ruta"),
 
     # Autenticación
     path('login/', auth_views.LoginView.as_view(template_name='transporte/login.html'), name='login'),
