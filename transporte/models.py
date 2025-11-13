@@ -53,6 +53,8 @@ class Vehiculo(models.Model):
     marca = models.CharField(max_length=50)
     modelo = models.CharField(max_length=50)
     capacidad = models.FloatField(help_text="Capacidad máxima en toneladas")
+    consumo_promedio = models.FloatField(default=0, help_text="Consumo estimado (litros/km)")
+    costo_km = models.FloatField(default=0, help_text="Costo operativo por km en ARS")
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='vehiculos')
 
     def __str__(self):
@@ -95,6 +97,9 @@ class Viaje(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
     ubicacion_actual = models.CharField(max_length=200, blank=True, null=True)
     codigo_qr = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
+    distancia_km = models.FloatField(default=0)
+    duracion_horas = models.FloatField(default=0)
+    costo_estimado = models.FloatField(default=0)
 
     def __str__(self):
         return f"Viaje {self.id} - {self.origen} → {self.destino}"

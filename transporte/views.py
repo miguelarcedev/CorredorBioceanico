@@ -451,3 +451,32 @@ def lista_viajes_demo(request):
             ]
         } for v in viajes
     ], safe=False)
+
+
+# transporte/views.py
+from django.db.models import Avg, Sum, Count
+from django.shortcuts import render
+from .models import Viaje, Chofer, Vehiculo
+
+def panel_analitico(request):
+    viajes = Viaje.objects.all()
+    choferes = Chofer.objects.all()
+    vehiculos = Vehiculo.objects.all()
+
+    # Evitamos errores si no hay datos
+    if not viajes.exists():
+        return render(request, "transporte/panel_analitico.html", {"sin_datos": True})
+
+    context = {
+        "total_viajes": viajes.count(),
+        "viajes_en_curso": viajes.filter(estado="EN_CURSO").count(),
+        "viajes_finalizados": viajes.filter(estado="FINALIZADO").count(),
+        "promedio_distancia": viajes.aggregate(Avg("distancia_km"))["distancia_km__avg"] or 0,
+        "promedio_duracion": viajes.aggregate(Avg("duracion_horas"))["duracion_horas__avg"] or 0,
+        "costo_total_estimado": viajes.aggregate(Sum("costo_estimado"))["costo_estimado__sum"] or 0,
+        "viajes_por_empresa": viajes.values("empresa__nombre").annotate(total=Count("id")).order_by("-total"),
+        "viajes_por_chofer": viajes.values("chofer__nombre").annotate(total=Count("id")).order_by("-total")[:5],
+        "viajes_por_vehiculo": viajes.values("vehiculo__patente").annotate(total=Count("id")).order_by("-total")[:5],
+    }
+
+    return render(request, "transporte/panel_analitico.html", context)

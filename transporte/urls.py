@@ -42,5 +42,7 @@ urlpatterns = [
     path('api/viajes_demo/', views.lista_viajes_demo, name='lista_viajes_demo'),
     path('api/ruta/', views.obtener_ruta, name='api_ruta'),
 
+    path("panel_analitico/", views.panel_analitico, name="panel_analitico"),
+
 
 ]
