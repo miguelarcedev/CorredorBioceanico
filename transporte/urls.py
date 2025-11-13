@@ -26,7 +26,6 @@ urlpatterns = [
 
     path('demo_viaje/', views.demo_viaje, name='demo_viaje'),
 
-    path("api/ruta/", views.obtener_ruta, name="api_ruta"),
 
     # Autenticación
     path('login/', auth_views.LoginView.as_view(template_name='transporte/login.html'), name='login'),
@@ -35,6 +34,12 @@ urlpatterns = [
     # Registro
     path('registro/', views.registro, name='registro'),
     path('activar/<uidb64>/<token>/', views.activar_cuenta, name='activar'),
+
+
+
+    # APIs usadas por el mapa
+    path('api/ruta/', views.obtener_ruta, name='obtener_ruta'),
+    path('api/viajes_demo/', views.lista_viajes_demo, name='lista_viajes_demo'),
 
 
 ]
