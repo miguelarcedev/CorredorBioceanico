@@ -17,27 +17,8 @@
             <th>Acción</th>
           </tr>
         </thead>
-        <tbody>
-          {% for viaje in viajes %}
-          <tr>
-            <td>{{ viaje.origen }}</td>
-            <td>{{ viaje.destino }}</td>
-            <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
-            <td>
-              <button class="btn btn-primary btn-sm btn-simular"
-                      data-origen="{{ viaje.origen }}"
-                      data-destino="{{ viaje.destino }}"
-                      data-lat1="{{ viaje.posiciones.first.latitud }}"
-                      data-lon1="{{ viaje.posiciones.first.longitud }}"
-                      data-lat2="{{ viaje.posiciones.last.latitud }}"
-                      data-lon2="{{ viaje.posiciones.last.longitud }}">
-                Simular
-              </button>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="4" class="text-center text-muted py-3">No hay viajes disponibles</td></tr>
-          {% endfor %}
+        <tbody id="tabla-viajes">
+          <tr><td colspan="4" class="text-muted py-3">Cargando viajes...</td></tr>
         </tbody>
       </table>
     </div>
@@ -55,12 +36,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
-const API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImFlNmEzYWMxNTQ3MDRkYTE5ZGIwMzhiNzU4OGU4ZTY2IiwiaCI6Im11cm11cjY0In0=";  // ⚠️ Coloca aquí tu API Key de OpenRouteService
+const API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImFlNmEzYWMxNTQ3MDRkYTE5ZGIwMzhiNzU4OGU4ZTY2IiwiaCI6Im11cm11cjY0In0=";
 
 let map = L.map('map').setView([-24.1858, -65.2995], 9);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
 let polyline = null;
 let marker = null;
@@ -70,15 +49,19 @@ let animInterval = null;
 //   OBTENER RUTA REAL
 // ============================
 async function obtenerRuta(start, end) {
-  const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
-  const data = await response.json();
-  if (data.error) {
-    console.error("Error obteniendo ruta:", data.error);
+  try {
+    const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
+    const data = await response.json();
+    if (data.error) {
+      console.error("Error obteniendo ruta:", data.error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error("Error de conexión al obtener ruta:", err);
     return null;
   }
-  return data;
 }
-
 
 // ============================
 //   ANIMAR VEHÍCULO
@@ -97,49 +80,76 @@ function moverMarcadorSuave(marker, start, end, duracion = 3000) {
 // ============================
 //   SIMULAR VIAJE
 // ============================
-async function iniciarSimulacion(origen, destino) {
+async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
   if (animInterval) clearInterval(animInterval);
   if (polyline) map.removeLayer(polyline);
   if (marker) map.removeLayer(marker);
 
-  try {
-    const ruta = await obtenerRutaReal(origen, destino);
-    polyline = L.polyline(ruta, { color: 'blue' }).addTo(map);
-    map.fitBounds(polyline.getBounds());
-    marker = L.marker(ruta[0]).addTo(map);
+  const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
+  if (!ruta) {
+    alert("No se pudo obtener la ruta real. Verifique su conexión o API Key.");
+    return;
+  }
 
-    let index = 0;
-    animInterval = setInterval(() => {
-      if (index < ruta.length - 1) {
-        moverMarcadorSuave(marker, ruta[index], ruta[index + 1]);
-        index++;
-      } else {
-        clearInterval(animInterval);
-      }
-    }, 3000);
+  polyline = L.polyline(ruta, { color: 'blue' }).addTo(map);
+  map.fitBounds(polyline.getBounds());
+  marker = L.marker(ruta[0]).addTo(map);
+
+  let index = 0;
+  animInterval = setInterval(() => {
+    if (index < ruta.length - 1) {
+      moverMarcadorSuave(marker, ruta[index], ruta[index + 1]);
+      index++;
+    } else {
+      clearInterval(animInterval);
+    }
+  }, 3000);
+}
+
+// ============================
+//   CARGAR VIAJES DEMO
+// ============================
+async function cargarViajesDemo() {
+  try {
+    const res = await fetch("/api/viajes_demo/");
+    const viajes = await res.json();
+
+    const tabla = document.getElementById("tabla-viajes");
+    tabla.innerHTML = "";
+
+    if (!viajes.length) {
+      tabla.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No hay viajes disponibles</td></tr>`;
+      return;
+    }
+
+    viajes.forEach(viaje => {
+      const p_ini = viaje.posiciones[0];
+      const p_fin = viaje.posiciones[viaje.posiciones.length - 1];
+
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${viaje.origen}</td>
+        <td>${viaje.destino}</td>
+        <td><span class="badge bg-info text-dark">${viaje.estado}</span></td>
+        <td><button class="btn btn-primary btn-sm">Simular</button></td>
+      `;
+
+      fila.querySelector("button").addEventListener("click", () => {
+        iniciarSimulacion(p_ini.latitud, p_ini.longitud, p_fin.latitud, p_fin.longitud);
+      });
+
+      tabla.appendChild(fila);
+    });
   } catch (err) {
-    console.error("Error en la simulación:", err);
-    alert("No se pudo obtener la ruta real. Verifique su API Key o conexión.");
+    console.error("Error cargando viajes demo:", err);
+    document.getElementById("tabla-viajes").innerHTML = `
+      <tr><td colspan="4" class="text-danger py-3">Error al cargar viajes demo</td></tr>`;
   }
 }
 
 // ============================
-//   EVENTO DE BOTONES
+//   INICIO
 // ============================
-document.querySelectorAll(".btn-simular").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const lat1 = parseFloat(btn.dataset.lat1);
-    const lon1 = parseFloat(btn.dataset.lon1);
-    const lat2 = parseFloat(btn.dataset.lat2);
-    const lon2 = parseFloat(btn.dataset.lon2);
-
-    if (isNaN(lat1) || isNaN(lat2)) {
-      alert("Este viaje no tiene posiciones válidas para simular.");
-      return;
-    }
-
-    await iniciarSimulacion([lat1, lon1], [lat2, lon2]);
-  });
-});
+document.addEventListener("DOMContentLoaded", cargarViajesDemo);
 </script>
 {% endblock %}
