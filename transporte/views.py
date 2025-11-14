@@ -387,55 +387,67 @@ def obtener_ruta(request):
     if not start or not end:
         return JsonResponse({'error': 'Faltan coordenadas'}, status=400)
 
-    # === ORDEN DE COORDENADAS ===
-    # OJO: ORS espera [longitud, latitud]
     try:
-        lat1, lon1 = map(float, start.split(','))
-        lat2, lon2 = map(float, end.split(','))
-    except:
-        return JsonResponse({'error': 'Formato de coordenadas inválido'}, status=400)
+        # Normalizar
+        start = start.replace(" ", "").replace(";", ",")
+        end = end.replace(" ", "").replace(";", ",")
 
-    # === API de OpenRouteService ===
-    API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImFlNmEzYWMxNTQ3MDRkYTE5ZGIwMzhiNzU4OGU4ZTY2IiwiaCI6Im11cm11cjY0In0="
+        lat1_str, lon1_str = start.split(',')
+        lat2_str, lon2_str = end.split(',')
+
+        lat1 = float(lat1_str)
+        lon1 = float(lon1_str)
+        lat2 = float(lat2_str)
+        lon2 = float(lon2_str)
+    except Exception as e:
+        return JsonResponse({'error': f'Error parseando coordenadas: {e}'}, status=400)
+
+    # --------------------------------------------
+    # IMPORTANTE: ORDEN CORRECTO (lon, lat)
+    # --------------------------------------------
+    coordinates = [
+        [lon1, lat1],
+        [lon2, lat2]
+    ]
+
+    # --------------------------------------------
+    # OPENROUTESERVICE
+    # --------------------------------------------
+    API_KEY = "XXXXXXXXX"
 
     url = "https://api.openrouteservice.org/v2/directions/driving-car"
-    headers = {
-        "Authorization": API_KEY,
-        "Content-Type": "application/json"
-    }
-    body = {
-        "coordinates": [
-            [lon1, lat1],
-            [lon2, lat2]
-        ]
-    }
+    headers = {"Authorization": API_KEY, "Content-Type": "application/json"}
 
     try:
-        r = requests.post(url, json=body, headers=headers, timeout=10)
+        r = requests.post(url, json={"coordinates": coordinates}, headers=headers, timeout=10)
         data = r.json()
 
-        # Si hay error en ORS
-        if 'error' in data:
-            raise Exception(data['error'])
-
-        coords = data['features'][0]['geometry']['coordinates']
-        ruta = [[lat, lon] for lon, lat in coords]  # invertimos para Leaflet
-        return JsonResponse(ruta, safe=False)
-
-    except Exception as e:
-        print("Error al consultar ORS:", e)
-
-        # === Plan B: usar OSRM público ===
-        osrm_url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson"
-        try:
-            r = requests.get(osrm_url, timeout=10)
-            data = r.json()
-            coords = data['routes'][0]['geometry']['coordinates']
+        if "features" in data:
+            coords = data['features'][0]['geometry']['coordinates']
             ruta = [[lat, lon] for lon, lat in coords]
             return JsonResponse(ruta, safe=False)
-        except Exception as e2:
-            print("Error al consultar OSRM:", e2)
-            return JsonResponse({'error': 'Error al consultar ruta externa', 'detalle': str(e2)}, status=500)
+
+    except:
+        pass
+
+    # --------------------------------------------
+    # Fallback seguro a OSRM
+    # --------------------------------------------
+    try:
+        osrm_url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson"
+
+        r = requests.get(osrm_url, timeout=10)
+        d = r.json()
+
+        if "routes" in d:
+            coords = d['routes'][0]['geometry']['coordinates']
+            ruta = [[lat, lon] for lon, lat in coords]
+            return JsonResponse(ruta, safe=False)
+
+    except:
+        pass
+
+    return JsonResponse({'error': 'No se pudo obtener la ruta real'}, status=500)
 
 # ================================
 #  API: lista de viajes demo
