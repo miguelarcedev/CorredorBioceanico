@@ -73,7 +73,8 @@ let animInterval = null;
 // ============================
 async function obtenerRuta(start, end) {
   try {
-    const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
+    const response = await fetch(`${window.location.origin}/api/ruta/?start=${start}&end=${end}`);
+
     const data = await response.json();
     if (data.error) {
       console.error("Error obteniendo ruta:", data.error);
