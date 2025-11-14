@@ -57,9 +57,9 @@
 <script>
 
 function fixRuta(ruta) {
+  // Convierte cada punto [lat, lon] en un objeto L.latLng
   return ruta.map(p => L.latLng(p[0], p[1]));
 }
-
 
 let map = L.map('map').setView([-24.1858, -65.2995], 9);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -87,7 +87,7 @@ async function obtenerRuta(start, end) {
 }
 
 // ============================
-//   SIMULAR VIAJE (CORREGIDO)
+//     SIMULAR VIAJE
 // ============================
 async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
@@ -103,26 +103,25 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
     return;
   }
 
-  // Dibujar ruta
-  const rutaFix = fixRuta(ruta);  
-    polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
+  // Convertir a L.latLng
+  const rutaFix = fixRuta(ruta);
 
+  // Dibujar ruta
+  polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
   map.fitBounds(polyline.getBounds());
 
-  // Crear marcador al inicio REAL de la ruta
+  // Crear marcador
   marker = L.marker(rutaFix[0]).addTo(map);
 
-
-  // Garantizamos enfocar al vehículo
+  // Enfocar correctamente (¡este era el error!)
   map.panTo(rutaFix[0]);
 
-
-  // Animación simple, estable y sin superposición
+  // Animación
   let index = 0;
-  const delay = 300; // velocidad de animación
+  const delay = 300;
 
   animInterval = setInterval(() => {
-    if (index >= ruta.length) {
+    if (index >= rutaFix.length) {
       clearInterval(animInterval);
       return;
     }
@@ -130,13 +129,12 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
     marker.setLatLng(rutaFix[index]);
     map.panTo(rutaFix[index]);
 
-
     index++;
   }, delay);
 }
 
 // ============================
-//   INICIO
+//       INICIO
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".btn-simular").forEach(btn => {
@@ -152,4 +150,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
+
 {% endblock %}
