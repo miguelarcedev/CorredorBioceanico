@@ -88,7 +88,19 @@ async function obtenerRuta(start, end) {
       return null;
     }
 
-    return ruta;
+    // Convertir a [lat, lon] si vienen como [lon, lat]
+    ruta = ruta.map(p => {
+    if (p.length === 2) {
+        // Si la latitud está fuera del rango esperado (< -55 o > -20 en Jujuy)
+        const lat = p[1];
+        const lon = p[0];
+        return [lat, lon];
+    }
+        return p;
+    });
+
+return ruta;
+
 
   } catch (err) {
     console.error("Error de conexión al obtener ruta:", err);
