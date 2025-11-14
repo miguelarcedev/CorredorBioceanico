@@ -69,44 +69,28 @@ let animInterval = null;
 async function obtenerRuta(start, end) {
   try {
     const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
-    const raw = await response.json();
+    let ruta = await response.json();
 
-    let ruta = raw;
-
-    // Convertir string → JSON si es necesario
     if (typeof ruta === "string") {
-      try {
-        ruta = JSON.parse(ruta);
-      } catch (e) {
-        console.error("Ruta recibida no es válida:", ruta);
-        return null;
-      }
+      ruta = JSON.parse(ruta);
     }
 
-    if (!Array.isArray(ruta)) {
-      console.error("Formato inesperado de ruta:", ruta);
-      return null;
-    }
+    if (!Array.isArray(ruta)) return null;
 
-    // Convertir a [lat, lon] si vienen como [lon, lat]
-    ruta = ruta.map(p => {
-    if (p.length === 2) {
-        // Si la latitud está fuera del rango esperado (< -55 o > -20 en Jujuy)
-        const lat = p[1];
-        const lon = p[0];
-        return [lat, lon];
-    }
-        return p;
-    });
+    // -------------------------------------------------
+    // CORRECCIÓN: convertir siempre a [lat, lon]
+    // -------------------------------------------------
+    ruta = ruta.map(p => [p[1], p[0]]);
+    // -------------------------------------------------
 
-return ruta;
-
+    return ruta;
 
   } catch (err) {
     console.error("Error de conexión al obtener ruta:", err);
     return null;
   }
 }
+
 
 // =======================================================
 //   ANIMACIÓN DEL VEHÍCULO — FLUIDA
