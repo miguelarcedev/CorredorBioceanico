@@ -56,6 +56,11 @@
 
 <script>
 
+function fixRuta(ruta) {
+  return ruta.map(p => L.latLng(p[0], p[1]));
+}
+
+
 let map = L.map('map').setView([-24.1858, -65.2995], 9);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
@@ -99,11 +104,14 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
   }
 
   // Dibujar ruta
-  polyline = L.polyline(ruta, { color: 'blue' }).addTo(map);
+  const rutaFix = fixRuta(ruta);  
+    polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
+
   map.fitBounds(polyline.getBounds());
 
   // Crear marcador al inicio REAL de la ruta
-  marker = L.marker(ruta[0]).addTo(map);
+  marker = L.marker(rutaFix[0]).addTo(map);
+
 
   // Garantizamos enfocar al vehículo
   map.panTo(ruta[0]);
@@ -118,8 +126,9 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
       return;
     }
 
-    marker.setLatLng(ruta[index]);
-    map.panTo(ruta[index]); // sigue al vehículo
+    marker.setLatLng(rutaFix[index]);
+    map.panTo(rutaFix[index]);
+
 
     index++;
   }, delay);
