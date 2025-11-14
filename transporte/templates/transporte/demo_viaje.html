@@ -63,85 +63,74 @@ let polyline = null;
 let marker = null;
 let animInterval = null;
 
-// =======================================================
-//   OBTENER RUTA REAL (CORREGIDO – convierte strings)
-// =======================================================
+// ============================
+//   OBTENER RUTA REAL
+// ============================
 async function obtenerRuta(start, end) {
   try {
     const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
-    let ruta = await response.json();
-
-    if (typeof ruta === "string") {
-      ruta = JSON.parse(ruta);
+    const data = await response.json();
+    if (data.error) {
+      console.error("Error obteniendo ruta:", data.error);
+      return null;
     }
-
-    if (!Array.isArray(ruta)) return null;
-
-    // -------------------------------------------------
-    // CORRECCIÓN: convertir siempre a [lat, lon]
-    // -------------------------------------------------
-    ruta = ruta.map(p => [p[1], p[0]]);
-    // -------------------------------------------------
-
-    return ruta;
-
+    return data; // lista de [lat, lon]
   } catch (err) {
     console.error("Error de conexión al obtener ruta:", err);
     return null;
   }
 }
 
+// ============================
+//   SIMULAR VIAJE (CORREGIDO)
+// ============================
+async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
-// =======================================================
-//   ANIMACIÓN DEL VEHÍCULO — FLUIDA
-// =======================================================
-function animarMarker(marker, ruta) {
+  // Reset visual
+  if (animInterval) clearInterval(animInterval);
+  if (polyline) map.removeLayer(polyline);
+  if (marker) map.removeLayer(marker);
+
+  // Pedimos la ruta al backend
+  const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
+  if (!ruta) {
+    alert("No se pudo obtener la ruta real. Verifique API Key o conexión.");
+    return;
+  }
+
+  // Dibujar ruta
+  polyline = L.polyline(ruta, { color: 'blue' }).addTo(map);
+  map.fitBounds(polyline.getBounds());
+
+  // Crear marcador al inicio REAL de la ruta
+  marker = L.marker(ruta[0]).addTo(map);
+
+  // Garantizamos enfocar al vehículo
+  map.panTo(ruta[0]);
+
+  // Animación simple, estable y sin superposición
   let index = 0;
-  
-  animInterval = setInterval(() => {
+  const delay = 300; // velocidad de animación
 
+  animInterval = setInterval(() => {
     if (index >= ruta.length) {
       clearInterval(animInterval);
       return;
     }
 
     marker.setLatLng(ruta[index]);
+    map.panTo(ruta[index]); // sigue al vehículo
+
     index++;
-
-  }, 150); // velocidad
+  }, delay);
 }
 
-// =======================================================
-//   INICIAR SIMULACIÓN
-// =======================================================
-async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
-
-  if (animInterval) clearInterval(animInterval);
-  if (polyline) map.removeLayer(polyline);
-  if (marker) map.removeLayer(marker);
-
-  const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
-
-  if (!ruta) {
-    alert("No se pudo obtener la ruta real.");
-    return;
-  }
-
-  polyline = L.polyline(ruta, { color: "blue" }).addTo(map);
-  map.fitBounds(polyline.getBounds());
-
-  marker = L.marker(ruta[0]).addTo(map);
-
-  animarMarker(marker, ruta);
-}
-
-// =======================================================
-//   INICIALIZAR BOTONES
-// =======================================================
+// ============================
+//   INICIO
+// ============================
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".btn-simular").forEach(btn => {
     btn.addEventListener("click", () => {
-
       const lat1 = parseFloat(btn.dataset.lat1);
       const lon1 = parseFloat(btn.dataset.lon1);
       const lat2 = parseFloat(btn.dataset.lat2);
