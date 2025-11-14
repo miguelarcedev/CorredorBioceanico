@@ -63,41 +63,61 @@ let polyline = null;
 let marker = null;
 let animInterval = null;
 
-// ============================
-//   OBTENER RUTA REAL
-// ============================
+// =======================================================
+//   OBTENER RUTA REAL (CORREGIDO – convierte strings)
+// =======================================================
 async function obtenerRuta(start, end) {
   try {
     const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
-    const data = await response.json();
-    if (data.error) {
-      console.error("Error obteniendo ruta:", data.error);
+    const raw = await response.json();
+
+    let ruta = raw;
+
+    // Convertir string → JSON si es necesario
+    if (typeof ruta === "string") {
+      try {
+        ruta = JSON.parse(ruta);
+      } catch (e) {
+        console.error("Ruta recibida no es válida:", ruta);
+        return null;
+      }
+    }
+
+    if (!Array.isArray(ruta)) {
+      console.error("Formato inesperado de ruta:", ruta);
       return null;
     }
-    return data;
+
+    return ruta;
+
   } catch (err) {
     console.error("Error de conexión al obtener ruta:", err);
     return null;
   }
 }
 
-// ============================
-//   ANIMAR VEHÍCULO
-// ============================
-function moverMarcadorSuave(marker, start, end, duracion = 3000) {
-  const steps = 30;
-  let i = 0;
-  const interval = setInterval(() => {
-    const lat = start[0] + (end[0] - start[0]) * (i / steps);
-    const lon = start[1] + (end[1] - start[1]) * (i / steps);
-    marker.setLatLng([lat, lon]);
-    if (i++ >= steps) clearInterval(interval);
-  }, duracion / steps);
+// =======================================================
+//   ANIMACIÓN DEL VEHÍCULO — FLUIDA
+// =======================================================
+function animarMarker(marker, ruta) {
+  let index = 0;
+  
+  animInterval = setInterval(() => {
+
+    if (index >= ruta.length) {
+      clearInterval(animInterval);
+      return;
+    }
+
+    marker.setLatLng(ruta[index]);
+    index++;
+
+  }, 150); // velocidad
 }
 
-// ============================
-//   SIMULAR VIAJE (REAL)
-// ============================
+// =======================================================
+//   INICIAR SIMULACIÓN
+// =======================================================
 async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
   if (animInterval) clearInterval(animInterval);
@@ -105,32 +125,27 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
   if (marker) map.removeLayer(marker);
 
   const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
+
   if (!ruta) {
-    alert("No se pudo obtener la ruta real. Verifique la API Key o la conexión.");
+    alert("No se pudo obtener la ruta real.");
     return;
   }
 
-  polyline = L.polyline(ruta, { color: 'blue' }).addTo(map);
+  polyline = L.polyline(ruta, { color: "blue" }).addTo(map);
   map.fitBounds(polyline.getBounds());
+
   marker = L.marker(ruta[0]).addTo(map);
 
-  let index = 0;
-  animInterval = setInterval(() => {
-    if (index < ruta.length - 1) {
-      moverMarcadorSuave(marker, ruta[index], ruta[index + 1]);
-      index++;
-    } else {
-      clearInterval(animInterval);
-    }
-  }, 3000);
+  animarMarker(marker, ruta);
 }
 
-// ============================
-//   INICIO
-// ============================
+// =======================================================
+//   INICIALIZAR BOTONES
+// =======================================================
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".btn-simular").forEach(btn => {
     btn.addEventListener("click", () => {
+
       const lat1 = parseFloat(btn.dataset.lat1);
       const lon1 = parseFloat(btn.dataset.lon1);
       const lat2 = parseFloat(btn.dataset.lat2);
