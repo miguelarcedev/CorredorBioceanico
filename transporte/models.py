@@ -86,7 +86,11 @@ class Viaje(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     origen = models.CharField(max_length=150)
+    lat_origen = models.FloatField(null=True, blank=True)
+    lon_origen = models.FloatField(null=True, blank=True)
     destino = models.CharField(max_length=150)
+    lat_destino = models.FloatField(null=True, blank=True)
+    lon_destino = models.FloatField(null=True, blank=True)
     fecha_salida = models.DateTimeField()
     fecha_llegada_estimada = models.DateTimeField()
     fecha_llegada_real = models.DateTimeField(null=True, blank=True)
@@ -100,6 +104,12 @@ class Viaje(models.Model):
     distancia_km = models.FloatField(default=0)
     duracion_horas = models.FloatField(default=0)
     costo_estimado = models.FloatField(default=0)
+    costo_combustible = models.FloatField(default=0, help_text="Costo total de combustible en USD")
+    kilometros_recorridos = models.FloatField(default=0, help_text="Distancia total del viaje en km")
+    tiempo_total_horas = models.FloatField(default=0, help_text="Duración total en horas")
+    consumo_promedio = models.FloatField(default=0, help_text="Litros por 100 km")
+    velocidad_promedio = models.FloatField(default=0, help_text="Velocidad promedio en km/h")
+
 
     def __str__(self):
         return f"Viaje {self.id} - {self.origen} → {self.destino}"
@@ -234,3 +244,32 @@ class PosicionDemo(models.Model):
 
     def __str__(self):
         return f"{self.viaje.origen} → {self.viaje.destino} @ {self.timestamp:%Y-%m-%d %H:%M:%S}"
+
+from geopy.distance import geodesic
+from datetime import datetime
+
+def calcular_metricas_viaje(viaje):
+    """
+    Calcula métricas de distancia, tiempo y velocidad a partir de las posiciones GPS registradas.
+    """
+    posiciones = viaje.posiciones.order_by('timestamp')
+    if posiciones.count() < 2:
+        return False  # No hay suficientes puntos
+
+    # Calcular distancia total
+    distancia_total = 0
+    for i in range(1, posiciones.count()):
+        punto1 = (posiciones[i-1].latitud, posiciones[i-1].longitud)
+        punto2 = (posiciones[i].latitud, posiciones[i].longitud)
+        distancia_total += geodesic(punto1, punto2).km
+
+    # Calcular tiempo total
+    tiempo_total = (posiciones.last().timestamp - posiciones.first().timestamp).total_seconds() / 3600
+    velocidad_promedio = distancia_total / tiempo_total if tiempo_total > 0 else 0
+
+    # Guardar en el modelo
+    viaje.kilometros_recorridos = round(distancia_total, 2)
+    viaje.tiempo_total_horas = round(tiempo_total, 2)
+    viaje.velocidad_promedio = round(velocidad_promedio, 2)
+    viaje.save(update_fields=['kilometros_recorridos', 'tiempo_total_horas', 'velocidad_promedio'])
+    return True

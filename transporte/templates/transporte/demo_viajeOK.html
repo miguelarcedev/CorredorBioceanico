@@ -1,7 +1,7 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
 <div class="container-fluid mt-4">
-  <h2>Simulación de viajes - Modo Real</h2>
+  <h2>Simulación de viajes - Modo Demo</h2>
 
   <div class="card shadow-sm mb-4">
     <div class="card-header bg-primary text-white">
@@ -18,25 +18,24 @@
           </tr>
         </thead>
         <tbody id="tabla-viajes">
-
           {% for viaje in viajes %}
-          <tr>
-              <td>{{ viaje.origen }}</td>
-              <td>{{ viaje.destino }}</td>
-              <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
-              <td>
-                  <button class="btn btn-primary btn-sm btn-simular"
-                          data-lat1="{{ viaje.lat_origen }}"
-                          data-lon1="{{ viaje.lon_origen }}"
-                          data-lat2="{{ viaje.lat_destino }}"
-                          data-lon2="{{ viaje.lon_destino }}">
-                      Simular
-                  </button>
-              </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="4" class="text-center text-muted py-3">No hay viajes</td></tr>
-          {% endfor %}
+<tr>
+    <td>{{ viaje.origen }}</td>
+    <td>{{ viaje.destino }}</td>
+    <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
+    <td>
+        <button class="btn btn-primary btn-sm btn-simular"
+                data-lat1="{{ viaje.lat_origen }}"
+                data-lon1="{{ viaje.lon_origen }}"
+                data-lat2="{{ viaje.lat_destino }}"
+                data-lon2="{{ viaje.lon_destino }}">
+            Simular
+        </button>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="text-center text-muted py-3">No hay viajes</td></tr>
+{% endfor %}
 
         </tbody>
       </table>
@@ -55,6 +54,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
+const API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImFlNmEzYWMxNTQ3MDRkYTE5ZGIwMzhiNzU4OGU4ZTY2IiwiaCI6Im11cm11cjY0In0=";
 
 let map = L.map('map').setView([-24.1858, -65.2995], 9);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -96,17 +96,16 @@ function moverMarcadorSuave(marker, start, end, duracion = 3000) {
 }
 
 // ============================
-//   SIMULAR VIAJE (REAL)
+//   SIMULAR VIAJE
 // ============================
 async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
-
   if (animInterval) clearInterval(animInterval);
   if (polyline) map.removeLayer(polyline);
   if (marker) map.removeLayer(marker);
 
   const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
   if (!ruta) {
-    alert("No se pudo obtener la ruta real. Verifique la API Key o la conexión.");
+    alert("No se pudo obtener la ruta real. Verifique su conexión o API Key.");
     return;
   }
 
@@ -126,20 +125,49 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 }
 
 // ============================
+//   CARGAR VIAJES DEMO
+// ============================
+async function cargarViajesDemo() {
+  try {
+    const res = await fetch("/api/viajes_demo/");
+    const viajes = await res.json();
+
+    const tabla = document.getElementById("tabla-viajes");
+    tabla.innerHTML = "";
+
+    if (!viajes.length) {
+      tabla.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No hay viajes disponibles</td></tr>`;
+      return;
+    }
+
+    viajes.forEach(viaje => {
+      const p_ini = viaje.posiciones[0];
+      const p_fin = viaje.posiciones[viaje.posiciones.length - 1];
+
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${viaje.origen}</td>
+        <td>${viaje.destino}</td>
+        <td><span class="badge bg-info text-dark">${viaje.estado}</span></td>
+        <td><button class="btn btn-primary btn-sm">Simular</button></td>
+      `;
+
+      fila.querySelector("button").addEventListener("click", () => {
+        iniciarSimulacion(p_ini.latitud, p_ini.longitud, p_fin.latitud, p_fin.longitud);
+      });
+
+      tabla.appendChild(fila);
+    });
+  } catch (err) {
+    console.error("Error cargando viajes demo:", err);
+    document.getElementById("tabla-viajes").innerHTML = `
+      <tr><td colspan="4" class="text-danger py-3">Error al cargar viajes demo</td></tr>`;
+  }
+}
+
+// ============================
 //   INICIO
 // ============================
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".btn-simular").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const lat1 = parseFloat(btn.dataset.lat1);
-      const lon1 = parseFloat(btn.dataset.lon1);
-      const lat2 = parseFloat(btn.dataset.lat2);
-      const lon2 = parseFloat(btn.dataset.lon2);
-
-      iniciarSimulacion(lat1, lon1, lat2, lon2);
-    });
-  });
-});
-
+document.addEventListener("DOMContentLoaded", cargarViajesDemo);
 </script>
 {% endblock %}

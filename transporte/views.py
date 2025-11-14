@@ -256,9 +256,12 @@ from .models import ViajeDemo  # asegurate de importar el modelo correcto
 
 from django.shortcuts import render
 
+
+from .models import Viaje
+
 def demo_viaje(request):
-    viajes = ViajeDemo.objects.all().prefetch_related("posiciones")
-    return render(request, 'transporte/demo_viaje.html', {'viajes': viajes})
+    viajes = Viaje.objects.filter(estado="PROGRAMADO")
+    return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
 
 
 
@@ -458,7 +461,7 @@ from django.db.models import Avg, Sum, Count
 from django.shortcuts import render
 from .models import Viaje, Chofer, Vehiculo
 
-def panel_analitico(request):
+""" def panel_analitico(request):
     viajes = Viaje.objects.all()
     choferes = Chofer.objects.all()
     vehiculos = Vehiculo.objects.all()
@@ -479,4 +482,24 @@ def panel_analitico(request):
         "viajes_por_vehiculo": viajes.values("vehiculo__patente").annotate(total=Count("id")).order_by("-total")[:5],
     }
 
-    return render(request, "transporte/panel_analitico.html", context)
+    return render(request, "transporte/panel_analitico.html", context) """
+
+
+from django.db.models import Avg, Count, Sum
+from django.shortcuts import render
+from .models import Viaje
+
+def panel_analitico(request):
+    viajes = Viaje.objects.all()
+
+    data = {
+        'total_viajes': viajes.count(),
+        'distancia_total': viajes.aggregate(Sum('kilometros_recorridos'))['kilometros_recorridos__sum'] or 0,
+        'distancia_promedio': viajes.aggregate(Avg('kilometros_recorridos'))['kilometros_recorridos__avg'] or 0,
+        'velocidad_promedio': viajes.aggregate(Avg('velocidad_promedio'))['velocidad_promedio__avg'] or 0,
+        'tiempo_promedio': viajes.aggregate(Avg('tiempo_total_horas'))['tiempo_total_horas__avg'] or 0,
+        'alertas': viajes.values('estado').annotate(total=Count('alertas')),
+        'lista_viajes': viajes.order_by('-fecha_salida')[:10],
+    }
+
+    return render(request, 'analitico/panel.html', {'data': data})
