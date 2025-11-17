@@ -1,0 +1,37 @@
+{% extends 'transporte/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">📊 Panel Analítico de Viajes</h2>
+
+    <div class="row text-center">
+        <div class="col-md-3"><h5>Total de viajes</h5><p>{{ data.total_viajes }}</p></div>
+        <div class="col-md-3"><h5>Distancia total (km)</h5><p>{{ data.distancia_total|floatformat:2 }}</p></div>
+        <div class="col-md-3"><h5>Velocidad promedio (km/h)</h5><p>{{ data.velocidad_promedio|floatformat:2 }}</p></div>
+        <div class="col-md-3"><h5>Tiempo promedio (h)</h5><p>{{ data.tiempo_promedio|floatformat:2 }}</p></div>
+    </div>
+
+    <hr>
+
+    <canvas id="chartDistancia" height="100"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('chartDistancia');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for v in data.lista_viajes %}"{{ v.origen }} → {{ v.destino }}",{% endfor %}],
+            datasets: [{
+                label: 'Distancia (km)',
+                data: [{% for v in data.lista_viajes %}{{ v.kilometros_recorridos }},{% endfor %}],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+{% endblock %}

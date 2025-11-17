@@ -253,10 +253,15 @@ from .models import Viaje
 
 from .models import ViajeDemo  # asegurate de importar el modelo correcto
 
-def demo_viaje(request):
-    viajes = ViajeDemo.objects.filter(estado="PROGRAMADO")  # 👈 usamos el modelo demo
-    return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
 
+from django.shortcuts import render
+
+
+from .models import Viaje
+
+def demo_viaje(request):
+    viajes = Viaje.objects.filter(estado="PROGRAMADO")
+    return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
 
 
 
@@ -299,6 +304,7 @@ def monitoreo_real(request):
 def monitoreo_demo(request):
     viajes = ViajeDemo.objects.all()
     return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
+
 
 
 # -----------------------------
@@ -347,3 +353,165 @@ def registrar_posicion_demo(request):
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import make_aware
+from datetime import datetime, timedelta
+from .models import ViajeDemo, PosicionDemo
+
+# ================================
+#  API: obtener ruta entre puntos
+# ================================
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import make_aware
+from datetime import datetime, timedelta
+from .models import ViajeDemo, PosicionDemo
+
+# ================================
+#  API: obtener ruta entre puntos
+# ================================
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def obtener_ruta(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    if not start or not end:
+        return JsonResponse({'error': 'Faltan coordenadas'}, status=400)
+
+    try:
+        # Normalizar
+        start = start.replace(" ", "").replace(";", ",")
+        end = end.replace(" ", "").replace(";", ",")
+
+        lat1_str, lon1_str = start.split(',')
+        lat2_str, lon2_str = end.split(',')
+
+        lat1 = float(lat1_str)
+        lon1 = float(lon1_str)
+        lat2 = float(lat2_str)
+        lon2 = float(lon2_str)
+    except Exception as e:
+        return JsonResponse({'error': f'Error parseando coordenadas: {e}'}, status=400)
+
+    # --------------------------------------------
+    # IMPORTANTE: ORDEN CORRECTO (lon, lat)
+    # --------------------------------------------
+    coordinates = [
+        [lon1, lat1],
+        [lon2, lat2]
+    ]
+
+    # --------------------------------------------
+    # OPENROUTESERVICE
+    # --------------------------------------------
+    API_KEY = "XXXXXXXXX"
+
+    url = "https://api.openrouteservice.org/v2/directions/driving-car"
+    headers = {"Authorization": API_KEY, "Content-Type": "application/json"}
+
+    try:
+        r = requests.post(url, json={"coordinates": coordinates}, headers=headers, timeout=10)
+        data = r.json()
+
+        if "features" in data:
+            coords = data['features'][0]['geometry']['coordinates']
+            ruta = [[lat, lon] for lon, lat in coords]
+            return JsonResponse(ruta, safe=False)
+
+    except:
+        pass
+
+    # --------------------------------------------
+    # Fallback seguro a OSRM
+    # --------------------------------------------
+    try:
+        osrm_url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson"
+
+        r = requests.get(osrm_url, timeout=10)
+        d = r.json()
+
+        if "routes" in d:
+            coords = d['routes'][0]['geometry']['coordinates']
+            ruta = [[lat, lon] for lon, lat in coords]
+            return JsonResponse(ruta, safe=False)
+
+    except:
+        pass
+
+    return JsonResponse({'error': 'No se pudo obtener la ruta real'}, status=500)
+
+# ================================
+#  API: lista de viajes demo
+# ================================
+def lista_viajes_demo(request):
+    viajes = ViajeDemo.objects.all().prefetch_related("posiciones")
+    return JsonResponse([
+        {
+            "id": v.id,
+            "origen": v.origen,
+            "destino": v.destino,
+            "estado": v.estado,
+            "posiciones": [
+                {"latitud": p.latitud, "longitud": p.longitud, "timestamp": p.timestamp}
+                for p in v.posiciones.all()
+            ]
+        } for v in viajes
+    ], safe=False)
+
+
+# transporte/views.py
+from django.db.models import Avg, Sum, Count
+from django.shortcuts import render
+from .models import Viaje, Chofer, Vehiculo
+
+""" def panel_analitico(request):
+    viajes = Viaje.objects.all()
+    choferes = Chofer.objects.all()
+    vehiculos = Vehiculo.objects.all()
+
+    # Evitamos errores si no hay datos
+    if not viajes.exists():
+        return render(request, "transporte/panel_analitico.html", {"sin_datos": True})
+
+    context = {
+        "total_viajes": viajes.count(),
+        "viajes_en_curso": viajes.filter(estado="EN_CURSO").count(),
+        "viajes_finalizados": viajes.filter(estado="FINALIZADO").count(),
+        "promedio_distancia": viajes.aggregate(Avg("distancia_km"))["distancia_km__avg"] or 0,
+        "promedio_duracion": viajes.aggregate(Avg("duracion_horas"))["duracion_horas__avg"] or 0,
+        "costo_total_estimado": viajes.aggregate(Sum("costo_estimado"))["costo_estimado__sum"] or 0,
+        "viajes_por_empresa": viajes.values("empresa__nombre").annotate(total=Count("id")).order_by("-total"),
+        "viajes_por_chofer": viajes.values("chofer__nombre").annotate(total=Count("id")).order_by("-total")[:5],
+        "viajes_por_vehiculo": viajes.values("vehiculo__patente").annotate(total=Count("id")).order_by("-total")[:5],
+    }
+
+    return render(request, "transporte/panel_analitico.html", context) """
+
+
+from django.db.models import Avg, Count, Sum
+from django.shortcuts import render
+from .models import Viaje
+
+def panel_analitico(request):
+    viajes = Viaje.objects.all()
+
+    data = {
+        'total_viajes': viajes.count(),
+        'distancia_total': viajes.aggregate(Sum('kilometros_recorridos'))['kilometros_recorridos__sum'] or 0,
+        'distancia_promedio': viajes.aggregate(Avg('kilometros_recorridos'))['kilometros_recorridos__avg'] or 0,
+        'velocidad_promedio': viajes.aggregate(Avg('velocidad_promedio'))['velocidad_promedio__avg'] or 0,
+        'tiempo_promedio': viajes.aggregate(Avg('tiempo_total_horas'))['tiempo_total_horas__avg'] or 0,
+        'alertas': viajes.values('estado').annotate(total=Count('alertas')),
+        'lista_viajes': viajes.order_by('-fecha_salida')[:10],
+    }
+
+    return render(request, 'analitico/panel.html', {'data': data})

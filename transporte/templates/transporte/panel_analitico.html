@@ -1,0 +1,62 @@
+{% extends 'transporte/base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+  <h2 class="mb-4">📈 Panel Analítico de Logística</h2>
+
+  {% if sin_datos %}
+    <div class="alert alert-warning">No hay datos suficientes para generar análisis.</div>
+  {% else %}
+  
+  <div class="row text-center mb-4">
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h5>{{ total_viajes }}</h5><p>Total de viajes</p></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h5>{{ viajes_en_curso }}</h5><p>En curso</p></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h5>{{ viajes_finalizados }}</h5><p>Finalizados</p></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h5>${{ costo_total_estimado|floatformat:2 }}</h5><p>Costo total estimado</p></div></div></div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <canvas id="graficoEmpresas"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="graficoChoferes"></canvas>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const datosEmpresas = {{ viajes_por_empresa|safe }};
+const datosChoferes = {{ viajes_por_chofer|safe }};
+
+new Chart(document.getElementById('graficoEmpresas'), {
+  type: 'bar',
+  data: {
+    labels: datosEmpresas.map(e => e.empresa__nombre),
+    datasets: [{
+      label: 'Viajes por empresa',
+      data: datosEmpresas.map(e => e.total),
+      borderWidth: 1
+    }]
+  },
+  options: { responsive: true }
+});
+
+new Chart(document.getElementById('graficoChoferes'), {
+  type: 'pie',
+  data: {
+    labels: datosChoferes.map(c => c.chofer__nombre),
+    datasets: [{
+      label: 'Viajes por chofer',
+      data: datosChoferes.map(c => c.total),
+      borderWidth: 1
+    }]
+  },
+  options: { responsive: true }
+});
+</script>
+
+{% endblock %}
