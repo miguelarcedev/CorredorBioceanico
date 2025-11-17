@@ -57,8 +57,44 @@ class Vehiculo(models.Model):
     costo_km = models.FloatField(default=0, help_text="Costo operativo por km en ARS")
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='vehiculos')
 
+    estado = models.CharField(max_length=20, choices=[
+        ('activo', 'Activo'),
+        ('mantenimiento', 'En mantenimiento'),
+        ('inactivo', 'Inactivo')
+    ], default='activo')
+
+    fecha_alta = models.DateField(auto_now_add=True)
+
     def __str__(self):
         return f"{self.patente} - {self.marca} {self.modelo}"
+
+
+
+
+ESTADOS_EQUIPO = [
+    ("online", "Online"),
+    ("offline", "Offline"),
+    ("mantenimiento", "En Mantenimiento"),
+]
+
+class EquipoGPS(models.Model):
+    nombre = models.CharField(max_length=100)
+    imei = models.CharField(max_length=30, unique=True)
+    tipo = models.CharField(max_length=50, default="GPS")
+
+    vehiculo = models.ForeignKey(
+        Vehiculo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="equipos"
+    )
+
+    estado = models.CharField(max_length=20, choices=ESTADOS_EQUIPO, default="offline")
+    ultima_conexion = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.nombre} ({self.imei})"
 
 
 # ---------------------------
@@ -77,55 +113,93 @@ class Carga(models.Model):
 # ---------------------------
 # MODELO DE VIAJE
 # ---------------------------
+import uuid
+from io import BytesIO
+from django.core.files import File
+from django.urls import reverse
+import qrcode
+from django.db import models
+
 class Viaje(models.Model):
+
     ESTADOS = [
-        ('PROGRAMADO', 'Programado'),
-        ('EN_CURSO', 'En curso'),
-        ('FINALIZADO', 'Finalizado'),
+        ("PROGRAMADO", "Programado"),
+        ("EN_CURSO", "En curso"),
+        ("FINALIZADO", "Finalizado"),
+        ("CANCELADO", "Cancelado"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # ---------------------------------------
+    # DATOS BASE DEL VIAJE
+    # ---------------------------------------
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="viajes")
+    chofer = models.ForeignKey(Chofer, on_delete=models.CASCADE, related_name="viajes")
+    vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name="viajes")
+    carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name="viajes")
+
     origen = models.CharField(max_length=150)
+    destino = models.CharField(max_length=150)
+
     lat_origen = models.FloatField(null=True, blank=True)
     lon_origen = models.FloatField(null=True, blank=True)
-    destino = models.CharField(max_length=150)
     lat_destino = models.FloatField(null=True, blank=True)
     lon_destino = models.FloatField(null=True, blank=True)
+
     fecha_salida = models.DateTimeField()
     fecha_llegada_estimada = models.DateTimeField()
     fecha_llegada_real = models.DateTimeField(null=True, blank=True)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='viajes')
-    chofer = models.ForeignKey(Chofer, on_delete=models.CASCADE, related_name='viajes')
-    vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='viajes')
-    carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name='viajes')
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
+
+    estado = models.CharField(max_length=20, choices=ESTADOS, default="PROGRAMADO")
+
+    # Ubicación en tiempo real (útil para monitoreo)
     ubicacion_actual = models.CharField(max_length=200, blank=True, null=True)
-    codigo_qr = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
+
+    # QR para trazabilidad
+    codigo_qr = models.ImageField(upload_to="qrcodes/", blank=True, null=True)
+
+    # ---------------------------------------
+    # DATOS OPERATIVOS Y KPIs AUTOMATIZADOS
+    # ---------------------------------------
     distancia_km = models.FloatField(default=0)
+    kilometros_recorridos = models.FloatField(default=0)
+
     duracion_horas = models.FloatField(default=0)
+    tiempo_total_horas = models.FloatField(default=0)
+
+    consumo_promedio = models.FloatField(default=0, help_text="Litros por 100 km")
+    velocidad_promedio = models.FloatField(default=0, help_text="km/h")
+
     costo_estimado = models.FloatField(default=0)
     costo_combustible = models.FloatField(default=0, help_text="Costo total de combustible en USD")
-    kilometros_recorridos = models.FloatField(default=0, help_text="Distancia total del viaje en km")
-    tiempo_total_horas = models.FloatField(default=0, help_text="Duración total en horas")
-    consumo_promedio = models.FloatField(default=0, help_text="Litros por 100 km")
-    velocidad_promedio = models.FloatField(default=0, help_text="Velocidad promedio en km/h")
 
-
+    # ---------------------------------------
+    # MÉTODOS
+    # ---------------------------------------
     def __str__(self):
         return f"Viaje {self.id} - {self.origen} → {self.destino}"
-    
+
     def save(self, *args, **kwargs):
-        # Guardamos primero para tener el ID disponible
+        crear_qr = False
+
+        # Guardamos primero para obtener el ID
+        if not self.pk:
+            crear_qr = True
+
         super().save(*args, **kwargs)
-        if not self.codigo_qr:
-            # Generamos URL del detalle del viaje
+
+        # Generación de QR con URL pública del viaje
+        if crear_qr:
             url = f"https://corredor.now-dns.net{reverse('viaje_detalle', args=[self.id])}"
             qr_img = qrcode.make(url)
+
             buffer = BytesIO()
-            qr_img.save(buffer, format='PNG')
-            file_name = f'viaje_{self.id}.png'
+            qr_img.save(buffer, format="PNG")
+            file_name = f"viaje_{self.id}.png"
+
             self.codigo_qr.save(file_name, File(buffer), save=False)
-            super().save(update_fields=['codigo_qr'])
+            super().save(update_fields=["codigo_qr"])
 
 
 # ---------------------------
