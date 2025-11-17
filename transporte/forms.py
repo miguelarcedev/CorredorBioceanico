@@ -40,3 +40,37 @@ class ViajeForm(forms.ModelForm):
             self.fields['chofer'].queryset = empresa.choferes.all()
             self.fields['vehiculo'].queryset = empresa.vehiculos.all()
             self.fields['carga'].queryset = empresa.cargas.all()
+
+
+from .models import EquipoGPS
+
+class EquipoGPSForm(forms.ModelForm):
+    class Meta:
+        model = EquipoGPS
+        fields = ["nombre", "imei", "tipo", "vehiculo", "estado", "ultima_conexion"]
+        widgets = {
+            "ultima_conexion": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+        }
+
+
+from django import forms
+from .models import Vehiculo
+
+class VehiculoForm(forms.ModelForm):
+    class Meta:
+        model = Vehiculo
+        fields = [
+            'patente', 'marca', 'modelo',
+            'capacidad', 'consumo_promedio', 'costo_km',
+            'empresa', 'estado'
+        ]
+        widgets = {
+            'estado': forms.Select(attrs={'class': 'form-select'}),
+            'empresa': forms.Select(attrs={'class': 'form-select'}),
+            'patente': forms.TextInput(attrs={'class': 'form-control'}),
+            'marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control'}),
+            'capacidad': forms.NumberInput(attrs={'class': 'form-control'}),
+            'consumo_promedio': forms.NumberInput(attrs={'class': 'form-control'}),
+            'costo_km': forms.NumberInput(attrs={'class': 'form-control'}),
+        }

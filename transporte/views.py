@@ -25,17 +25,66 @@ def dashboard(request):
     return render(request, 'transporte/dashboard.html', {'viajes': viajes})
 
 
-@login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from .models import Viaje
+from .forms import ViajeForm
+
+
+# LISTA
+
+
 def viaje_list(request):
-    empresa = request.user.empresa if hasattr(request.user, 'empresa') else None
-    viajes = Viaje.objects.filter(empresa=empresa) if empresa else Viaje.objects.all()
-    return render(request, 'transporte/viaje_list.html', {'viajes': viajes})
+    viajes = Viaje.objects.all().order_by('-fecha_salida')
+    return render(request, 'viajes/viaje_list.html', {'viajes': viajes})
 
 
-@login_required
-def viaje_detalle(request, viaje_id):
-    viaje = get_object_or_404(Viaje, id=viaje_id)
-    return render(request, 'transporte/viaje_detalle.html', {'viaje': viaje})
+# CREAR
+
+
+def viaje_create(request):
+    if request.method == 'POST':
+        form = ViajeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('viaje_list')
+    else:
+        form = ViajeForm()
+    return render(request, 'viajes/viaje_form.html', {'form': form})
+
+
+# EDITAR
+
+
+def viaje_edit(request, pk):
+    viaje = get_object_or_404(Viaje, pk=pk)
+    if request.method == 'POST':
+        form = ViajeForm(request.POST, instance=viaje)
+        if form.is_valid():
+            form.save()
+            return redirect('viaje_list')
+    else:
+        form = ViajeForm(instance=viaje)
+    return render(request, 'viajes/viaje_form.html', {'form': form, 'viaje': viaje})
+
+
+# ELIMINAR
+
+
+def viaje_delete(request, pk):
+    viaje = get_object_or_404(Viaje, pk=pk)
+    if request.method == 'POST':
+        viaje.delete()
+        return redirect('viaje_list')
+    return render(request, 'viajes/viaje_confirm_delete.html', {'viaje': viaje})
+
+
+# DETALLE
+
+
+def viaje_detalle(request, pk):
+    viaje = get_object_or_404(Viaje, pk=pk)
+    return render(request, 'viajes/viaje_detalle.html', {'viaje': viaje})
 
 
 from django.contrib.sites.shortcuts import get_current_site
@@ -515,3 +564,138 @@ def panel_analitico(request):
     }
 
     return render(request, 'analitico/panel.html', {'data': data})
+
+
+# ================================
+#  CRUD COMPLETO -- EquiposGPS
+# ================================
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import EquipoGPS
+from .forms import EquipoGPSForm
+
+
+# LISTA
+@login_required
+def equipos_list(request):
+    equipos = EquipoGPS.objects.all().order_by("nombre")
+    return render(request, "equipos/equipos.html", {"equipos": equipos})
+
+
+# DETALLE
+@login_required
+def equipos_detalle(request, pk):
+    equipo = get_object_or_404(EquipoGPS, pk=pk)
+    return render(request, "equipos/equipos_detalle.html", {"equipo": equipo})
+
+
+# CREAR
+@login_required
+def equipos_crear(request):
+    if request.method == "POST":
+        form = EquipoGPSForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("equipos_list")
+    else:
+        form = EquipoGPSForm()
+
+    return render(request, "equipos/equipos_form.html", {"form": form, "accion": "Crear"})
+
+
+# EDITAR
+@login_required
+def equipos_editar(request, pk):
+    equipo = get_object_or_404(EquipoGPS, pk=pk)
+
+    if request.method == "POST":
+        form = EquipoGPSForm(request.POST, instance=equipo)
+        if form.is_valid():
+            form.save()
+            return redirect("equipos_list")
+    else:
+        form = EquipoGPSForm(instance=equipo)
+
+    return render(request, "equipos/equipos_form.html", {"form": form, "accion": "Editar"})
+
+
+# ELIMINAR
+@login_required
+def equipos_eliminar(request, pk):
+    equipo = get_object_or_404(EquipoGPS, pk=pk)
+
+    if request.method == "POST":
+        equipo.delete()
+        return redirect("equipos_list")
+
+    return render(request, "equipos/equipos_eliminar.html", {"equipo": equipo})
+
+
+# ================================
+#  CRUD COMPLETO -- VEHICULOS
+# ================================
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Vehiculo
+from .forms import VehiculoForm
+
+
+# LISTA
+@login_required
+def vehiculo_list(request):
+    vehiculos = Vehiculo.objects.all().order_by('patente')
+    return render(request, 'vehiculos/vehiculo_list.html', {'vehiculos': vehiculos})
+
+
+# CREAR
+@login_required
+def vehiculo_create(request):
+    if request.method == 'POST':
+        form = VehiculoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('vehiculo_list')
+    else:
+        form = VehiculoForm()
+
+    return render(request, 'vehiculos/vehiculo_form.html', {
+        'form': form,
+        'titulo': 'Registrar Vehículo',
+        'boton': 'Guardar'
+    })
+
+
+# EDITAR
+@login_required
+def vehiculo_update(request, pk):
+    vehiculo = get_object_or_404(Vehiculo, pk=pk)
+
+    if request.method == 'POST':
+        form = VehiculoForm(request.POST, instance=vehiculo)
+        if form.is_valid():
+            form.save()
+            return redirect('vehiculo_list')
+    else:
+        form = VehiculoForm(instance=vehiculo)
+
+    return render(request, 'vehiculos/vehiculo_form.html', {
+        'form': form,
+        'titulo': 'Editar Vehículo',
+        'boton': 'Actualizar'
+    })
+
+
+# ELIMINAR
+@login_required
+def vehiculo_delete(request, pk):
+    vehiculo = get_object_or_404(Vehiculo, pk=pk)
+
+    if request.method == 'POST':
+        vehiculo.delete()
+        return redirect('vehiculo_list')
+
+    return render(request, 'vehiculos/vehiculo_confirm_delete.html', {
+        'vehiculo': vehiculo
+    })

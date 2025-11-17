@@ -1,0 +1,38 @@
+{% extends 'transporte/base.html' %}
+
+{% block content %}
+<h2>Listado de Viajes</h2>
+<a href="{% url 'viaje_create' %}" class="btn btn-primary mb-3">Nuevo Viaje</a>
+
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Salida</th>
+            <th>Chofer</th>
+            <th>Vehículo</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for viaje in viajes %}
+        <tr>
+            <td>{{ viaje.origen }}</td>
+            <td>{{ viaje.destino }}</td>
+            <td>{{ viaje.fecha_salida }}</td>
+            <td>{{ viaje.chofer }}</td>
+            <td>{{ viaje.vehiculo }}</td>
+            <td>{{ viaje.get_estado_display }}</td>
+            <td>
+                <a href="{% url 'viaje_detalle' viaje.pk %}" class="btn btn-info btn-sm">Ver</a>
+                <a href="{% url 'viaje_edit' viaje.pk %}" class="btn btn-warning btn-sm">Editar</a>
+                <a href="{% url 'viaje_delete' viaje.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

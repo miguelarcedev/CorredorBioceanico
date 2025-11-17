@@ -1,0 +1,47 @@
+{% extends "transporte/base.html" %}
+
+{% block content %}
+
+<h2 class="fw-bold text-primary mb-4">
+    <i class="bi bi-info-circle"></i> Detalle del Equipo
+</h2>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+        {{ equipo.nombre }} — {{ equipo.imei }}
+    </div>
+
+    <div class="card-body">
+
+        <p><strong>Tipo:</strong> {{ equipo.tipo }}</p>
+        <p><strong>Estado:</strong> {{ equipo.get_estado_display }}</p>
+
+        <p><strong>Última conexión:</strong>
+            {% if equipo.ultima_conexion %}
+                {{ equipo.ultima_conexion }}
+            {% else %}
+                <span class="text-muted">Sin datos</span>
+            {% endif %}
+        </p>
+
+        <p><strong>Vehículo asignado:</strong>
+            {% if equipo.vehiculo %}
+                {{ equipo.vehiculo }}
+            {% else %}
+                <span class="text-muted">Sin asignar</span>
+            {% endif %}
+        </p>
+
+    </div>
+
+    <div class="card-footer d-flex justify-content-between bg-light">
+        <a href="{% url 'equipos_editar' equipo.id %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a href="{% url 'equipos_eliminar' equipo.id %}" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Eliminar
+        </a>
+    </div>
+</div>
+
+{% endblock %}
