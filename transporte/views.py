@@ -33,7 +33,7 @@ from .forms import ViajeForm
 
 # LISTA
 
-
+@login_required
 def viaje_list(request):
     viajes = Viaje.objects.all().order_by('-fecha_salida')
     return render(request, 'viajes/viaje_list.html', {'viajes': viajes})
@@ -41,7 +41,7 @@ def viaje_list(request):
 
 # CREAR
 
-
+@login_required
 def viaje_create(request):
     if request.method == 'POST':
         form = ViajeForm(request.POST)
@@ -55,7 +55,7 @@ def viaje_create(request):
 
 # EDITAR
 
-
+@login_required
 def viaje_edit(request, pk):
     viaje = get_object_or_404(Viaje, pk=pk)
     if request.method == 'POST':
@@ -70,7 +70,7 @@ def viaje_edit(request, pk):
 
 # ELIMINAR
 
-
+@login_required
 def viaje_delete(request, pk):
     viaje = get_object_or_404(Viaje, pk=pk)
     if request.method == 'POST':
@@ -81,7 +81,7 @@ def viaje_delete(request, pk):
 
 # DETALLE
 
-
+@login_required
 def viaje_detalle(request, pk):
     viaje = get_object_or_404(Viaje, pk=pk)
     return render(request, 'viajes/viaje_detalle.html', {'viaje': viaje})
@@ -100,6 +100,7 @@ from .forms import RegistroEmpresaForm
 from django.shortcuts import render, redirect # Importar 'redirect'
 from django.contrib import messages           # Importar 'messages'
 # ... otras importaciones ...
+
 
 def registro(request):
     if request.method == 'POST':
@@ -360,6 +361,7 @@ from datetime import datetime
 # -----------------------------
 # MONITOREO REAL
 # -----------------------------
+@login_required
 def monitoreo_real(request):
     viajes = Viaje.objects.filter(estado__in=["EN_CURSO", "PROGRAMADO"])
     return render(request, "transporte/monitoreo_real.html", {"viajes": viajes})
@@ -368,6 +370,7 @@ def monitoreo_real(request):
 # -----------------------------
 # MONITOREO DEMO
 # -----------------------------
+@login_required
 def monitoreo_demo(request):
     viajes = ViajeDemo.objects.all()
     return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
