@@ -1,6 +1,6 @@
 Hola {{ usuario.username }},
 
-Gracias por registrarte en el sistema del Corredor Bioceánico Capricornio.
+Gracias por registrarte en CapriTech.
 
 Por favor, haz clic en el siguiente enlace para activar tu cuenta:
 
