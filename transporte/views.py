@@ -97,11 +97,18 @@ from django.http import HttpResponse
 
 from .forms import RegistroEmpresaForm
 
+from django.shortcuts import render, redirect # Importar 'redirect'
+from django.contrib import messages           # Importar 'messages'
+# ... otras importaciones ...
+
 def registro(request):
     if request.method == 'POST':
         form = RegistroEmpresaForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.is_active = False # Asegurar que la cuenta no esté activa hasta que se haga clic
+            user.save()
+
             # Crear la empresa vinculada
             Empresa.objects.create(
                 nombre=form.cleaned_data['nombre_empresa'],
@@ -111,7 +118,7 @@ def registro(request):
                 usuario=user
             )
 
-            # Enviar correo de activación
+            # ... (Lógica de envío de correo) ...
             dominio = get_current_site(request).domain
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -122,31 +129,42 @@ def registro(request):
                 'link_activacion': link_activacion,
             })
             send_mail(
-                'Activación de cuenta - Corredor Bioceánico',
+                'Activación de cuenta - Empresa de Transporte de carga',
                 mensaje,
                 None,
                 [user.email],
             )
-            return HttpResponse("<h4>Registro exitoso. Revisa tu correo para activar tu cuenta.</h4>")
+            
+            # 💡 CAMBIO 1: Usar messages y redirect
+            messages.success(request, '¡Registro exitoso! Revisa tu correo electrónico para el enlace de activación y completa el proceso.')
+            return redirect('login') # Redirige al usuario al login
     else:
         form = RegistroEmpresaForm()
 
     return render(request, 'transporte/registro.html', {'form': form})
 
 
+# ... importaciones ...
+
 def activar_cuenta(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
-        user = Usuario.objects.get(pk=uid)
+        # Asegúrate de importar tu modelo Usuario, por ejemplo: from .models import Usuario
+        user = Usuario.objects.get(pk=uid) 
     except (TypeError, ValueError, OverflowError, Usuario.DoesNotExist):
         user = None
 
     if user and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
-        return HttpResponse("<h4>Cuenta activada correctamente. Ya puedes iniciar sesión.</h4>")
+        
+        # 💡 CAMBIO 2: Mensaje de éxito y redirección a login
+        messages.success(request, 'Tu cuenta ha sido activada correctamente. ¡Ya puedes iniciar sesión!')
+        return redirect('login') 
     else:
-        return HttpResponse("<h4>El enlace de activación no es válido o ha expirado.</h4>")
+        # 💡 CAMBIO 3: Mensaje de error y redirección a login
+        messages.error(request, 'El enlace de activación no es válido o ha expirado. Por favor, contacta a soporte.')
+        return redirect('login') # También redirige a login para evitar página en blanco
 
 
 from django.contrib import messages
