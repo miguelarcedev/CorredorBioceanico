@@ -23,10 +23,18 @@ class RegistroEmpresaForm(UserCreationForm):
 
 from .models import Viaje
 
+# transporte/forms.py
+
+from django import forms
+from .models import Viaje, Chofer, Vehiculo, Carga # Asegúrate de importar todos
+
 class ViajeForm(forms.ModelForm):
     class Meta:
         model = Viaje
+        # Los campos que el usuario DEBE seleccionar
         fields = ['origen', 'destino', 'fecha_salida', 'fecha_llegada_estimada', 'chofer', 'vehiculo', 'carga']
+        
+        # Widgets de fecha/hora
         widgets = {
             'fecha_salida': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'fecha_llegada_estimada': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
@@ -35,12 +43,15 @@ class ViajeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         empresa = kwargs.pop('empresa', None)
         super().__init__(*args, **kwargs)
+        
         # Filtramos choferes, vehículos y cargas de la empresa actual
         if empresa:
-            self.fields['chofer'].queryset = empresa.choferes.all()
-            self.fields['vehiculo'].queryset = empresa.vehiculos.all()
-            self.fields['carga'].queryset = empresa.cargas.all()
-
+            # 💡 CORRECCIÓN SUGERIDA (Opción A): Filtrar usando el manager del modelo
+            # (Asumiendo que Chofer, Vehiculo, Carga tienen un campo 'empresa')
+            
+            self.fields['chofer'].queryset = Chofer.objects.filter(empresa=empresa)
+            self.fields['vehiculo'].queryset = Vehiculo.objects.filter(empresa=empresa)
+            self.fields['carga'].queryset = Carga.objects.filter(empresa=empresa)
 
 from .models import EquipoGPS
 

@@ -171,6 +171,7 @@ def activar_cuenta(request, uidb64, token):
 from django.contrib import messages
 from django.shortcuts import redirect
 from .forms import ViajeForm
+from django.contrib import messages # Necesitas esto para messages.error/success
 
 @login_required
 def viaje_crear(request):
