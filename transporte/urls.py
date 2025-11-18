@@ -15,8 +15,10 @@ urlpatterns = [
 
 
     # Autenticación
+    # Autenticación: Usar next_page para forzar la redirección post-logout.
     path('login/', auth_views.LoginView.as_view(template_name='transporte/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # ¡Línea Corregida!
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     # Registro
     path('registro/', views.registro, name='registro'),

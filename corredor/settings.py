@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'widget_tweaks',
     'transporte',  # ← nuestra app principal
 ]
 
@@ -74,6 +75,7 @@ STATICFILES_DIRS = (
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+
 
 LANGUAGE_CODE = 'es'
 TIME_ZONE = 'America/Argentina/Jujuy'
