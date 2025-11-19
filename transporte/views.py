@@ -14,6 +14,12 @@ from django.contrib.auth.decorators import login_required
 from .models import Viaje, Empresa, Usuario
 
 @login_required
+def home(request):
+        
+    return render(request, 'transporte/home.html')
+
+
+@login_required
 def dashboard(request):
     # Si el usuario es una empresa, mostrar sus viajes
     if hasattr(request.user, 'empresa'):

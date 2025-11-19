@@ -50,7 +50,6 @@
 
         /* CONTENEDOR PRINCIPAL */
         .main-container {
-            background: #ffffff;
             padding: 25px;
             margin-top: 25px;
             border-radius: 10px;
@@ -80,7 +79,7 @@
         /* FOOTER */
         footer {
             margin-top: 40px;
-            background: #e3e3e3;
+            background: #9bc7f1;
             padding: 12px;
             font-size: 0.85rem;
         }
@@ -92,11 +91,11 @@
 {% if user.is_authenticated %}
 <nav class="navbar navbar-expand-lg navbar-main shadow-sm">
     <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
             <img src="{% static 'img/logo_capritech.png' %}" 
                 alt="CapriTech Logo" 
                 style="height: 65px; margin-right: 10px;">
-                Corredor Bioceanico
+                Monitoreo de transporte
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
@@ -129,8 +128,8 @@
     <div class="container">
         <ul class="nav">
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                    href="{% url 'dashboard' %}">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+                    href="{% url 'home' %}">
                     <i class="bi bi-house-door-fill"></i> Inicio
                 </a>
             </li>
@@ -168,6 +167,12 @@
                     <i class="bi bi-file-bar-graph-fill"></i> Reportes
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'reportes' in request.resolver_match.url_name %}active{% endif %}"
+                    href="/admin/" target="_blank">
+                    <i class="bi bi-gear"></i> Administración
+                </a>
+            </li>
 
         </ul>
     </div>
@@ -187,11 +192,10 @@
 {% endif %}
 
 
-<footer>
-    <div class="container d-flex justify-content-between">
-        <span>&copy; 2025 - Proyecto académico UNJu | Sistema de Gestión y Trazabilidad</span>
-        <span id="reloj" class="text-muted"></span>
-    </div>
+<footer class="text-center">
+        <p class="mb-1 fw-bold">Universidad Nacional de Jujuy – Facultad de Ingeniería</p>
+        <p class="mb-0">Proyecto académico - Sistemas de Información</p>
+        <small class="d-block mt-2">© 2025. Equipo de Desarrollo.</small>
 </footer>
 
 

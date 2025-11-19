@@ -1,0 +1,30 @@
+{% extends 'transporte/base.html' %}
+
+{% block content %}
+  
+    <!-- SECCIÓN CORREDOR (sin fondo) -->
+    <section class="py-2">
+        <div class="container text-center">
+            <h4 class="text-center fw-bold mb-2 text-primary">Sobre el Corredor Bioceánico Capricornio</h4>
+
+            <p class="text-center mx-auto" style="max-width: 800px;">
+                El Corredor Bioceánico Capricornio conecta puertos estratégicos del Océano Pacífico e Atlántico,
+                permitiendo el transporte eficiente de mercancías entre Chile, Argentina, Brasil y Paraguay.
+                Este sistema facilita el monitoreo continuo mediante tecnología GPS, mejorando la logística
+                y trazabilidad del transporte de carga.
+            </p>
+
+            <!-- IMAGEN CENTRADA Y MÁS CHICA -->
+            <img src="/static/img/mapa.png" 
+                 alt="Mapa del Corredor Bioceánico Capricornio"
+                 class="img-fluid mt-3"
+                 style="
+                    max-width: 60%;
+                    height: auto;
+                    display: block;
+                    margin: 0 auto;
+                 ">
+        </div>
+    </section>
+
+{% endblock %}
