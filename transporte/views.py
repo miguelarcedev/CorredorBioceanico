@@ -379,8 +379,8 @@ def monitoreo_real(request):
 # -----------------------------
 @login_required
 def monitoreo_demo(request):
-    viajes = Viaje.objects.all()
-    return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
+    viajes = ViajeDemo.objects.all()
+    return render(request, "transporte/demo_viajeOK.html", {"viajes": viajes})
 
 
 
