@@ -1,163 +1,167 @@
-{% extends "transporte/base.html" %}
-{% load static %}
-
+{% extends 'transporte/base.html' %}
 {% block content %}
 
-<h3 class="mb-4"><i class="bi bi-broadcast-pin"></i> Monitoreo de Viaje</h3>
+<div class="container-fluid mt-4">
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Viajes en curso</h5>
-
-                {% if viajes %}
-                <ul class="list-group">
-                    {% for viaje in viajes %}
-                    <li class="list-group-item seleccionar-viaje"
-                        style="cursor:pointer"
-                        data-inicio="{{ viaje.lat_origen }},{{ viaje.lon_origen }}"
-                        data-destino="{{ viaje.lat_destino }},{{ viaje.lon_destino }}">
-                        <strong>{{ viaje.descripcion }}</strong><br>
-                        <small>{{ viaje.origen }} → {{ viaje.destino }}</small>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted">No hay viajes en curso.</p>
-                {% endif %}
-            </div>
-        </div>
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Viajes en curso</h5>
     </div>
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0 text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-viajes">
 
-    <div class="col-md-8">
+          {% for viaje in viajes %}
+          <tr>
+              <td>{{ viaje.origen }}</td>
+              <td>{{ viaje.destino }}</td>
+              <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
+              <td>
+                  <button class="btn btn-primary btn-sm btn-simular"
+                      data-lat1="{{ viaje.lat_origen|floatformat:6 }}"
+                      data-lon1="{{ viaje.lon_origen|floatformat:6 }}"
+                      data-lat2="{{ viaje.lat_destino|floatformat:6 }}"
+                      data-lon2="{{ viaje.lon_destino|floatformat:6 }}">
+                      Simular
+                  </button>
+              </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-3">No hay viajes</td></tr>
+          {% endfor %}
 
-        <div id="map" style="height:520px;" class="shadow-sm mb-3"></div>
-
-        <button id="btnPlay" class="btn btn-primary w-100">
-            <i class="bi bi-play-circle"></i> Iniciar simulación
-        </button>
-
+        </tbody>
+      </table>
     </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white">Mapa del recorrido</div>
+    <div class="card-body p-0">
+      <div id="map" style="height: 550px; border-radius: 10px;"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-/* ============================
-   VARIABLES GLOBALES
-============================ */
-let map, polyline, marker, ruta = [];
-
-/* ============================
-   INICIALIZAR MAPA
-============================ */
-document.addEventListener("DOMContentLoaded", function () {
+// ======================================
+//     Crear el mapa
+// ======================================
+document.addEventListener("DOMContentLoaded", () => {
 
     console.log("DOM cargado — creando mapa");
 
-    map = L.map("map").setView([-24.185268, -65.298483], 13);
+    window.map = L.map('map').setView([-24.1858, -65.2995], 10);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
     }).addTo(map);
 
-    // FIX Bootstrap + Leaflet: asegurar tamaño real
-    setTimeout(() => map.invalidateSize(true), 300);
+    window.polyline = null;
+    window.marker = null;
+    window.animInterval = null;
+
+    document.querySelectorAll(".btn-simular").forEach(btn => {
+        btn.addEventListener("click", () => {
+
+            const lat1 = parseFloat(btn.dataset.lat1.replace(",", "."));
+            const lon1 = parseFloat(btn.dataset.lon1.replace(",", "."));
+            const lat2 = parseFloat(btn.dataset.lat2.replace(",", "."));
+            const lon2 = parseFloat(btn.dataset.lon2.replace(",", "."));
+
+            iniciarSimulacion(lat1, lon1, lat2, lon2);
+        });
+    });
 });
 
-/* ============================
-   CLICK EN UN VIAJE
-============================ */
-document.addEventListener("click", function (e) {
-    if (!e.target.classList.contains("seleccionar-viaje")) return;
+// ======================================
+//    Convertir array [lat,lon] a Leaflet
+// ======================================
+function fixRuta(arr) {
+    return arr.map(p => L.latLng(p[0], p[1]));
+}
 
-    const [latI, lonI] = e.target.dataset.inicio.split(",");
-    const [latF, lonF] = e.target.dataset.destino.split(",");
-
-    console.log("=== DEBUG COORDENADAS ===");
-    console.log("Inicio:", latI, lonI);
-    console.log("Destino:", latF, lonF);
-
-    obtenerRuta(latI, lonI, latF, lonF);
-});
-
-/* ============================
-   OBTENER RUTA DESDE EL SERVIDOR
-============================ */
-function obtenerRuta(latI, lonI, latF, lonF) {
+// ======================================
+//         Obtener ruta real
+// ======================================
+async function obtenerRuta(start, end) {
 
     console.log(">>> Llamando a API ruta:");
-    console.log("Start:", `${latI},${lonI}`);
-    console.log("End:", `${latF},${lonF}`);
+    console.log("Start:", start);
+    console.log("End:", end);
 
-    fetch(`/api/ruta/?start=${latI},${lonI}&end=${latF},${lonF}`)
-        .then(r => r.json())
-        .then(data => {
+    try {
+        const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
+        const data = await response.json();
 
-            console.log("=== DEBUG RUTA OBTENIDA ===");
-            console.log(data);
+        return data;
 
-            if (!Array.isArray(data.ruta)) {
-                alert("Error en la ruta recibida");
-                return;
-            }
-
-            ruta = data.ruta.map(p => [p.lat, p.lon]);
-
-            console.log("=== DEBUG RUTA TRANSFORMADA PARA LEAFLET ===");
-            console.log(ruta);
-
-            dibujarRuta();
-        })
-        .catch(err => console.error(err));
+    } catch (err) {
+        console.error("ERROR obteniendo ruta:", err);
+        return null;
+    }
 }
 
-/* ============================
-   DIBUJAR LA RUTA
-============================ */
-function dibujarRuta() {
+// ======================================
+//        Simulación del recorrido
+// ======================================
+async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
-    setTimeout(() => {
-        map.invalidateSize(true);
+    console.log("=== DEBUG COORDENADAS ===");
+    console.log("Inicio:", lat1, lon1);
+    console.log("Destino:", lat2, lon2);
 
-        if (polyline) map.removeLayer(polyline);
-        if (marker) map.removeLayer(marker);
-
-        polyline = L.polyline(ruta, { color: "blue" }).addTo(map);
-
-        marker = L.marker(ruta[0]).addTo(map);
-
-        const bounds = polyline.getBounds();
-        map.fitBounds(bounds, { padding: [30, 30] });
-
-    }, 150); // delay crucial para evitar Bounds.js error
-}
-
-/* ============================
-   SIMULACIÓN
-============================ */
-document.getElementById("btnPlay").addEventListener("click", function () {
-    if (!ruta.length) {
-        alert("Selecciona un viaje primero.");
+    if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+        alert("Coordenadas inválidas.");
         return;
     }
 
-    let index = 0;
+    if (animInterval) clearInterval(animInterval);
+    if (polyline) map.removeLayer(polyline);
+    if (marker) map.removeLayer(marker);
 
-    const interval = setInterval(() => {
-        if (index >= ruta.length) {
-            clearInterval(interval);
+    const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
+
+    console.log("=== DEBUG RUTA OBTENIDA ===");
+    console.log(ruta);
+
+    if (!ruta || !Array.isArray(ruta) || ruta.length < 2) {
+        alert("Error obteniendo ruta.");
+        return;
+    }
+
+    const rutaFix = fixRuta(ruta);
+
+    console.log("=== DEBUG RUTA TRANSFORMADA PARA LEAFLET ===");
+    console.log(rutaFix);
+
+    polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
+    map.fitBounds(polyline.getBounds());
+
+    marker = L.marker(rutaFix[0]).addTo(map);
+    map.panTo(rutaFix[0]);
+
+    let index = 0;
+    const delay = 250;
+
+    animInterval = setInterval(() => {
+        if (index >= rutaFix.length) {
+            clearInterval(animInterval);
             return;
         }
-
-        const punto = ruta[index];
-
-        marker.setLatLng(punto);
-        map.panTo(punto, { animate: true, duration: 0.25 });
-
+        marker.setLatLng(rutaFix[index]);
+        map.panTo(rutaFix[index]);
         index++;
-
-    }, 300);
-});
+    }, delay);
+}
 </script>
 
 {% endblock %}

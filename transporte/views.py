@@ -476,26 +476,23 @@ def obtener_ruta(request):
         return JsonResponse({'error': 'Faltan coordenadas'}, status=400)
 
     try:
-        start = start.replace(" ", "").replace(";", ",")
-        end = end.replace(" ", "").replace(";", ",")
+        # Limpieza mínima
+        start = start.replace(" ", "")
+        end = end.replace(" ", "")
 
-        lat1_str, lon1_str = start.split(',')
-        lat2_str, lon2_str = end.split(',')
+        lat1, lon1 = map(float, start.split(","))
+        lat2, lon2 = map(float, end.split(","))
 
-        lat1 = float(lat1_str)
-        lon1 = float(lon1_str)
-        lat2 = float(lat2_str)
-        lon2 = float(lon2_str)
-
-    except:
+    except Exception as e:
+        print("ERROR parseando coordenadas:", e)
         return JsonResponse({'error': 'Coordenadas inválidas'}, status=400)
 
-    # Preparar pares [lon, lat]
+    # Formato ORS: [lon, lat]
     coordinates = [[lon1, lat1], [lon2, lat2]]
 
-    # ==============================================
-    # 1) OPENROUTESERVICE
-    # ==============================================
+    # =======================================================
+    # 1) INTENTAR OPENROUTESERVICE
+    # =======================================================
     API_KEY = "TU_API_KEY"
 
     try:
@@ -507,37 +504,53 @@ def obtener_ruta(request):
             "units": "m"
         }
 
-        r = requests.post(url, json=payload, headers=headers, timeout=10)
+        r = requests.post(url, json=payload, headers=headers, timeout=12)
         data = r.json()
+
+        print("DEBUG ORS →", data)
 
         if "features" in data:
             coords = data["features"][0]["geometry"]["coordinates"]
+
             ruta = [[lat, lon] for lon, lat in coords]
-            return JsonResponse(ruta, safe=False)
+
+            if len(ruta) >= 2:
+                return JsonResponse(ruta, safe=False)
 
     except Exception as e:
         print("ORS ERROR:", e)
 
-    # ==============================================
-    # 2) FALLBACK OSRM
-    # ==============================================
+    # =======================================================
+    # 2) FALLBACK OSRM (mucho más estable)
+    # =======================================================
     try:
         osrm_url = (
             f"http://router.project-osrm.org/route/v1/driving/"
-            f"{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson"
+            f"{lon1},{lat1};{lon2},{lat2}"
+            f"?overview=full&geometries=geojson"
         )
-        r = requests.get(osrm_url, timeout=10)
+
+        r = requests.get(osrm_url, timeout=12)
         d = r.json()
 
-        if "routes" in d:
-            coords = d['routes'][0]['geometry']['coordinates']
+        print("DEBUG OSRM →", d)
+
+        if "routes" in d and d["routes"]:
+            coords = d["routes"][0]["geometry"]["coordinates"]
+
             ruta = [[lat, lon] for lon, lat in coords]
-            return JsonResponse(ruta, safe=False)
+
+            if len(ruta) >= 2:
+                return JsonResponse(ruta, safe=False)
 
     except Exception as e:
         print("OSRM ERROR:", e)
 
+    # =======================================================
+    # FALLÓ TODO
+    # =======================================================
     return JsonResponse({'error': 'No se pudo obtener la ruta real'}, status=500)
+
 
 
 # ================================
