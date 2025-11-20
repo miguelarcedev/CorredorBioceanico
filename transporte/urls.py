@@ -11,7 +11,7 @@ urlpatterns = [
 
     path('api/demo/registrar/', views.registrar_posicion_demo, name='registrar_posicion_demo'),
 
-    path('demo_viaje/', views.demo_viaje, name='demo_viaje'),
+    #path('demo_viaje/', views.demo_viaje, name='demo_viaje'),
 
 
     # Autenticación
