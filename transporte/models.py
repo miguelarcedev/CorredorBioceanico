@@ -142,10 +142,11 @@ class Viaje(models.Model):
     origen = models.CharField(max_length=150)
     destino = models.CharField(max_length=150)
 
-    lat_origen = models.FloatField(null=True, blank=True)
-    lon_origen = models.FloatField(null=True, blank=True)
-    lat_destino = models.FloatField(null=True, blank=True)
-    lon_destino = models.FloatField(null=True, blank=True)
+    lat_origen = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    lon_origen = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    lat_destino = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    lon_destino = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
 
     fecha_salida = models.DateTimeField()
     fecha_llegada_estimada = models.DateTimeField()
