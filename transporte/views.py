@@ -389,7 +389,7 @@ def monitoreo_demo(request):
         "viajes": viajes
     }
 
-    return render(request, "viajes/monitoreo/demo_viaje.html", context)
+    return render(request, "transporte/demo_viaje.html", context)
 
 
 
