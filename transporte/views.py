@@ -377,10 +377,17 @@ def monitoreo_real(request):
 # -----------------------------
 # MONITOREO DEMO
 # -----------------------------
-@login_required
+""" @login_required
 def monitoreo_demo(request):
     viajes = ViajeDemo.objects.all()
-    return render(request, "transporte/demo_viajeOK.html", {"viajes": viajes})
+    return render(request, "transporte/demo_viajeOK.html", {"viajes": viajes}) """
+
+def monitoreo_demo(request):
+    viajes = Viaje.objects.filter(estado="EN_CURSO")
+
+    return render(request, "transporte/demo_viaje.html", {
+        "viajes": viajes
+    })
 
 
 

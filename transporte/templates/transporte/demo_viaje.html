@@ -1,5 +1,6 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
+
 <div class="container-fluid mt-4">
 
   <div class="card shadow-sm mb-4">
@@ -25,10 +26,10 @@
               <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
               <td>
                   <button class="btn btn-primary btn-sm btn-simular"
-                          data-lat1="{{ viaje.lat_origen }}"
-                          data-lon1="{{ viaje.lon_origen }}"
-                          data-lat2="{{ viaje.lat_destino }}"
-                          data-lon2="{{ viaje.lon_destino }}">
+                          data-lat1="{{ viaje.lat_origen|default:0 }}"
+                          data-lon1="{{ viaje.lon_origen|default:0 }}"
+                          data-lat2="{{ viaje.lat_destino|default:0 }}"
+                          data-lon2="{{ viaje.lon_destino|default:0 }}">
                       Simular
                   </button>
               </td>
@@ -51,16 +52,15 @@
 </div>
 
 <!-- Leaflet -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
 function fixRuta(ruta) {
-  // Convierte cada punto [lat, lon] en un objeto L.latLng
   return ruta.map(p => L.latLng(p[0], p[1]));
 }
 
-let map = L.map('map').setView([-24.1858, -65.2995], 9);
+let map = L.map('map').setView([-24.1858, -65.2995], 10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
 let polyline = null;
@@ -72,14 +72,15 @@ let animInterval = null;
 // ============================
 async function obtenerRuta(start, end) {
   try {
-    const response = await fetch(`${window.location.origin}/api/ruta/?start=${start}&end=${end}`);
-
+    const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
     const data = await response.json();
+
     if (data.error) {
       console.error("Error obteniendo ruta:", data.error);
       return null;
     }
-    return data; // lista de [lat, lon]
+
+    return data;
   } catch (err) {
     console.error("Error de conexión al obtener ruta:", err);
     return null;
@@ -91,32 +92,29 @@ async function obtenerRuta(start, end) {
 // ============================
 async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
-  // Reset visual
+  if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+    alert("Coordenadas inválidas.");
+    return;
+  }
+
   if (animInterval) clearInterval(animInterval);
   if (polyline) map.removeLayer(polyline);
   if (marker) map.removeLayer(marker);
 
-  // Pedimos la ruta al backend
   const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
   if (!ruta) {
-    alert("No se pudo obtener la ruta real. Verifique API Key o conexión.");
+    alert("No se pudo obtener la ruta real.");
     return;
   }
 
-  // Convertir a L.latLng
   const rutaFix = fixRuta(ruta);
 
-  // Dibujar ruta
   polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
   map.fitBounds(polyline.getBounds());
 
-  // Crear marcador
   marker = L.marker(rutaFix[0]).addTo(map);
-
-  // Enfocar correctamente (¡este era el error!)
   map.panTo(rutaFix[0]);
 
-  // Animación
   let index = 0;
   const delay = 300;
 
