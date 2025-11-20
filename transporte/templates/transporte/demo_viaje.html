@@ -92,7 +92,15 @@ async function obtenerRuta(start, end) {
 // ============================
 async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
+  // ============================
+  // DEBUG - VER COORDENADAS
+  // ============================
+  console.log("=== DEBUG COORDENADAS ===");
+  console.log("Inicio:", lat1, lon1);
+  console.log("Destino:", lat2, lon2);
+
   if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+    console.error("Coordenadas inválidas:", lat1, lon1, lat2, lon2);
     alert("Coordenadas inválidas.");
     return;
   }
@@ -102,12 +110,20 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
   if (marker) map.removeLayer(marker);
 
   const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
-  if (!ruta) {
+
+  console.log("=== DEBUG RUTA OBTENIDA ===");
+  console.log(ruta);
+
+  if (!ruta || ruta.length === 0) {
+    console.error("La API devolvió una ruta vacía");
     alert("No se pudo obtener la ruta real.");
     return;
   }
 
   const rutaFix = fixRuta(ruta);
+
+  console.log("=== DEBUG RUTA TRANSFORMADA PARA LEAFLET ===");
+  console.log(rutaFix);
 
   polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
   map.fitBounds(polyline.getBounds());
