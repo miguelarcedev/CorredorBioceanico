@@ -26,10 +26,11 @@
               <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
               <td>
                   <button class="btn btn-primary btn-sm btn-simular"
-                          data-lat1="{{ viaje.lat_origen|default:0 }}"
-                          data-lon1="{{ viaje.lon_origen|default:0 }}"
-                          data-lat2="{{ viaje.lat_destino|default:0 }}"
-                          data-lon2="{{ viaje.lon_destino|default:0 }}">
+                          data-lat1="{{ viaje.lat_origen|floatformat:'6' }}"
+                          data-lon1="{{ viaje.lon_origen|floatformat:'6' }}"
+                          data-lat2="{{ viaje.lat_destino|floatformat:'6' }}"
+                          data-lon2="{{ viaje.lon_destino|floatformat:'6' }}"></button>
+
                       Simular
                   </button>
               </td>
