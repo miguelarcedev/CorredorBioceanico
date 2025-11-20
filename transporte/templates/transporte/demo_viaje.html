@@ -56,6 +56,7 @@
 
 <script>
 
+// Convertir puntos a LatLng Leaflet
 function fixRuta(ruta) {
   return ruta.map(p => L.latLng(p[0], p[1]));
 }
@@ -71,6 +72,10 @@ let animInterval = null;
 //   OBTENER RUTA REAL
 // ============================
 async function obtenerRuta(start, end) {
+  console.log(">>> Llamando a API ruta:");
+  console.log("Start:", start);
+  console.log("End:", end);
+
   try {
     const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
     const data = await response.json();
@@ -92,15 +97,11 @@ async function obtenerRuta(start, end) {
 // ============================
 async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 
-  // ============================
-  // DEBUG - VER COORDENADAS
-  // ============================
   console.log("=== DEBUG COORDENADAS ===");
   console.log("Inicio:", lat1, lon1);
   console.log("Destino:", lat2, lon2);
 
   if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
-    console.error("Coordenadas inválidas:", lat1, lon1, lat2, lon2);
     alert("Coordenadas inválidas.");
     return;
   }
@@ -114,9 +115,8 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
   console.log("=== DEBUG RUTA OBTENIDA ===");
   console.log(ruta);
 
-  if (!ruta || ruta.length === 0) {
-    console.error("La API devolvió una ruta vacía");
-    alert("No se pudo obtener la ruta real.");
+  if (!ruta || !Array.isArray(ruta) || ruta.length < 2) {
+    alert("Ruta inválida o vacía.");
     return;
   }
 
@@ -153,6 +153,7 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".btn-simular").forEach(btn => {
     btn.addEventListener("click", () => {
+
       const lat1 = parseFloat(btn.dataset.lat1);
       const lon1 = parseFloat(btn.dataset.lon1);
       const lat2 = parseFloat(btn.dataset.lat2);
