@@ -382,12 +382,20 @@ def monitoreo_demo(request):
     viajes = ViajeDemo.objects.all()
     return render(request, "transporte/demo_viajeOK.html", {"viajes": viajes}) """
 
-def monitoreo_demo(request):
-    viajes = Viaje.objects.filter(estado="EN_CURSO")
+def monitoreo_demo(request, viaje_id):
+    viaje = get_object_or_404(Viaje, id=viaje_id)
 
-    return render(request, "transporte/demo_viaje.html", {
-        "viajes": viajes
-    })
+    context = {
+        "fecha_salida": viaje.fecha_salida,
+        "hora_salida": viaje.hora_salida,
+        "latitud_origen": float(viaje.lat_origen),
+        "longitud_origen": float(viaje.lon_origen),
+        "latitud_destino": float(viaje.lat_destino),
+        "longitud_destino": float(viaje.lon_destino),
+    }
+
+    return render(request, "viajes/monitoreo/demo_viaje.html", context)
+
 
 
 
