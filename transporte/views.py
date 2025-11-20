@@ -383,7 +383,7 @@ def monitoreo_demo(request):
     return render(request, "transporte/demo_viajeOK.html", {"viajes": viajes}) """
 
 def monitoreo_demo(request):
-    viajes = Viaje.objects.filter(estado="En curso")
+    viajes = Viaje.objects.filter(estado="EN_CURSO")
 
     context = {
         "viajes": viajes
