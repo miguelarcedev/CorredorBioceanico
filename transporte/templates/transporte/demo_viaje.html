@@ -146,7 +146,25 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
     polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
     map.fitBounds(polyline.getBounds());
 
-    marker = L.marker(rutaFix[0]).addTo(map);
+    // ============================
+//     ICONO DE CAMIÓN
+// ============================
+const truckIcon = L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/1995/1995574.png",
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+});
+
+// Crear el marcador con icono de camión
+marker = L.marker(rutaFix[0], { icon: truckIcon }).addTo(map);
+
+// Función para rotar icono según dirección
+function getAngle(p1, p2) {
+    const dy = p2.lat - p1.lat;
+    const dx = p2.lng - p1.lng;
+    return (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
+}
+
     map.panTo(rutaFix[0]);
 
     let index = 0;
@@ -157,8 +175,18 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
             clearInterval(animInterval);
             return;
         }
-        marker.setLatLng(rutaFix[index]);
-        map.panTo(rutaFix[index]);
+        let prev = rutaFix[index > 0 ? index - 1 : 0];
+let next = rutaFix[index];
+
+marker.setLatLng(next);
+
+// Rotación del camión
+let angle = getAngle(prev, next);
+marker._icon.style.transform = `rotate(${angle}deg)`;
+
+// Mover el mapa
+map.panTo(next);
+
         index++;
     }, delay);
 }
