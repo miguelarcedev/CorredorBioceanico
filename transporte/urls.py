@@ -66,4 +66,8 @@ urlpatterns = [
     path("monitoreo/demo/", views.monitoreo_demo, name="monitoreo_demo"),
     path("api/ruta/", views.obtener_ruta, name="api_ruta"),
 
+     # Reportes
+    path("reportes/viajes-completados/", views.reporte_viajes_completados, name="reporte_viajes_completados"),
+
+
 ]

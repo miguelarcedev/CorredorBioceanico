@@ -754,3 +754,47 @@ def vehiculo_delete(request, pk):
     return render(request, 'vehiculos/vehiculo_confirm_delete.html', {
         'vehiculo': vehiculo
     })
+
+
+from django.shortcuts import render
+from django.db.models import Q
+from django.utils.dateparse import parse_date
+
+from transporte.models import Viaje, Empresa, Chofer
+
+
+def reporte_viajes_completados(request):
+    
+    viajes = Viaje.objects.filter(estado="FINALIZADO").order_by("-fecha_salida")
+    empresas = Empresa.objects.all()
+    choferes = Chofer.objects.all()
+
+    # FILTROS (opcionales)
+    fecha_desde = request.GET.get("desde")
+    fecha_hasta = request.GET.get("hasta")
+    empresa_id = request.GET.get("empresa")
+    chofer_id = request.GET.get("chofer")
+
+    if fecha_desde:
+        viajes = viajes.filter(fecha_salida__date__gte=parse_date(fecha_desde))
+
+    if fecha_hasta:
+        viajes = viajes.filter(fecha_salida__date__lte=parse_date(fecha_hasta))
+
+    if empresa_id and empresa_id != "0":
+        viajes = viajes.filter(empresa_id=empresa_id)
+
+    if chofer_id and chofer_id != "0":
+        viajes = viajes.filter(chofer_id=chofer_id)
+
+    context = {
+        "viajes": viajes,
+        "empresas": empresas,
+        "choferes": choferes,
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+        "empresa_id": empresa_id,
+        "chofer_id": chofer_id,
+    }
+
+    return render(request, "reportes/reporte_viajes_completados.html", context)
