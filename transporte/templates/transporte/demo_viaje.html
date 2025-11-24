@@ -1,3 +1,4 @@
+{% load static %}
 {% extends 'transporte/base.html' %}
 {% block content %}
 
@@ -146,7 +147,24 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
     polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
     map.fitBounds(polyline.getBounds());
 
-    marker = L.marker(rutaFix[0]).addTo(map);
+    // ============================
+    //     ICONO DE CAMIÓN
+    // ============================
+    const truckIcon = L.icon({
+        iconUrl: "{% static 'img/truck.png' %}",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+    });
+
+    marker = L.marker(rutaFix[0], { icon: truckIcon }).addTo(map);
+
+    // Función para rotar icono según dirección
+    function getAngle(p1, p2) {
+        const dy = p2.lat - p1.lat;
+        const dx = p2.lng - p1.lng;
+        return (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
+    }
+
     map.panTo(rutaFix[0]);
 
     let index = 0;
@@ -157,9 +175,19 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
             clearInterval(animInterval);
             return;
         }
-        marker.setLatLng(rutaFix[index]);
-        map.panTo(rutaFix[index]);
+
+        const prev = rutaFix[index > 0 ? index - 1 : 0];
+        const next = rutaFix[index];
+
+        marker.setLatLng(next);
+
+        // Rotación del icono
+        const angle = getAngle(prev, next);
+        marker._icon.style.transform = `rotate(${angle}deg)`;
+
+        map.panTo(next);
         index++;
+
     }, delay);
 }
 </script>
