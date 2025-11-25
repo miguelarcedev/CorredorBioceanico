@@ -20,7 +20,7 @@
         <tbody id="tabla-viajes">
 
           {% for viaje in viajes %}
-          <tr>
+          <tr id="fila-{{ viaje.id }}">
               <td>{{ viaje.origen }}</td>
               <td>{{ viaje.destino }}</td>
               <td><span class="badge bg-info text-dark">{{ viaje.estado }}</span></td>
@@ -33,7 +33,6 @@
                       data-lon2="{{ viaje.lon_destino|floatformat:6 }}">
                       Simular
                   </button>
-
               </td>
           </tr>
           {% empty %}
@@ -54,12 +53,12 @@
 </div>
 
 <script>
-// ======================================
-//     Crear el mapa
-// ======================================
+/* =======================================================
+   Crear mapa
+======================================================= */
 document.addEventListener("DOMContentLoaded", () => {
 
-    console.log("DOM cargado — creando mapa");
+    console.log("Mapa cargando...");
 
     window.map = L.map('map').setView([-24.1858, -65.2995], 10);
 
@@ -74,76 +73,92 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".btn-simular").forEach(btn => {
         btn.addEventListener("click", () => {
 
-            const lat1 = parseFloat(btn.dataset.lat1.replace(",", "."));
-            const lon1 = parseFloat(btn.dataset.lon1.replace(",", "."));
-            const lat2 = parseFloat(btn.dataset.lat2.replace(",", "."));
-            const lon2 = parseFloat(btn.dataset.lon2.replace(",", "."));
+            const viaje_id = btn.dataset.id;
+            const lat1 = parseFloat(btn.dataset.lat1);
+            const lon1 = parseFloat(btn.dataset.lon1);
+            const lat2 = parseFloat(btn.dataset.lat2);
+            const lon2 = parseFloat(btn.dataset.lon2);
 
-            iniciarSimulacion(lat1, lon1, lat2, lon2);
+            iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2);
         });
     });
 });
 
-// ======================================
-//    Convertir array [lat,lon] a Leaflet
-// ======================================
+/* =======================================================
+   Convertir ruta para Leaflet
+======================================================= */
 function fixRuta(arr) {
     return arr.map(p => L.latLng(p[0], p[1]));
 }
 
-// ======================================
-//         Obtener ruta real
-// ======================================
+/* =======================================================
+   Obtener ruta desde Django
+======================================================= */
 async function obtenerRuta(start, end) {
-
-    console.log(">>> Llamando a API ruta:");
-    console.log("Start:", start);
-    console.log("End:", end);
-
     try {
         const response = await fetch(`/api/ruta/?start=${start}&end=${end}`);
-        const data = await response.json();
-
-        return data;
-
+        return await response.json();
     } catch (err) {
-        console.error("ERROR obteniendo ruta:", err);
+        console.error(err);
         return null;
     }
 }
 
-// ======================================
-//        Simulación del recorrido
-// ======================================
-async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
+/* =======================================================
+   Guardar posición cada 250 ms
+======================================================= */
+async function guardarPosicion(viaje_id, lat, lon, velocidad) {
 
-    console.log("=== DEBUG COORDENADAS ===");
-    console.log("Inicio:", lat1, lon1);
-    console.log("Destino:", lat2, lon2);
+    await fetch("/api/guardar_posicion/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            viaje_id: viaje_id,
+            latitud: lat,
+            longitud: lon,
+            velocidad: velocidad
+        })
+    });
+}
 
-    if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
-        alert("Coordenadas inválidas.");
-        return;
+/* =======================================================
+   Finalizar viaje al terminar simulación
+======================================================= */
+async function finalizarViaje(viaje_id) {
+
+    const resp = await fetch("/api/finalizar_viaje/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ viaje_id })
+    });
+
+    const data = await resp.json();
+
+    if (data.ok) {
+        // remover visualmente la fila
+        const fila = document.getElementById(`fila-${viaje_id}`);
+        if (fila) fila.remove();
     }
+}
+
+/* =======================================================
+   SIMULACIÓN PRINCIPAL
+======================================================= */
+async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
 
     if (animInterval) clearInterval(animInterval);
     if (polyline) map.removeLayer(polyline);
     if (marker) map.removeLayer(marker);
 
+    // obtener la ruta real
     const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
 
-    console.log("=== DEBUG RUTA OBTENIDA ===");
-    console.log(ruta);
-
-    if (!ruta || !Array.isArray(ruta) || ruta.length < 2) {
-        alert("Error obteniendo ruta.");
+    if (!ruta || !Array.isArray(ruta)) {
+        alert("No se pudo obtener la ruta.");
         return;
     }
 
     const rutaFix = fixRuta(ruta);
-
-    console.log("=== DEBUG RUTA TRANSFORMADA PARA LEAFLET ===");
-    console.log(rutaFix);
 
     polyline = L.polyline(rutaFix, { color: 'blue' }).addTo(map);
     map.fitBounds(polyline.getBounds());
@@ -154,16 +169,37 @@ async function iniciarSimulacion(lat1, lon1, lat2, lon2) {
     let index = 0;
     const delay = 250;
 
-    animInterval = setInterval(() => {
+    animInterval = setInterval(async () => {
+
         if (index >= rutaFix.length) {
             clearInterval(animInterval);
+
+            // marcar viaje finalizado
+            await finalizarViaje(viaje_id);
+
+            alert("Viaje finalizado.");
             return;
         }
-        marker.setLatLng(rutaFix[index]);
-        map.panTo(rutaFix[index]);
+
+        const actual = rutaFix[index];
+        const anterior = rutaFix[index - 1] || actual;
+
+        // CALCULAR VELOCIDAD FICTICIA (km/h)
+        const distancia = map.distance(anterior, actual); // metros
+        const velocidad = (distancia / (delay / 1000)) * 3.6; // km/h
+
+        // mover marcador
+        marker.setLatLng(actual);
+        map.panTo(actual);
+
+        // guardar en BD
+        await guardarPosicion(viaje_id, actual.lat, actual.lng, velocidad);
+
         index++;
+
     }, delay);
 }
+
 </script>
 
 {% endblock %}

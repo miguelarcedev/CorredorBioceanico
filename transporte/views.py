@@ -628,3 +628,62 @@ def reporte_viajes_completados(request):
     }
 
     return render(request, "reportes/reporte_viajes_completados.html", context)
+
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Viaje, PosicionGPS
+
+@csrf_exempt
+def guardar_posicion(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        viaje_id = data.get("viaje_id")
+        lat = data.get("latitud")
+        lon = data.get("longitud")
+        velocidad = data.get("velocidad", 0)
+
+        viaje = Viaje.objects.get(id=viaje_id)
+
+        PosicionGPS.objects.create(
+            viaje=viaje,
+            latitud=lat,
+            longitud=lon,
+            velocidad=velocidad
+        )
+
+        return JsonResponse({"ok": True})
+
+    except Viaje.DoesNotExist:
+        return JsonResponse({"error": "Viaje no encontrado"}, status=404)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def finalizar_viaje(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        viaje_id = data.get("viaje_id")
+
+        viaje = Viaje.objects.get(id=viaje_id)
+
+        # Cambiar estado a "FINALIZADO"
+        viaje.estado = "FINALIZADO"
+        viaje.save()
+
+        return JsonResponse({"ok": True})
+
+    except Viaje.DoesNotExist:
+        return JsonResponse({"error": "Viaje no encontrado"}, status=404)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
