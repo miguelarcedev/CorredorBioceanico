@@ -1,61 +1,68 @@
-{% extends 'transporte/base.html' %}
+{% extends "transporte/base.html" %}
 {% block content %}
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
 <div class="container mt-4">
-    <h2 class="text-primary mb-3">
-        🗺️ Recorrido del Viaje — {{ viaje.origen }} → {{ viaje.destino }}
-    </h2>
 
-    <p>
-        <strong>Chofer:</strong> {{ viaje.chofer }} <br>
-        <strong>Vehículo:</strong> {{ viaje.vehiculo }} <br>
-        <strong>Fecha:</strong> {{ viaje.fecha_salida|date:"d/m/Y H:i" }} → 
-        {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }} <br>
-        <strong>Kilómetros recorridos:</strong> {{ viaje.kilometros_recorridos|floatformat:2 }} km
-    </p>
+    <h3 class="text-primary mb-3">
+        🚚 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
+    </h3>
 
-    <div id="map" style="height: 600px;" class="mb-4 shadow rounded"></div>
+    <!-- Datos del viaje -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <p><strong>Chofer:</strong> {{ viaje.chofer }}</p>
+            <p><strong>Vehículo:</strong> {{ viaje.vehiculo }}</p>
+            <p><strong>Empresa:</strong> {{ viaje.empresa }}</p>
+            <p><strong>Salida:</strong> {{ viaje.fecha_salida }}</p>
+            <p><strong>Llegada real:</strong> {{ viaje.fecha_llegada_real }}</p>
+        </div>
+    </div>
+
+    <!-- Mapa -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">🗺️ Recorrido histórico</div>
+        <div class="card-body p-0">
+            <div id="map" style="height: 550px;"></div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    const puntos = {{ puntos|safe }};
+// Datos enviados desde Django ➜ lista de puntos
+const puntos = {{ puntos|safe }};
 
-    const map = L.map('map').setView([puntos[0].lat, puntos[0].lon], 13);
+document.addEventListener("DOMContentLoaded", function () {
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
+    if (!puntos || puntos.length === 0) {
+        alert("No hay posiciones registradas para este viaje.");
+        return;
+    }
+
+    // Inicializar mapa centrado en el primer punto
+    const map = L.map("map").setView([puntos[0].lat, puntos[0].lon], 14);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
     }).addTo(map);
 
-    // Línea completa del viaje
-    const polyline = L.polyline(
-        puntos.map(p => [p.lat, p.lon]),
-        { color: "blue", weight: 4 }
-    ).addTo(map);
+    // Convertir puntos a línea para Leaflet
+    const ruta = puntos.map(p => [p.lat, p.lon]);
 
+    // Dibujar línea
+    const polyline = L.polyline(ruta, { color: "blue" }).addTo(map);
+
+    // Ajustar zoom al recorrido
     map.fitBounds(polyline.getBounds());
 
-    // Marcador inicio
-    L.marker([puntos[0].lat, puntos[0].lon])
-        .addTo(map)
-        .bindPopup("<b>Inicio</b>");
+    // Marcar inicio y final
+    L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
+    L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");
 
-    // Marcador fin
-    const ultimo = puntos[puntos.length - 1];
-    L.marker([ultimo.lat, ultimo.lon], { icon: L.icon({ 
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/190/190411.png',
-            iconSize: [32, 32]
-    }) })
-        .addTo(map)
-        .bindPopup("<b>Fin del viaje</b>");
-
-    // Opcional: puntos con velocidad
-    puntos.forEach(p => {
-        L.circleMarker([p.lat, p.lon], {
-            radius: 4,
-            color: p.velocidad > 80 ? 'red' : 'green'
-        }).addTo(map)
-          .bindPopup("Vel: " + p.velocidad + " km/h<br>" + p.tiempo);
-    });
+});
 </script>
 
 {% endblock %}
