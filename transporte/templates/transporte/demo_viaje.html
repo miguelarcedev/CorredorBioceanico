@@ -54,7 +54,7 @@
 
 <script>
 /* =======================================================
-   Crear mapa
+   Inicializar mapa
 ======================================================= */
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -74,10 +74,12 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", () => {
 
             const viaje_id = btn.dataset.id;
-            const lat1 = parseFloat(btn.dataset.lat1);
-            const lon1 = parseFloat(btn.dataset.lon1);
-            const lat2 = parseFloat(btn.dataset.lat2);
-            const lon2 = parseFloat(btn.dataset.lon2);
+
+            // 🔥 FIX IMPORTANTE: reemplazar comas
+            const lat1 = parseFloat(btn.dataset.lat1.replace(",", "."));
+            const lon1 = parseFloat(btn.dataset.lon1.replace(",", "."));
+            const lat2 = parseFloat(btn.dataset.lat2.replace(",", "."));
+            const lon2 = parseFloat(btn.dataset.lon2.replace(",", "."));
 
             iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2);
         });
@@ -85,14 +87,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* =======================================================
-   Convertir ruta para Leaflet
+   Convertir ruta a Leaflet
 ======================================================= */
 function fixRuta(arr) {
     return arr.map(p => L.latLng(p[0], p[1]));
 }
 
 /* =======================================================
-   Obtener ruta desde Django
+   Obtener ruta desde el backend
 ======================================================= */
 async function obtenerRuta(start, end) {
     try {
@@ -105,7 +107,7 @@ async function obtenerRuta(start, end) {
 }
 
 /* =======================================================
-   Guardar posición cada 250 ms
+   Guardar posición
 ======================================================= */
 async function guardarPosicion(viaje_id, lat, lon, velocidad) {
 
@@ -122,7 +124,7 @@ async function guardarPosicion(viaje_id, lat, lon, velocidad) {
 }
 
 /* =======================================================
-   Finalizar viaje al terminar simulación
+   Finalizar viaje
 ======================================================= */
 async function finalizarViaje(viaje_id) {
 
@@ -135,14 +137,13 @@ async function finalizarViaje(viaje_id) {
     const data = await resp.json();
 
     if (data.ok) {
-        // remover visualmente la fila
         const fila = document.getElementById(`fila-${viaje_id}`);
         if (fila) fila.remove();
     }
 }
 
 /* =======================================================
-   SIMULACIÓN PRINCIPAL
+   Simulación principal
 ======================================================= */
 async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
 
@@ -150,10 +151,9 @@ async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
     if (polyline) map.removeLayer(polyline);
     if (marker) map.removeLayer(marker);
 
-    // obtener la ruta real
     const ruta = await obtenerRuta(`${lat1},${lon1}`, `${lat2},${lon2}`);
 
-    if (!ruta || !Array.isArray(ruta)) {
+    if (!ruta || !Array.isArray(ruta) || ruta.length < 2) {
         alert("No se pudo obtener la ruta.");
         return;
     }
@@ -174,7 +174,6 @@ async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
         if (index >= rutaFix.length) {
             clearInterval(animInterval);
 
-            // marcar viaje finalizado
             await finalizarViaje(viaje_id);
 
             alert("Viaje finalizado.");
@@ -184,15 +183,13 @@ async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
         const actual = rutaFix[index];
         const anterior = rutaFix[index - 1] || actual;
 
-        // CALCULAR VELOCIDAD FICTICIA (km/h)
-        const distancia = map.distance(anterior, actual); // metros
-        const velocidad = (distancia / (delay / 1000)) * 3.6; // km/h
+        // velocidad aproximada
+        const distancia = map.distance(anterior, actual);
+        const velocidad = (distancia / (delay / 1000)) * 3.6;
 
-        // mover marcador
         marker.setLatLng(actual);
         map.panTo(actual);
 
-        // guardar en BD
         await guardarPosicion(viaje_id, actual.lat, actual.lng, velocidad);
 
         index++;
