@@ -72,6 +72,8 @@ urlpatterns = [
 
      # Reportes
     path("reportes/viajes-completados/", views.reporte_viajes_completados, name="reporte_viajes_completados"),
+    path("reportes/viaje/<uuid:viaje_id>/mapa/", views.ver_mapa_viaje, name="ver_mapa_viaje"),
+
 
 
 ]
