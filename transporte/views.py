@@ -693,14 +693,14 @@ def ver_mapa_viaje(request, viaje_id):
     viaje = get_object_or_404(Viaje, id=viaje_id)
 
     # Cargar todas las posiciones GPS registradas
-    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("timestamp")
+    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
 
     puntos = [
         {
-            "lat": float(p.lat),
-            "lon": float(p.lon),
+            "lat": float(p.latitud),
+            "lon": float(p.longitud),
             "velocidad": float(p.velocidad),
-            "tiempo": p.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            "tiempo": p.fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
         }
         for p in posiciones
     ]
