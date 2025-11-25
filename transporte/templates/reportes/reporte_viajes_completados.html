@@ -80,13 +80,16 @@
                         <td>{{ v.vehiculo }}</td>
                         <td>{{ v.empresa }}</td>
                         <td>{{ v.origen }} → {{ v.destino }}</td>
-                        <td>{{ v.km_recorridos|floatformat:2 }}</td>
+
+                        <!-- 🔥 FIX CORRECTO -->
+                        <td>{{ v.kilometros_recorridos|floatformat:2 }}</td>
+
                         <td>{{ v.duracion_horas|floatformat:2 }} h</td>
                         <td>{{ v.velocidad_promedio|floatformat:2 }} km/h</td>
 
                         <td>
                             <a class="btn btn-sm btn-primary"
-                               href="{% url 'demo_viaje' v.id %}">
+                               href="{% url 'reporte_viaje_mapa' v.id %}">
                                Ver mapa
                             </a>
                         </td>
