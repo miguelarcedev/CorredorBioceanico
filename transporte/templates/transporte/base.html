@@ -22,7 +22,6 @@
         .navbar-main {
             background-color: #0d47a1 !important; /* Azul oscuro primario */
         }
-
         .navbar-main .nav-link,
         .navbar-main .navbar-brand,
         .navbar-main .navbar-text {
@@ -32,9 +31,9 @@
 
         /* SUBMENÚ INFERIOR */
         .submenu {
-            background-color: #1565c0; /* Azul más claro */
+            background-color: #1565c0; /* Azul más claro*/
             border-bottom: 3px solid #0d47a1;
-        }
+         }
 
         .submenu .nav-link {
             color: #e3f2fd !important;
@@ -47,7 +46,8 @@
             color: #fff !important;
             font-weight: bold;
         }
-
+    
+   
         /* CONTENEDOR PRINCIPAL */
         .main-container {
             padding: 25px;
@@ -83,6 +83,8 @@
             padding: 12px;
             font-size: 0.85rem;
         }
+
+
     </style>
 
 </head>
@@ -94,7 +96,7 @@
         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
             <img src="{% static 'img/logo_capritech.png' %}" 
                 alt="CapriTech Logo" 
-                style="height: 65px; margin-right: 10px;">
+                style="height:140px; margin-right: 5px;">
                 Monitoreo de transporte
         </a>
 
@@ -106,8 +108,23 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <span class="navbar-text me-3">
-                        <i class="bi bi-person-circle"></i>
-                        {{ user.username }} ({{ user.get_rol_display }})
+                        <div class="d-flex align-items-center">
+    {% if user.photo %}
+        <img src="{{ user.photo.url }}" 
+             style="width:95px; height:95px; object-fit:cover; border-radius:50%; margin-right:10px;">
+    {% else %}
+        <div style="width:40px; height:40px; background:#bbdefb; border-radius:50%;
+                    display:flex; align-items:center; justify-content:center;
+                    font-weight:bold; color:#0d47a1; margin-right:10px;">
+            {{ user.username|first|upper }}
+        </div>
+    {% endif %}
+
+    <span class="navbar-text me-3">
+        {{ user.username }} ({{ user.get_rol_display }})
+    </span>
+</div>
+
                     </span>
                 </li>
                 <li class="nav-item">
@@ -190,6 +207,7 @@
     {% endblock %}
 
 {% endif %}
+
 
 
 <footer class="text-center">

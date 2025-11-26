@@ -1,13 +1,40 @@
 
 
-# Register your models here.
-
 from django.contrib import admin
-from .models import Usuario, Empresa, Chofer, Vehiculo, Carga, Viaje, ViajeDemo, PosicionGPS, Alerta, ControlFrontera,RegistroUbicacion, PosicionDemo
-from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin
+from .models import (
+    Usuario,
+    Empresa,
+    Chofer,
+    Vehiculo,
+    Carga,
+    Viaje,
+    ViajeDemo,
+    PosicionGPS,
+    Alerta,
+    ControlFrontera,
+    RegistroUbicacion,
+    PosicionDemo,
+)
 
-admin.site.register(User)
-admin.site.register(Usuario)
+# 👉 Admin para el usuario personalizado
+@admin.register(Usuario)
+class CustomUserAdmin(UserAdmin):
+    # Campos que se ven en el listado
+    list_display = ('username', 'email', 'rol', 'is_staff', 'is_active')
+    list_filter = ('rol', 'is_staff', 'is_superuser', 'is_active')
+
+    # Secciones del formulario de edición
+    fieldsets = UserAdmin.fieldsets + (
+        ('Información extra', {'fields': ('rol', 'photo')}),
+    )
+
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ('Información extra', {'fields': ('rol', 'photo')}),
+    )
+
+
+# 👉 Resto de modelos del sistema
 admin.site.register(Empresa)
 admin.site.register(Chofer)
 admin.site.register(Vehiculo)
@@ -19,3 +46,4 @@ admin.site.register(PosicionDemo)
 admin.site.register(Alerta)
 admin.site.register(ControlFrontera)
 admin.site.register(RegistroUbicacion)
+
