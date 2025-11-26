@@ -1,68 +1,101 @@
 {% extends "transporte/base.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container mt-4">
 
     <h3 class="text-primary mb-3">
-        🚚 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
+        📍 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
     </h3>
 
-    <!-- Datos del viaje -->
-    <div class="card mb-4 shadow-sm">
+    <!-- Resumen del viaje -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">Resumen del viaje</div>
         <div class="card-body">
-            <p><strong>Chofer:</strong> {{ viaje.chofer }}</p>
-            <p><strong>Vehículo:</strong> {{ viaje.vehiculo }}</p>
-            <p><strong>Empresa:</strong> {{ viaje.empresa }}</p>
-            <p><strong>Salida:</strong> {{ viaje.fecha_salida }}</p>
-            <p><strong>Llegada real:</strong> {{ viaje.fecha_llegada_real }}</p>
+
+            <div class="row">
+
+                <div class="col-md-3"><strong>Distancia real:</strong><br>{{ resumen.distancia_total }} km</div>
+                <div class="col-md-3"><strong>Vel. promedio:</strong><br>{{ resumen.velocidad_promedio }} km/h</div>
+                <div class="col-md-3"><strong>Vel. máxima:</strong><br>{{ resumen.velocidad_max }} km/h</div>
+                <div class="col-md-3"><strong>Vel. mínima:</strong><br>{{ resumen.velocidad_min }} km/h</div>
+
+            </div>
+
         </div>
     </div>
 
     <!-- Mapa -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-success text-white">🗺️ Recorrido histórico</div>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">🗺️ Recorrido del vehículo</div>
         <div class="card-body p-0">
             <div id="map" style="height: 550px;"></div>
+        </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-dark text-white">📈 Velocidad vs Tiempo</div>
+        <div class="card-body">
+            <canvas id="velChart" height="120"></canvas>
         </div>
     </div>
 
 </div>
 
 <script>
-// Datos enviados desde Django ➜ lista de puntos
+
 const puntos = {{ puntos|safe }};
 
 document.addEventListener("DOMContentLoaded", function () {
 
     if (!puntos || puntos.length === 0) {
-        alert("No hay posiciones registradas para este viaje.");
+        alert("No hay puntos registrados.");
         return;
     }
 
-    // Inicializar mapa centrado en el primer punto
+    /* ============================
+           MAPA
+    ============================= */
     const map = L.map("map").setView([puntos[0].lat, puntos[0].lon], 14);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
     }).addTo(map);
 
-    // Convertir puntos a línea para Leaflet
     const ruta = puntos.map(p => [p.lat, p.lon]);
 
-    // Dibujar línea
     const polyline = L.polyline(ruta, { color: "blue" }).addTo(map);
 
-    // Ajustar zoom al recorrido
     map.fitBounds(polyline.getBounds());
 
-    // Marcar inicio y final
     L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
     L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");
 
+    /* ============================
+           GRAFICO VELOCIDAD
+    ============================= */
+    const labels = puntos.map(p => p.t);
+    const velocidades = puntos.map(p => p.vel);
+
+    new Chart(document.getElementById("velChart"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Velocidad (km/h)",
+                data: velocidades,
+                borderWidth: 2,
+                fill: false
+            }]
+        }
+    });
+
 });
+
 </script>
 
 {% endblock %}

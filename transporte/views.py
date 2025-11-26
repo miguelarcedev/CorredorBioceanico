@@ -689,25 +689,56 @@ def finalizar_viaje(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from .models import Viaje, PosicionGPS
+from math import radians, sin, cos, sqrt, atan2
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371  # km
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
+
 def ver_mapa_viaje(request, viaje_id):
-    viaje = get_object_or_404(Viaje, id=viaje_id)
+    viaje = get_object_or_404(Viaje, pk=viaje_id)
+    puntos = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
 
-    # Cargar todas las posiciones GPS registradas
-    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
+    datos = []
+    total_dist = 0
+    velocidades = []
 
-    puntos = [
-        {
+    ultimo = None
+
+    for p in puntos:
+        datos.append({
             "lat": float(p.latitud),
             "lon": float(p.longitud),
-            "velocidad": float(p.velocidad),
-            "tiempo": p.fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
-        }
-        for p in posiciones
-    ]
+            "vel": float(p.velocidad),
+            "t": p.fecha_hora.strftime("%H:%M:%S")
+        })
 
-    context = {
-        "viaje": viaje,
-        "puntos": puntos,
+        velocidades.append(p.velocidad)
+
+        if ultimo:
+            total_dist += haversine(
+                ultimo.latitud, ultimo.longitud,
+                p.latitud, p.longitud
+            )
+        ultimo = p
+
+    resumen = {
+        "distancia_total": round(total_dist, 2),
+        "velocidad_max": round(max(velocidades), 2) if velocidades else 0,
+        "velocidad_min": round(min(velocidades), 2) if velocidades else 0,
+        "velocidad_promedio": round(sum(velocidades)/len(velocidades), 2) if velocidades else 0,
     }
 
-    return render(request, "reportes/ver_mapa_viaje.html", context)
+    return render(request, "reportes/ver_mapa_viaje.html", {
+        "viaje": viaje,
+        "puntos": datos,
+        "resumen": resumen
+    })
+
