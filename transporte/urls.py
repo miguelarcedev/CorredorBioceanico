@@ -66,8 +66,14 @@ urlpatterns = [
     path("monitoreo/demo/", views.monitoreo_demo, name="monitoreo_demo"),
     path("api/ruta/", views.obtener_ruta, name="api_ruta"),
 
+    path("api/guardar_posicion/", views.guardar_posicion, name="guardar_posicion"),
+    path("api/finalizar_viaje/", views.finalizar_viaje, name="finalizar_viaje"),
+
+
      # Reportes
     path("reportes/viajes-completados/", views.reporte_viajes_completados, name="reporte_viajes_completados"),
+    path("reportes/viaje/<uuid:viaje_id>/mapa/", views.ver_mapa_viaje, name="ver_mapa_viaje"),
+
 
 
 ]

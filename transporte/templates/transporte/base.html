@@ -151,26 +151,7 @@
                 </a>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link {% if 'viaje' in request.resolver_match.url_name %}active{% endif %}"
-                    href="{% url 'viaje_list' %}">
-                    <i class="bi bi-pin-map-fill"></i> Viajes
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if 'vehiculo' in request.resolver_match.url_name %}active{% endif %}"
-                href="{% url 'vehiculo_list' %}">
-                    <i class="bi bi-truck-front-fill"></i> Vehículos
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link {% if 'equipos' in request.resolver_match.url_name %}active{% endif %}"
-                    href="{% url 'equipos_list' %}">
-                    <i class="bi bi-hdd-network-fill"></i> Equipos
-                </a>
-            </li>
-
+            
             <li class="nav-item">
                 <a class="nav-link {% if 'monitoreo' in request.resolver_match.url_name %}active{% endif %}"
                     href="{% url 'monitoreo_demo' %}">
@@ -180,7 +161,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {% if 'reportes' in request.resolver_match.url_name %}active{% endif %}"
-                    href="{% url 'viaje_list' %}">
+                    href="{% url 'reporte_viajes_completados' %}">
                     <i class="bi bi-file-bar-graph-fill"></i> Reportes
                 </a>
             </li>

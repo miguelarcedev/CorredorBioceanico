@@ -1,17 +1,29 @@
 
-
-# Create your views here.
-
-# transporte/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from .forms import ViajeForm, RegistroEmpresaForm, VehiculoForm, EquipoGPSForm
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.dateparse import parse_date
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Viaje
+from django.db.models import Avg, Sum, Count
+from datetime import datetime, timedelta
+from .models import ViajeDemo, RutaDemo, PosicionDemo, EquipoGPS, Chofer, Vehiculo
+from .models import Viaje, Empresa, Usuario, RegistroUbicacion
+import requests
 
 
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Viaje, Empresa, Usuario
+
 
 @login_required
 def home(request):
@@ -30,11 +42,6 @@ def dashboard(request):
     
     return render(request, 'transporte/dashboard.html', {'viajes': viajes})
 
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from .models import Viaje
-from .forms import ViajeForm
 
 
 # LISTA
@@ -93,20 +100,6 @@ def viaje_detalle(request, pk):
     return render(request, 'viajes/viaje_detalle.html', {'viaje': viaje})
 
 
-from django.contrib.sites.shortcuts import get_current_site
-from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from django.http import HttpResponse
-
-from .forms import RegistroEmpresaForm
-
-from django.shortcuts import render, redirect # Importar 'redirect'
-from django.contrib import messages           # Importar 'messages'
-# ... otras importaciones ...
-
 
 def registro(request):
     if request.method == 'POST':
@@ -151,7 +144,6 @@ def registro(request):
     return render(request, 'transporte/registro.html', {'form': form})
 
 
-# ... importaciones ...
 
 def activar_cuenta(request, uidb64, token):
     try:
@@ -174,32 +166,6 @@ def activar_cuenta(request, uidb64, token):
         return redirect('login') # También redirige a login para evitar página en blanco
 
 
-from django.contrib import messages
-from django.shortcuts import redirect
-from .forms import ViajeForm
-from django.contrib import messages # Necesitas esto para messages.error/success
-
-@login_required
-def viaje_crear(request):
-    if not hasattr(request.user, 'empresa'):
-        messages.error(request, "Solo las empresas pueden registrar viajes.")
-        return redirect('dashboard')
-
-    empresa = request.user.empresa
-
-    if request.method == 'POST':
-        form = ViajeForm(request.POST, empresa=empresa)
-        if form.is_valid():
-            viaje = form.save(commit=False)
-            viaje.empresa = empresa
-            viaje.estado = 'PROGRAMADO'
-            viaje.save()
-            messages.success(request, "El viaje se registró correctamente.")
-            return redirect('viaje_detalle', viaje_id=viaje.id)
-    else:
-        form = ViajeForm(empresa=empresa)
-
-    return render(request, 'transporte/viaje_crear.html', {'form': form})
 
 @login_required
 def actualizar_ubicacion(request, viaje_id):
@@ -207,39 +173,6 @@ def actualizar_ubicacion(request, viaje_id):
     return render(request, 'transporte/actualizar_ubicacion.html', {'viaje': viaje})
 
 
-
-
-
-
-# transporte/views.py
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from .models import Viaje, RegistroUbicacion
-
-""" @csrf_exempt
-def actualizar_ubicacion_api(request, viaje_id):
-    if request.method == 'POST':
-        try:
-            lat = float(request.POST.get('lat'))
-            lon = float(request.POST.get('lon'))
-            viaje = Viaje.objects.get(id=viaje_id)
-
-            viaje.ubicacion_actual = f"{lat},{lon}"
-            viaje.save(update_fields=['ubicacion_actual'])
-
-            RegistroUbicacion.objects.create(viaje=viaje, lat=lat, lon=lon)
-
-            return JsonResponse({'status': 'ok'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'mensaje': str(e)})
-    return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido'}) """
-
-
-# views.py
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
 
 # ======================================================
 #   API: Actualizar (enviar) nueva ubicación
@@ -285,10 +218,6 @@ def actualizar_ubicacion_api(request, viaje_id):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
-# transporte/views.py
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-from django.http import JsonResponse
 
 def registros_api(request, viaje_id):
     # GET: devuelve todos los registros del viaje en JSON
@@ -304,40 +233,21 @@ def registros_api(request, viaje_id):
 
 
 
-# transporte/views.py
-from django.shortcuts import render, get_object_or_404
-
 def monitor_viaje(request, viaje_id):
     viaje = get_object_or_404(Viaje, id=viaje_id)
     return render(request, 'transporte/monitor_viaje.html', {'viaje': viaje})
 
 
 
-from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
-from .models import Viaje, RegistroUbicacion
-
 def monitoreo_viaje(request, viaje_id):
     """Muestra el mapa con el recorrido en tiempo real."""
     viaje = get_object_or_404(Viaje, id=viaje_id)
     return render(request, 'transporte/monitoreo_viaje.html', {'viaje': viaje})
 
-from django.shortcuts import render, get_object_or_404
-from .models import Viaje
-
-
-from .models import ViajeDemo  # asegurate de importar el modelo correcto
-
-
-from django.shortcuts import render
-
-
-from .models import Viaje
 
 def demo_viaje(request):
     viajes = Viaje.objects.filter(estado="PROGRAMADO")
     return render(request, "transporte/demo_viaje.html", {"viajes": viajes})
-
 
 
 
@@ -360,10 +270,6 @@ def obtener_ubicaciones(request, viaje_id):
     return JsonResponse(data)
 
 
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from .models import Viaje, ViajeDemo, RutaDemo, RegistroUbicacion
-from datetime import datetime
 
 # -----------------------------
 # MONITOREO REAL
@@ -377,21 +283,13 @@ def monitoreo_real(request):
 # -----------------------------
 # MONITOREO DEMO
 # -----------------------------
-""" @login_required
-def monitoreo_demo(request):
-    viajes = ViajeDemo.objects.all()
-    return render(request, "transporte/demo_viajeOK.html", {"viajes": viajes}) """
 
 def monitoreo_demo(request):
     viajes = Viaje.objects.filter(estado="EN_CURSO")
-
     context = {
         "viajes": viajes
     }
-
     return render(request, "transporte/demo_viaje.html", context)
-
-
 
 
 
@@ -411,10 +309,6 @@ def api_ruta_demo(request, viaje_id):
     ]
     return JsonResponse({"ruta": data})
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import PosicionDemo
-import json
 
 @csrf_exempt
 def registrar_posicion_demo(request):
@@ -443,29 +337,12 @@ def registrar_posicion_demo(request):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import make_aware
-from datetime import datetime, timedelta
-from .models import ViajeDemo, PosicionDemo
+
+
 
 # ================================
 #  API: obtener ruta entre puntos
 # ================================
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import make_aware
-from datetime import datetime, timedelta
-from .models import ViajeDemo, PosicionDemo
-
-# ================================
-#  API: obtener ruta entre puntos
-# ================================
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def obtener_ruta(request):
@@ -572,38 +449,6 @@ def lista_viajes_demo(request):
     ], safe=False)
 
 
-# transporte/views.py
-from django.db.models import Avg, Sum, Count
-from django.shortcuts import render
-from .models import Viaje, Chofer, Vehiculo
-
-""" def panel_analitico(request):
-    viajes = Viaje.objects.all()
-    choferes = Chofer.objects.all()
-    vehiculos = Vehiculo.objects.all()
-
-    # Evitamos errores si no hay datos
-    if not viajes.exists():
-        return render(request, "transporte/panel_analitico.html", {"sin_datos": True})
-
-    context = {
-        "total_viajes": viajes.count(),
-        "viajes_en_curso": viajes.filter(estado="EN_CURSO").count(),
-        "viajes_finalizados": viajes.filter(estado="FINALIZADO").count(),
-        "promedio_distancia": viajes.aggregate(Avg("distancia_km"))["distancia_km__avg"] or 0,
-        "promedio_duracion": viajes.aggregate(Avg("duracion_horas"))["duracion_horas__avg"] or 0,
-        "costo_total_estimado": viajes.aggregate(Sum("costo_estimado"))["costo_estimado__sum"] or 0,
-        "viajes_por_empresa": viajes.values("empresa__nombre").annotate(total=Count("id")).order_by("-total"),
-        "viajes_por_chofer": viajes.values("chofer__nombre").annotate(total=Count("id")).order_by("-total")[:5],
-        "viajes_por_vehiculo": viajes.values("vehiculo__patente").annotate(total=Count("id")).order_by("-total")[:5],
-    }
-
-    return render(request, "transporte/panel_analitico.html", context) """
-
-
-from django.db.models import Avg, Count, Sum
-from django.shortcuts import render
-from .models import Viaje
 
 def panel_analitico(request):
     viajes = Viaje.objects.all()
@@ -624,12 +469,6 @@ def panel_analitico(request):
 # ================================
 #  CRUD COMPLETO -- EquiposGPS
 # ================================
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import EquipoGPS
-from .forms import EquipoGPSForm
-
 
 # LISTA
 @login_required
@@ -691,12 +530,6 @@ def equipos_eliminar(request, pk):
 #  CRUD COMPLETO -- VEHICULOS
 # ================================
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Vehiculo
-from .forms import VehiculoForm
-
-
 # LISTA
 @login_required
 def vehiculo_list(request):
@@ -756,12 +589,9 @@ def vehiculo_delete(request, pk):
     })
 
 
-from django.shortcuts import render
-from django.db.models import Q
-from django.utils.dateparse import parse_date
-
-from transporte.models import Viaje, Empresa, Chofer
-
+# ================================
+#  REPORTES -- VIAJES
+# ================================
 
 def reporte_viajes_completados(request):
     
@@ -798,3 +628,117 @@ def reporte_viajes_completados(request):
     }
 
     return render(request, "reportes/reporte_viajes_completados.html", context)
+
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Viaje, PosicionGPS
+
+@csrf_exempt
+def guardar_posicion(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        viaje_id = data.get("viaje_id")
+        lat = data.get("latitud")
+        lon = data.get("longitud")
+        velocidad = data.get("velocidad", 0)
+
+        viaje = Viaje.objects.get(id=viaje_id)
+
+        PosicionGPS.objects.create(
+            viaje=viaje,
+            latitud=lat,
+            longitud=lon,
+            velocidad=velocidad
+        )
+
+        return JsonResponse({"ok": True})
+
+    except Viaje.DoesNotExist:
+        return JsonResponse({"error": "Viaje no encontrado"}, status=404)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def finalizar_viaje(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        viaje_id = data.get("viaje_id")
+
+        viaje = Viaje.objects.get(id=viaje_id)
+
+        # Cambiar estado a "FINALIZADO"
+        viaje.estado = "FINALIZADO"
+        viaje.save()
+
+        return JsonResponse({"ok": True})
+
+    except Viaje.DoesNotExist:
+        return JsonResponse({"error": "Viaje no encontrado"}, status=404)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from .models import Viaje, PosicionGPS
+from math import radians, sin, cos, sqrt, atan2
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371  # km
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
+
+def ver_mapa_viaje(request, viaje_id):
+    viaje = get_object_or_404(Viaje, pk=viaje_id)
+    puntos = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
+
+    datos = []
+    total_dist = 0
+    velocidades = []
+
+    ultimo = None
+
+    for p in puntos:
+        datos.append({
+            "lat": float(p.latitud),
+            "lon": float(p.longitud),
+            "vel": float(p.velocidad),
+            "t": p.fecha_hora.strftime("%H:%M:%S")
+        })
+
+        velocidades.append(p.velocidad)
+
+        if ultimo:
+            total_dist += haversine(
+                ultimo.latitud, ultimo.longitud,
+                p.latitud, p.longitud
+            )
+        ultimo = p
+
+    resumen = {
+        "distancia_total": round(total_dist, 2),
+        "velocidad_max": round(max(velocidades), 2) if velocidades else 0,
+        "velocidad_min": round(min(velocidades), 2) if velocidades else 0,
+        "velocidad_promedio": round(sum(velocidades)/len(velocidades), 2) if velocidades else 0,
+    }
+
+    return render(request, "reportes/ver_mapa_viaje.html", {
+        "viaje": viaje,
+        "puntos": datos,
+        "resumen": resumen
+    })
+

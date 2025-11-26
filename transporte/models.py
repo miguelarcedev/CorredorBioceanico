@@ -5,6 +5,8 @@ import qrcode
 from io import BytesIO
 from django.core.files import File
 from django.urls import reverse
+from geopy.distance import geodesic
+from datetime import datetime
 
 
 # ---------------------------
@@ -116,13 +118,6 @@ class Carga(models.Model):
 # ---------------------------
 # MODELO DE VIAJE
 # ---------------------------
-import uuid
-from io import BytesIO
-from django.core.files import File
-from django.urls import reverse
-import qrcode
-from django.db import models
-
 class Viaje(models.Model):
 
     ESTADOS = [
@@ -210,13 +205,27 @@ class Viaje(models.Model):
 # MODELOS DE POSICIÓN GPS Y ALERTAS
 # ---------------------------
 class PosicionGPS(models.Model):
-    viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE, related_name='posiciones')
+    viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE)
     latitud = models.FloatField()
     longitud = models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    velocidad = models.FloatField(null=True, blank=True)
+    fecha_hora = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.viaje.id} ({self.latitud}, {self.longitud})"
+        return f"{self.viaje.id} @ {self.fecha_hora}"
+
+
+class RegistroUbicacion(models.Model):
+    viaje = models.ForeignKey('Viaje', on_delete=models.CASCADE, related_name='registros')
+    lat = models.FloatField()
+    lon = models.FloatField()
+    fecha_hora = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha_hora']
+
+    def __str__(self):
+        return f"{self.viaje.id} @ {self.fecha_hora:%Y-%m-%d %H:%M:%S}"
 
 
 class Alerta(models.Model):
@@ -248,17 +257,7 @@ class ControlFrontera(models.Model):
         return f"Control en frontera para {self.viaje.id}"
 
 
-class RegistroUbicacion(models.Model):
-    viaje = models.ForeignKey('Viaje', on_delete=models.CASCADE, related_name='registros')
-    lat = models.FloatField()
-    lon = models.FloatField()
-    fecha_hora = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['fecha_hora']
-
-    def __str__(self):
-        return f"{self.viaje.id} @ {self.fecha_hora:%Y-%m-%d %H:%M:%S}"
 
 
 # ---------------------------
@@ -323,8 +322,7 @@ class PosicionDemo(models.Model):
     def __str__(self):
         return f"{self.viaje.origen} → {self.viaje.destino} @ {self.timestamp:%Y-%m-%d %H:%M:%S}"
 
-from geopy.distance import geodesic
-from datetime import datetime
+
 
 def calcular_metricas_viaje(viaje):
     """
