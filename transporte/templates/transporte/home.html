@@ -2,39 +2,72 @@
 
 {% block content %}
   
-    <!-- SECCIÓN CORREDOR (sin fondo) -->
-    <section class="py-2">
-        <div class="container text-center">
-            <h4 class="text-center fw-bold mb-2 text-primary">CapriTech Tecnología a tu alcance</h4>
-
-            <p class="text-center mx-auto" style="max-width: 800px;">
-                Pensamos en vos, y estamos para ayudarte, con esta plataforma vas a poder
-                supervisar tus vehículos durante todo el recorrido, conocer ubicaciónes exactas y recibir
-                información clave para la toma de decisiones, ademas de agilizar procesos con la implementacion
-                de generacion de reportes, reflejando asi tu esfuerzo y compromiso que es de vital importancia.
-                Una herramienta creada para proveer de informacion y simplicidad y de este modo impulsar a el 
-                desarrollo colectivo de esta gran empresa.
-            </p>
+<section class="py-2">
+    <div class="container text-center">
+        
 
 
-                 <div class="row mt-3 justify-content-center">
-                    <!-- Imagen 1 -->
-                     <div class="col-md-6 text-center">
-                        <img src="/static/img/mapa_corredor.png"
-                        alt="Mapa Corredor"
-                        class="img-fluid"
-                        style="max-width: 80%; height: auto;">
-                    </div>
-                    <!-- Imagen 2 (la nueva) -->
-                     <div class="col-md-6 text-center">
-                        <img src="/static/img/imagen2.jpg"
-                        alt="Imagen adicional"
-                        class="img-fluid"
-                        style="max-width: 80%; height: auto;">
+        <h4 class="text-center fw-bold mb-2 text-primary">CapriTech Tecnología a tu alcance</h4>
+
+        <p class="text-center mx-auto" style="max-width: 800px;">
+            Pensamos en vos, y estamos para ayudarte, con esta plataforma vas a poder
+            supervisar tus vehículos durante todo el recorrido, conocer ubicaciones exactas y recibir
+            información clave para la toma de decisiones, además de agilizar procesos con la
+            implementación de reportes. Una herramienta creada para impulsar el desarrollo colectivo.
+        </p>
+
+        <!-- ============================= -->
+        <!--   CARRUSEL DE NOVEDADES       -->
+        <!-- ============================= -->
+        
+
+        {% if novedades %}
+        <div id="carouselNovedades" class="carousel slide mt-4" data-bs-ride="carousel">
+
+            <!-- Indicadores -->
+            <div class="carousel-indicators">
+                {% for item in novedades %}
+                <button type="button" data-bs-target="#carouselNovedades"
+                        data-bs-slide-to="{{ forloop.counter0 }}"
+                        class="{% if forloop.first %}active{% endif %}">
+                </button>
+                {% endfor %}
+            </div>
+
+            <!-- Slides -->
+            <div class="carousel-inner">
+                
+                {% for item in novedades %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <img src="{{ item.imagen.url }}" class="d-block w-100"
+                         style="max-height: 420px; object-fit: cover;">
+
+                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 p-2 rounded">
+                        <h5>{{ item.titulo }}</h5>
+                        <p>{{ item.descripcion }}</p>
                     </div>
                 </div>
+                {% endfor %}
+            </div>
+
+            <!-- Controles -->
+            <button class="carousel-control-prev" type="button"
+                    data-bs-target="#carouselNovedades" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+
+            <button class="carousel-control-next" type="button"
+                    data-bs-target="#carouselNovedades" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
 
         </div>
-    </section>
+        {% else %}
+            <p class="text-center mt-4 text-muted">No hay novedades cargadas aún.</p>
+        {% endif %}
+
+    </div>
+</section>
 
 {% endblock %}
+

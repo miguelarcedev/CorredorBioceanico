@@ -349,3 +349,17 @@ def calcular_metricas_viaje(viaje):
     viaje.velocidad_promedio = round(velocidad_promedio, 2)
     viaje.save(update_fields=['kilometros_recorridos', 'tiempo_total_horas', 'velocidad_promedio'])
     return True
+
+#agrego
+class Novedad(models.Model):
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    imagen = models.ImageField(upload_to='novedades/')
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']  # Las más nuevas primero
+
+    def __str__(self):
+        return self.titulo
+

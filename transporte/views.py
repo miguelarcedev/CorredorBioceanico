@@ -22,13 +22,18 @@ from .models import ViajeDemo, RutaDemo, PosicionDemo, EquipoGPS, Chofer, Vehicu
 from .models import Viaje, Empresa, Usuario, RegistroUbicacion
 import requests
 
-
+#grego
+from .models import Novedad
 
 
 @login_required
 def home(request):
-        
-    return render(request, 'transporte/home.html')
+    #agrego
+    novedades = Novedad.objects.all()[:10]  # trae las últimas 10  
+     
+    return render(request, 'transporte/home.html', {
+        'novedades': novedades
+    })
 
 
 @login_required

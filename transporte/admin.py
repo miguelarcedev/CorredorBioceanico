@@ -15,7 +15,11 @@ from .models import (
     ControlFrontera,
     RegistroUbicacion,
     PosicionDemo,
+    #agrego
+    Novedad,
 )
+
+
 
 # 👉 Admin para el usuario personalizado
 @admin.register(Usuario)
@@ -46,4 +50,5 @@ admin.site.register(PosicionDemo)
 admin.site.register(Alerta)
 admin.site.register(ControlFrontera)
 admin.site.register(RegistroUbicacion)
-
+#agrego
+admin.site.register(Novedad)
