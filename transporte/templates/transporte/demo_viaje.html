@@ -167,7 +167,7 @@ async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
     map.panTo(rutaFix[0]);
 
     let index = 0;
-    const delay = 250;
+    const delay = 500;
 
     animInterval = setInterval(async () => {
 
@@ -185,7 +185,8 @@ async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
 
         // velocidad aproximada
         const distancia = map.distance(anterior, actual);
-        const velocidad = (distancia / (delay / 1000)) * 3.6;
+         // velocidad realista reducida a la mitad
+        const velocidad = ((distancia / (delay / 1000)) * 3.6) / 2;
 
         marker.setLatLng(actual);
         map.panTo(actual);
