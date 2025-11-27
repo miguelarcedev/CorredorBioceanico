@@ -186,7 +186,7 @@ async function iniciarSimulacion(viaje_id, lat1, lon1, lat2, lon2) {
         // velocidad aproximada
         const distancia = map.distance(anterior, actual);
          // velocidad realista reducida a la mitad
-        const velocidad = ((distancia / (delay / 1000)) * 3.6) / 2;
+        const velocidad = ((distancia / (delay / 1000)) * 3.6) / 3;
 
         marker.setLatLng(actual);
         map.panTo(actual);
