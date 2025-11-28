@@ -204,6 +204,7 @@ class Viaje(models.Model):
 # ---------------------------
 # MODELOS DE POSICIÓN GPS Y ALERTAS
 # ---------------------------
+
 class PosicionGPS(models.Model):
     viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE)
     latitud = models.FloatField()
@@ -213,19 +214,6 @@ class PosicionGPS(models.Model):
 
     def __str__(self):
         return f"{self.viaje.id} @ {self.fecha_hora}"
-
-
-class RegistroUbicacion(models.Model):
-    viaje = models.ForeignKey('Viaje', on_delete=models.CASCADE, related_name='registros')
-    lat = models.FloatField()
-    lon = models.FloatField()
-    fecha_hora = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['fecha_hora']
-
-    def __str__(self):
-        return f"{self.viaje.id} @ {self.fecha_hora:%Y-%m-%d %H:%M:%S}"
 
 
 class Alerta(models.Model):
@@ -247,6 +235,7 @@ class Alerta(models.Model):
 # ---------------------------
 # MODELO DE CONTROL FRONTERIZO
 # ---------------------------
+
 class ControlFrontera(models.Model):
     viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE, related_name='controles')
     agente = models.ForeignKey(Usuario, on_delete=models.CASCADE, limit_choices_to={'rol': 'FRONTERA'})
@@ -255,72 +244,6 @@ class ControlFrontera(models.Model):
 
     def __str__(self):
         return f"Control en frontera para {self.viaje.id}"
-
-
-
-
-
-# ---------------------------
-# MODO DEMO - VIAJES SIMULADOS
-# ---------------------------
-
-class ViajeDemo(models.Model):
-    """
-    Representa un viaje simulado entre dos puntos de Jujuy.
-    No interfiere con los viajes reales.
-    """
-    ESTADOS = [
-        ('PROGRAMADO', 'Programado'),
-        ('EN_CURSO', 'En curso'),
-        ('FINALIZADO', 'Finalizado'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    origen = models.CharField(max_length=150)
-    destino = models.CharField(max_length=150)
-    descripcion = models.TextField(blank=True)
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='PROGRAMADO')
-
-    def __str__(self):
-        return f"Demo: {self.origen} → {self.destino} ({self.estado})"
-class RutaDemo(models.Model):
-    """Coordenadas predefinidas para simular el recorrido de un viaje demo."""
-    viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='rutas')
-    orden = models.PositiveIntegerField(help_text="Orden del punto en la ruta")
-    latitud = models.FloatField()
-    longitud = models.FloatField()
-
-    class Meta:
-        ordering = ['orden']
-
-    def __str__(self):
-        return f"Ruta {self.orden} ({self.latitud}, {self.longitud}) - {self.viaje.nombre}"
-
-
-
-
-
-# ==========================================================
-# 🔹 MODO DEMO - SIMULACIÓN DE VIAJES
-# ==========================================================
-
-
-
-
-class PosicionDemo(models.Model):
-    """
-    Representa una posición GPS simulada para un viaje de demostración.
-    """
-    viaje = models.ForeignKey(ViajeDemo, on_delete=models.CASCADE, related_name='posiciones')
-    latitud = models.FloatField()
-    longitud = models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['timestamp']
-
-    def __str__(self):
-        return f"{self.viaje.origen} → {self.viaje.destino} @ {self.timestamp:%Y-%m-%d %H:%M:%S}"
 
 
 

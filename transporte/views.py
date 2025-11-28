@@ -18,8 +18,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Sum, Count
 from datetime import datetime, timedelta
-from .models import ViajeDemo, RutaDemo, PosicionDemo, EquipoGPS, Chofer, Vehiculo
-from .models import Viaje, Empresa, Usuario, RegistroUbicacion
+from .models import Viaje, Empresa, Usuario, EquipoGPS, Chofer, Vehiculo
 import requests
 
 #grego
@@ -179,49 +178,6 @@ def actualizar_ubicacion(request, viaje_id):
 
 
 
-# ======================================================
-#   API: Actualizar (enviar) nueva ubicación
-# ======================================================
-@csrf_exempt
-def actualizar_ubicacion_api(request, viaje_id):
-    """
-    Recibe una nueva ubicación (lat, lon) en formato JSON y la guarda en la BD.
-    Retorna estado y la ubicación registrada con timestamp.
-    """
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            lat = data.get("lat")
-            lon = data.get("lon")
-
-            if lat is None or lon is None:
-                return JsonResponse({"error": "Faltan parámetros lat/lon"}, status=400)
-
-            viaje = Viaje.objects.get(pk=viaje_id)
-
-            ubicacion = RegistroUbicacion.objects.create(
-                viaje=viaje,
-                lat=lat,
-                lon=lon,
-                fecha_hora=timezone.now()
-            )
-
-            return JsonResponse({
-                "status": "ok",
-                "ubicacion": {
-                    "lat": ubicacion.lat,
-                    "lon": ubicacion.lon,
-                    "fecha_hora": ubicacion.fecha_hora.isoformat(),
-                }
-            })
-
-        except Viaje.DoesNotExist:
-            return JsonResponse({"error": "Viaje no encontrado"}, status=404)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "JSON inválido"}, status=400)
-
-    return JsonResponse({"error": "Método no permitido"}, status=405)
-
 
 
 def registros_api(request, viaje_id):
@@ -256,34 +212,6 @@ def demo_viaje(request):
 
 
 
-def obtener_ubicaciones(request, viaje_id):
-    """
-    Devuelve las ubicaciones asociadas al viaje en formato JSON.
-    Incluye fecha y hora en formato ISO para el frontend.
-    """
-    ubicaciones = RegistroUbicacion.objects.filter(viaje_id=viaje_id).order_by('fecha_hora')
-    data = {
-        "ubicaciones": [
-            {
-                "lat": u.lat,
-                "lon": u.lon,
-                "fecha_hora": u.fecha_hora.isoformat() if u.fecha_hora else None,
-            }
-            for u in ubicaciones
-        ]
-    }
-    return JsonResponse(data)
-
-
-
-# -----------------------------
-# MONITOREO REAL
-# -----------------------------
-@login_required
-def monitoreo_real(request):
-    viajes = Viaje.objects.filter(estado__in=["EN_CURSO", "PROGRAMADO"])
-    return render(request, "transporte/monitoreo_real.html", {"viajes": viajes})
-
 
 # -----------------------------
 # MONITOREO DEMO
@@ -296,50 +224,6 @@ def monitoreo_demo(request):
     }
     return render(request, "transporte/demo_viaje.html", context)
 
-
-
-# -----------------------------
-# API para devolver las coordenadas demo
-# -----------------------------
-def api_ruta_demo(request, viaje_id):
-    viaje = get_object_or_404(ViajeDemo, id=viaje_id)
-    rutas = RutaDemo.objects.filter(viaje=viaje).order_by("orden")
-    data = [
-        {
-            "lat": r.latitud,
-            "lon": r.longitud,
-            "orden": r.orden,
-        }
-        for r in rutas
-    ]
-    return JsonResponse({"ruta": data})
-
-
-@csrf_exempt
-def registrar_posicion_demo(request):
-    """
-    Guarda una posición de simulación (modo demo)
-    """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-            viaje_id = data.get('viaje_id')
-            lat = data.get('lat')
-            lon = data.get('lon')
-
-            if not all([viaje_id, lat, lon]):
-                return JsonResponse({'error': 'Datos incompletos'}, status=400)
-
-            PosicionDemo.objects.create(
-                viaje_id=viaje_id,
-                latitud=lat,
-                longitud=lon
-            )
-            return JsonResponse({'status': 'ok'})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
 
@@ -432,26 +316,6 @@ def obtener_ruta(request):
     # FALLÓ TODO
     # =======================================================
     return JsonResponse({'error': 'No se pudo obtener la ruta real'}, status=500)
-
-
-
-# ================================
-#  API: lista de viajes demo
-# ================================
-def lista_viajes_demo(request):
-    viajes = ViajeDemo.objects.all().prefetch_related("posiciones")
-    return JsonResponse([
-        {
-            "id": v.id,
-            "origen": v.origen,
-            "destino": v.destino,
-            "estado": v.estado,
-            "posiciones": [
-                {"latitud": p.latitud, "longitud": p.longitud, "timestamp": p.timestamp}
-                for p in v.posiciones.all()
-            ]
-        } for v in viajes
-    ], safe=False)
 
 
 

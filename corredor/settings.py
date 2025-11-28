@@ -11,6 +11,7 @@ ALLOWED_HOSTS = ['*']
 
 
 INSTALLED_APPS = [
+    #'jazzmin',           # Debe ir primero
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -104,3 +105,25 @@ EMAIL_HOST_PASSWORD = 'lhso hedx aqao ixox'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# settings.py
+
+JAZZMIN_SETTINGS = {
+    # Logo y Títulos
+    "site_brand": "Corredor Bioceanico",
+    "site_header": "Administración",
+    "site_logo": "img/logo_capritech.png", # Ruta al logo dentro de tu carpeta 'static'
+    
+    # Colores (Temas)
+    # Jazzmin viene con muchos temas basados en Bootstrap/AdminLTE.
+    # Algunos populares: 'flatly', 'darkly', 'solar', 'cerulean', 'minty', etc.
+    #"theme": "flatly", # ¡Prueba con 'darkly' o 'solar' para un tema oscuro!
+    
+    # Colores de la barra superior (Top Bar)
+    # Puedes elegir entre 'navbar-primary', 'navbar-dark', 'navbar-white', etc.
+    #"navbar_color": "navbar-dark",
+    #"navbar_color": "navbar-primary",
+
+    # Colores de la barra lateral (Side Bar)
+    # Puedes elegir entre 'sidebar-dark-primary', 'sidebar-light-primary', etc.
+    #"sidebar_themes": "sidebar-dark-primary",
+}

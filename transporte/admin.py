@@ -9,12 +9,9 @@ from .models import (
     Vehiculo,
     Carga,
     Viaje,
-    ViajeDemo,
     PosicionGPS,
     Alerta,
     ControlFrontera,
-    RegistroUbicacion,
-    PosicionDemo,
     #agrego
     Novedad,
 )
@@ -44,11 +41,8 @@ admin.site.register(Chofer)
 admin.site.register(Vehiculo)
 admin.site.register(Carga)
 admin.site.register(Viaje)
-admin.site.register(ViajeDemo)
 admin.site.register(PosicionGPS)
-admin.site.register(PosicionDemo)
 admin.site.register(Alerta)
 admin.site.register(ControlFrontera)
-admin.site.register(RegistroUbicacion)
 #agrego
 admin.site.register(Novedad)

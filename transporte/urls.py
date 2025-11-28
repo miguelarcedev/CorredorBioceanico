@@ -7,9 +7,9 @@ urlpatterns = [
     path('', views.home, name='home'),
     #path("monitoreo/real/", views.monitoreo_real, name="monitoreo_real"),
     #path("monitoreo/demo/", views.monitoreo_demo, name="monitoreo_demo"),
-    path("api/demo/<uuid:viaje_id>/", views.api_ruta_demo, name="api_ruta_demo"),
+    #path("api/demo/<uuid:viaje_id>/", views.api_ruta_demo, name="api_ruta_demo"),
 
-    path('api/demo/registrar/', views.registrar_posicion_demo, name='registrar_posicion_demo'),
+    #path('api/demo/registrar/', views.registrar_posicion_demo, name='registrar_posicion_demo'),
 
     #path('demo_viaje/', views.demo_viaje, name='demo_viaje'),
 
@@ -28,7 +28,7 @@ urlpatterns = [
 
     # APIs usadas por el mapa
     #path('api/ruta/', views.obtener_ruta, name='api_ruta'),
-    path('api/viajes_demo/', views.lista_viajes_demo, name='lista_viajes_demo'),
+    #path('api/viajes_demo/', views.lista_viajes_demo, name='lista_viajes_demo'),
 
     path("panel_analitico/", views.panel_analitico, name="panel_analitico"),
 
@@ -57,9 +57,9 @@ urlpatterns = [
     path('viaje/<uuid:viaje_id>/monitor/', views.monitor_viaje, name='monitor_viaje'),
 
     path('viaje/<uuid:viaje_id>/actualizar_ubicacion/', views.actualizar_ubicacion, name='actualizar_ubicacion'),
-    path('viaje/<uuid:viaje_id>/actualizar_ubicacion_api/', views.actualizar_ubicacion_api, name='actualizar_ubicacion_api'),
+    #path('viaje/<uuid:viaje_id>/actualizar_ubicacion_api/', views.actualizar_ubicacion_api, name='actualizar_ubicacion_api'),
     path('viaje/<uuid:viaje_id>/monitoreo/', views.monitoreo_viaje, name='monitoreo_viaje'),
-    path('viaje/<uuid:viaje_id>/obtener_ubicaciones/', views.obtener_ubicaciones, name='obtener_ubicaciones'),
+    #path('viaje/<uuid:viaje_id>/obtener_ubicaciones/', views.obtener_ubicaciones, name='obtener_ubicaciones'),
     path('viaje/<uuid:viaje_id>/demo/', views.demo_viaje, name='demo_viaje'),
 
 
