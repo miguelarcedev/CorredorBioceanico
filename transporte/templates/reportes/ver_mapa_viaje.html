@@ -10,6 +10,64 @@
     <h3 class="text-primary mb-3">
         📍 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
     </h3>
+        <!-- Datos generales del viaje -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+            Datos del viaje
+        </div>
+        <div class="card-body">
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Chofer:</strong><br>
+                    {{ viaje.chofer.nombre }} {{ viaje.chofer.apellido }}<br>
+                    <small>DNI: {{ viaje.chofer.documento }} — Licencia: {{ viaje.chofer.licencia_nro }}</small>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Vehículo:</strong><br>
+                    {{ viaje.vehiculo.patente }} — {{ viaje.vehiculo.marca }} {{ viaje.vehiculo.modelo }}<br>
+                    <small>Capacidad: {{ viaje.vehiculo.capacidad }} tn</small>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Carga transportada:</strong><br>
+                    {{ viaje.carga.tipo }} — {{ viaje.carga.peso_aprox }} tn<br>
+                    <small>{{ viaje.carga.descripcion }}</small>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Estado del viaje:</strong><br>
+                    <span class="badge bg-info text-dark">{{ viaje.get_estado_display }}</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Fecha salida:</strong><br>
+                    {{ viaje.fecha_salida|date:"d/m/Y H:i" }}
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Fecha llegada estimada:</strong><br>
+                    {{ viaje.fecha_llegada_estimada|date:"d/m/Y H:i" }}
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Fecha llegada real:</strong><br>
+                    {% if viaje.fecha_llegada_real %}
+                        {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }}
+                    {% else %}
+                        <span class="text-muted">Aún no finalizado</span>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 
     <!-- Resumen del viaje -->
     <div class="card shadow-sm mb-4">
