@@ -5,15 +5,7 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     #path('', views.dashboard, name='dashboard'),
     path('', views.home, name='home'),
-    #path("monitoreo/real/", views.monitoreo_real, name="monitoreo_real"),
-    #path("monitoreo/demo/", views.monitoreo_demo, name="monitoreo_demo"),
-    #path("api/demo/<uuid:viaje_id>/", views.api_ruta_demo, name="api_ruta_demo"),
-
-    #path('api/demo/registrar/', views.registrar_posicion_demo, name='registrar_posicion_demo'),
-
-    #path('demo_viaje/', views.demo_viaje, name='demo_viaje'),
-
-
+    
     # Autenticación
     # Autenticación: Usar next_page para forzar la redirección post-logout.
     path('login/', auth_views.LoginView.as_view(template_name='transporte/login.html'), name='login'),
@@ -25,10 +17,6 @@ urlpatterns = [
     path('activar/<uidb64>/<token>/', views.activar_cuenta, name='activar'),
 
 
-
-    # APIs usadas por el mapa
-    #path('api/ruta/', views.obtener_ruta, name='api_ruta'),
-    #path('api/viajes_demo/', views.lista_viajes_demo, name='lista_viajes_demo'),
 
     path("panel_analitico/", views.panel_analitico, name="panel_analitico"),
 
