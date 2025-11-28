@@ -756,138 +756,173 @@ from .models import Viaje
 def exportar_pdf_viaje(request, viaje_id):
     viaje = Viaje.objects.get(id=viaje_id)
 
-    # -------- RESPONSE --------
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="Reporte_Viaje_{viaje.id}.pdf"'
+    # ---------------------------------------------------------------------
+    #  SANEAR valores None → evitar que KPIs queden vacíos o generen error
+    # ---------------------------------------------------------------------
+    def safe(v, fmt="{:.2f}"):
+        if v is None:
+            return "—"
+        try:
+            return fmt.format(v)
+        except:
+            return str(v)
 
-    doc = SimpleDocTemplate(response, pagesize=A4, title="Reporte del Viaje")
+    # DEFAULTS SI EL VIAJE AÚN NO CARGÓ TODO
+    km = safe(viaje.kilometros_recorridos)
+    vel_prom = safe(viaje.velocidad_promedio, "{:.1f}")
+    dur_hs = safe(viaje.tiempo_total_horas)
+    cons = safe(viaje.consumo_promedio)
+    costo_comb = safe(viaje.costo_combustible)
+    costo_total = safe(viaje.costo_estimado)
+
+    # ---------------------------------------------------------------------
+    #   RESPONSE
+    # ---------------------------------------------------------------------
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Viaje_{viaje.id}.pdf"'
+
+    doc = SimpleDocTemplate(
+        response, pagesize=A4, leftMargin=40, rightMargin=40, topMargin=40, bottomMargin=40
+    )
+
     styles = getSampleStyleSheet()
 
-    # ---- Estilos personalizados ----
-    titulo_estilo = ParagraphStyle(
-        name="TituloPrincipal",
+    # ----- Estilos minimalistas -----
+    titulo = ParagraphStyle(
+        "Titulo",
         parent=styles["Title"],
-        fontSize=22,
-        textColor=colors.HexColor("#003366"),
-        spaceAfter=20,
+        fontSize=20,
+        textColor=colors.black,
+        spaceAfter=15,
     )
 
     subtitulo = ParagraphStyle(
-        name="Subtitulo",
+        "Subtitulo",
         parent=styles["Heading2"],
-        fontSize=15,
-        textColor=colors.HexColor("#004c99"),
-        spaceAfter=10,
+        fontSize=13,
+        textColor=colors.black,
+        spaceAfter=6,
     )
 
     texto = ParagraphStyle(
-        name="Texto",
+        "Texto",
         parent=styles["BodyText"],
         fontSize=11,
-        leading=15
+        leading=15,
     )
 
-    # ---- Separador visual corporativo ----
-    def separador():
+    # ----- Separador minimalista -----
+    def sep():
         return Table(
             [[""]],
             colWidths=[450],
             style=[
-                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#0059b3")),
-                ('INNER_PADDING', (0, 0), (-1, -1), 2),
+                ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.85, 0.85, 0.85)),
+                ('INNER_PADDING', (0, 0), (-1, -1), 1),
             ],
         )
 
     story = []
 
-    # ---------- TITULO ----------
-    story.append(Paragraph(f"Reporte del Viaje", titulo_estilo))
-    story.append(separador())
+    # =====================================================================
+    #                         TÍTULO
+    # =====================================================================
+    story.append(Paragraph("REPORTE DEL VIAJE", titulo))
+    story.append(sep())
     story.append(Spacer(1, 15))
 
-    # ---------- INFORMACIÓN DEL VIAJE ----------
-    story.append(Paragraph("Información General", subtitulo))
-    info_text = f"""
+    # =====================================================================
+    #                 INFORMACIÓN GENERAL DEL VIAJE
+    # =====================================================================
+    story.append(Paragraph("Información del Viaje", subtitulo))
+    info_html = f"""
         <b>Origen:</b> {viaje.origen}<br/>
         <b>Destino:</b> {viaje.destino}<br/>
-        <b>Fecha salida:</b> {viaje.fecha_salida.strftime("%d/%m/%Y %H:%M")}<br/>
-        <b>Fecha llegada real:</b> {viaje.fecha_llegada_real.strftime("%d/%m/%Y %H:%M") if viaje.fecha_llegada_real else "—"}<br/>
+        <b>Salida:</b> {viaje.fecha_salida.strftime("%d/%m/%Y %H:%M")}<br/>
+        <b>Llegada real:</b> {viaje.fecha_llegada_real.strftime("%d/%m/%Y %H:%M") if viaje.fecha_llegada_real else "—"}<br/>
         <b>Estado:</b> {viaje.estado}<br/>
     """
-    story.append(Paragraph(info_text, texto))
-    story.append(Spacer(1, 15))
-    story.append(separador())
+    story.append(Paragraph(info_html, texto))
+    story.append(Spacer(1, 10))
+    story.append(sep())
     story.append(Spacer(1, 15))
 
-    # ---------- CHOFER ----------
+    # =====================================================================
+    #                            CHOFER
+    # =====================================================================
     story.append(Paragraph("Chofer", subtitulo))
-    chofer_text = f"""
-        <b>Nombre:</b> {viaje.chofer.nombre} {viaje.chofer.apellido}<br/>
-        <b>Documento:</b> {viaje.chofer.documento}<br/>
-        <b>Licencia:</b> {viaje.chofer.licencia_nro}<br/>
-    """
-    story.append(Paragraph(chofer_text, texto))
+    story.append(Paragraph(
+        f"<b>Nombre:</b> {viaje.chofer.nombre} {viaje.chofer.apellido}<br/>"
+        f"<b>Documento:</b> {viaje.chofer.documento}<br/>"
+        f"<b>Licencia:</b> {viaje.chofer.licencia_nro}",
+        texto
+    ))
     story.append(Spacer(1, 15))
-    story.append(separador())
+    story.append(sep())
     story.append(Spacer(1, 15))
 
-    # ---------- VEHÍCULO ----------
+    # =====================================================================
+    #                            VEHÍCULO
+    # =====================================================================
     story.append(Paragraph("Vehículo", subtitulo))
-    veh_text = f"""
-        <b>Patente:</b> {viaje.vehiculo.patente}<br/>
-        <b>Marca/Modelo:</b> {viaje.vehiculo.marca} {viaje.vehiculo.modelo}<br/>
-        <b>Capacidad:</b> {viaje.vehiculo.capacidad} tn<br/>
-        <b>Estado:</b> {viaje.vehiculo.estado}<br/>
-    """
-    story.append(Paragraph(veh_text, texto))
-    story.append(Spacer(1, 12))
+    story.append(Paragraph(
+        f"<b>Patente:</b> {viaje.vehiculo.patente}<br/>"
+        f"<b>Marca/Modelo:</b> {viaje.vehiculo.marca} {viaje.vehiculo.modelo}<br/>"
+        f"<b>Capacidad:</b> {viaje.vehiculo.capacidad} tn<br/>"
+        f"<b>Estado:</b> {viaje.vehiculo.estado}",
+        texto
+    ))
+    story.append(Spacer(1, 15))
+    story.append(sep())
+    story.append(Spacer(1, 15))
 
-    # ---------- CARGA ----------
+    # =====================================================================
+    #                               CARGA
+    # =====================================================================
     story.append(Paragraph("Carga", subtitulo))
-    carga_text = f"""
-        <b>Tipo:</b> {viaje.carga.tipo}<br/>
-        <b>Peso aprox.:</b> {viaje.carga.peso_aprox} tn<br/>
-        <b>Descripción:</b> {viaje.carga.descripcion if viaje.carga.descripcion else "—"}<br/>
-    """
-    story.append(Paragraph(carga_text, texto))
-    story.append(Spacer(1, 20))
-    story.append(separador())
+    story.append(Paragraph(
+        f"<b>Tipo:</b> {viaje.carga.tipo}<br/>"
+        f"<b>Peso aprox.:</b> {viaje.carga.peso_aprox} tn<br/>"
+        f"<b>Descripción:</b> {viaje.carga.descripcion or '—'}",
+        texto
+    ))
+    story.append(Spacer(1, 15))
+    story.append(sep())
     story.append(Spacer(1, 20))
 
-    # -----------------------------------
-    #           KPIs DEL VIAJE
-    # -----------------------------------
+    # =====================================================================
+    #                         KPIs DEL VIAJE
+    # =====================================================================
     story.append(Paragraph("Indicadores del Viaje (KPIs)", subtitulo))
 
-    tabla_kpi = [
-        ["Indicador", "Valor"],
-        ["Kilómetros recorridos", f"{viaje.kilometros_recorridos:.2f} km"],
-        ["Velocidad promedio", f"{viaje.velocidad_promedio:.1f} km/h"],
-        ["Duración total", f"{viaje.tiempo_total_horas:.2f} horas"],
-        ["Consumo promedio", f"{viaje.consumo_promedio:.2f} L/100km"],
-        ["Costo total combustible", f"{viaje.costo_combustible:.2f} USD"],
-        ["Costo estimado total", f"{viaje.costo_estimado:.2f} USD"],
-    ]
-
-    tabla = Table(
-        tabla_kpi,
-        colWidths=[200, 200],
+    tabla_kpi = Table(
+        [
+            ["Indicador", "Valor"],
+            ["Kilómetros recorridos", km],
+            ["Velocidad promedio", vel_prom + " km/h"],
+            ["Duración total", dur_hs + " h"],
+            ["Consumo promedio", cons + " L/100km"],
+            ["Costo combustible", costo_comb + " USD"],
+            ["Costo total estimado", costo_total + " USD"],
+        ],
+        colWidths=[220, 200],
         style=[
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#004c99")),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 0.7, colors.black),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
-        ]
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('INNER_PADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
+        ],
     )
 
-    story.append(tabla)
-    story.append(Spacer(1, 30))
+    story.append(tabla_kpi)
+    story.append(Spacer(1, 25))
 
-    # ---- PIE ----
+    # =====================================================================
+    #                                 PIE
+    # =====================================================================
     story.append(Paragraph(
-        "<i>Reporte generado automáticamente por el sistema de monitoreo de transporte.</i>",
+        "<i>Este informe fue generado automáticamente por el sistema de gestión de transporte.</i>",
         styles["Italic"]
     ))
 
