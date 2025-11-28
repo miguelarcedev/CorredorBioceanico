@@ -753,7 +753,7 @@ from .models import Viaje, PosicionGPS  # Ajusta si tu modelo de posiciones tien
 def exportar_pdf_viaje(request, viaje_id):
     viaje = Viaje.objects.get(id=viaje_id)
 
-    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("timestamp")
+    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
 
     # -------- RESPONSE --------
     response = HttpResponse(content_type="application/pdf")
