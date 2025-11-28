@@ -787,7 +787,7 @@ def exportar_pdf_viaje(request, viaje_id):
 
     for p in posiciones:
         data.append([
-            p.timestamp.strftime("%H:%M:%S"),
+            p.fecha_hora.strftime("%H:%M:%S"),
             str(p.latitud),
             str(p.longitud),
             f"{p.velocidad:.1f}",
