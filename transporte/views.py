@@ -747,3 +747,189 @@ def ver_mapa_viaje(request, viaje_id):
         "resumen": resumen
     })
 
+
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+)
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from django.http import HttpResponse
+from .models import Viaje
+
+
+def exportar_pdf_viaje(request, viaje_id):
+    viaje = Viaje.objects.get(id=viaje_id)
+
+    # ---------------------------------------------------------------------
+    #  SANEAR valores None → evitar que KPIs queden vacíos o generen error
+    # ---------------------------------------------------------------------
+    def safe(v, fmt="{:.2f}"):
+        if v is None:
+            return "—"
+        try:
+            return fmt.format(v)
+        except:
+            return str(v)
+
+    # DEFAULTS SI EL VIAJE AÚN NO CARGÓ TODO
+    km = safe(viaje.kilometros_recorridos)
+    vel_prom = safe(viaje.velocidad_promedio, "{:.1f}")
+    dur_hs = safe(viaje.tiempo_total_horas)
+    cons = safe(viaje.consumo_promedio)
+    costo_comb = safe(viaje.costo_combustible)
+    costo_total = safe(viaje.costo_estimado)
+
+    # ---------------------------------------------------------------------
+    #   RESPONSE
+    # ---------------------------------------------------------------------
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Viaje_{viaje.id}.pdf"'
+
+    doc = SimpleDocTemplate(
+        response, pagesize=A4, leftMargin=40, rightMargin=40, topMargin=40, bottomMargin=40
+    )
+
+    styles = getSampleStyleSheet()
+
+    # ----- Estilos minimalistas -----
+    titulo = ParagraphStyle(
+        "Titulo",
+        parent=styles["Title"],
+        fontSize=20,
+        textColor=colors.black,
+        spaceAfter=15,
+    )
+
+    subtitulo = ParagraphStyle(
+        "Subtitulo",
+        parent=styles["Heading2"],
+        fontSize=13,
+        textColor=colors.black,
+        spaceAfter=6,
+    )
+
+    texto = ParagraphStyle(
+        "Texto",
+        parent=styles["BodyText"],
+        fontSize=11,
+        leading=15,
+    )
+
+    # ----- Separador minimalista -----
+    def sep():
+        return Table(
+            [[""]],
+            colWidths=[450],
+            style=[
+                ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.85, 0.85, 0.85)),
+                ('INNER_PADDING', (0, 0), (-1, -1), 1),
+            ],
+        )
+
+    story = []
+
+    # =====================================================================
+    #                         TÍTULO
+    # =====================================================================
+    story.append(Paragraph("REPORTE DEL VIAJE", titulo))
+    story.append(sep())
+    story.append(Spacer(1, 15))
+
+    # =====================================================================
+    #                 INFORMACIÓN GENERAL DEL VIAJE
+    # =====================================================================
+    story.append(Paragraph("Información del Viaje", subtitulo))
+    info_html = f"""
+        <b>Origen:</b> {viaje.origen}<br/>
+        <b>Destino:</b> {viaje.destino}<br/>
+        <b>Salida:</b> {viaje.fecha_salida.strftime("%d/%m/%Y %H:%M")}<br/>
+        <b>Llegada real:</b> {viaje.fecha_llegada_real.strftime("%d/%m/%Y %H:%M") if viaje.fecha_llegada_real else "—"}<br/>
+        <b>Estado:</b> {viaje.estado}<br/>
+    """
+    story.append(Paragraph(info_html, texto))
+    story.append(Spacer(1, 10))
+    story.append(sep())
+    story.append(Spacer(1, 15))
+
+    # =====================================================================
+    #                            CHOFER
+    # =====================================================================
+    story.append(Paragraph("Chofer", subtitulo))
+    story.append(Paragraph(
+        f"<b>Nombre:</b> {viaje.chofer.nombre} {viaje.chofer.apellido}<br/>"
+        f"<b>Documento:</b> {viaje.chofer.documento}<br/>"
+        f"<b>Licencia:</b> {viaje.chofer.licencia_nro}",
+        texto
+    ))
+    story.append(Spacer(1, 15))
+    story.append(sep())
+    story.append(Spacer(1, 15))
+
+    # =====================================================================
+    #                            VEHÍCULO
+    # =====================================================================
+    story.append(Paragraph("Vehículo", subtitulo))
+    story.append(Paragraph(
+        f"<b>Patente:</b> {viaje.vehiculo.patente}<br/>"
+        f"<b>Marca/Modelo:</b> {viaje.vehiculo.marca} {viaje.vehiculo.modelo}<br/>"
+        f"<b>Capacidad:</b> {viaje.vehiculo.capacidad} tn<br/>"
+        f"<b>Estado:</b> {viaje.vehiculo.estado}",
+        texto
+    ))
+    story.append(Spacer(1, 15))
+    story.append(sep())
+    story.append(Spacer(1, 15))
+
+    # =====================================================================
+    #                               CARGA
+    # =====================================================================
+    story.append(Paragraph("Carga", subtitulo))
+    story.append(Paragraph(
+        f"<b>Tipo:</b> {viaje.carga.tipo}<br/>"
+        f"<b>Peso aprox.:</b> {viaje.carga.peso_aprox} tn<br/>"
+        f"<b>Descripción:</b> {viaje.carga.descripcion or '—'}",
+        texto
+    ))
+    story.append(Spacer(1, 15))
+    story.append(sep())
+    story.append(Spacer(1, 20))
+
+    # =====================================================================
+    #                         KPIs DEL VIAJE
+    # =====================================================================
+    story.append(Paragraph("Indicadores del Viaje (KPIs)", subtitulo))
+
+    tabla_kpi = Table(
+        [
+            ["Indicador", "Valor"],
+            ["Kilómetros recorridos", km],
+            ["Velocidad promedio", vel_prom + " km/h"],
+            ["Duración total", dur_hs + " h"],
+            ["Consumo promedio", cons + " L/100km"],
+            ["Costo combustible", costo_comb + " USD"],
+            ["Costo total estimado", costo_total + " USD"],
+        ],
+        colWidths=[220, 200],
+        style=[
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('INNER_PADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
+        ],
+    )
+
+    story.append(tabla_kpi)
+    story.append(Spacer(1, 25))
+
+    # =====================================================================
+    #                                 PIE
+    # =====================================================================
+    story.append(Paragraph(
+        "<i>Este informe fue generado automáticamente por el sistema de gestión de transporte.</i>",
+        styles["Italic"]
+    ))
+
+    doc.build(story)
+    return response

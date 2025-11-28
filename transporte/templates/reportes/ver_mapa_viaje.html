@@ -10,6 +10,68 @@
     <h3 class="text-primary mb-3">
         📍 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
     </h3>
+    <a href="{% url 'exportar_pdf_viaje' viaje.id %}" class="btn btn-danger mt-2">
+    Exportar reporte a PDF
+    </a>
+
+        <!-- Datos generales del viaje -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+            Datos del viaje
+        </div>
+        <div class="card-body">
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Chofer:</strong><br>
+                    {{ viaje.chofer.nombre }} {{ viaje.chofer.apellido }}<br>
+                    <small>DNI: {{ viaje.chofer.documento }} — Licencia: {{ viaje.chofer.licencia_nro }}</small>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Vehículo:</strong><br>
+                    {{ viaje.vehiculo.patente }} — {{ viaje.vehiculo.marca }} {{ viaje.vehiculo.modelo }}<br>
+                    <small>Capacidad: {{ viaje.vehiculo.capacidad }} tn</small>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Carga transportada:</strong><br>
+                    {{ viaje.carga.tipo }} — {{ viaje.carga.peso_aprox }} tn<br>
+                    <small>{{ viaje.carga.descripcion }}</small>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Estado del viaje:</strong><br>
+                    <span class="badge bg-info text-dark">{{ viaje.get_estado_display }}</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Fecha salida:</strong><br>
+                    {{ viaje.fecha_salida|date:"d/m/Y H:i" }}
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Fecha llegada estimada:</strong><br>
+                    {{ viaje.fecha_llegada_estimada|date:"d/m/Y H:i" }}
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Fecha llegada real:</strong><br>
+                    {% if viaje.fecha_llegada_real %}
+                        {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }}
+                    {% else %}
+                        <span class="text-muted">Aún no finalizado</span>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 
     <!-- Resumen del viaje -->
     <div class="card shadow-sm mb-4">
@@ -43,10 +105,52 @@
             <canvas id="velChart" height="120"></canvas>
         </div>
     </div>
+    <!-- Tabla de posiciones -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-secondary text-white">📋 Detalle de posiciones</div>
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover text-center mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tiempo</th>
+                        <th>Latitud</th>
+                        <th>Longitud</th>
+                        <th>Velocidad (km/h)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in puntos %}
+                    <tr>
+                        <td>{{ p.t }}</td>
+                        <td>{{ p.lat }}</td>
+                        <td>{{ p.lon }}</td>
+                        <td class="{% if p.vel > 80 %}text-danger fw-bold{% endif %}">
+                            {{ p.vel|floatformat:1 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 
 </div>
 
 <script>
+
+function agregarTramo(p1, p2, vel, map) {
+    let color = "green";
+    if (vel > 80) color = "red";
+    else if (vel > 50) color = "orange";
+
+    L.polyline([p1, p2], {
+        color: color,
+        weight: 5,
+        opacity: 0.9
+    }).addTo(map);
+}
+
 
 const puntos = {{ puntos|safe }};
 
@@ -68,9 +172,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const ruta = puntos.map(p => [p.lat, p.lon]);
 
-    const polyline = L.polyline(ruta, { color: "blue" }).addTo(map);
+    for (let i = 1; i < puntos.length; i++) {
+    const p1 = [puntos[i-1].lat, puntos[i-1].lon];
+    const p2 = [puntos[i].lat, puntos[i].lon];
+    agregarTramo(p1, p2, puntos[i].vel, map);
+    }
+    map.fitBounds(L.polyline(ruta).getBounds());
 
-    map.fitBounds(polyline.getBounds());
 
     L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
     L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");

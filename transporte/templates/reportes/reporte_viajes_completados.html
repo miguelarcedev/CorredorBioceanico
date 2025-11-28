@@ -1,11 +1,127 @@
 {% extends 'transporte/base.html' %}
 {% block content %}
 
+<!-- ======================================================
+     Estilo Minimalista Profesional
+====================================================== -->
+<style>
+    h2 {
+        font-weight: 600;
+        margin-bottom: 1.2rem;
+    }
+
+    .kpi-card {
+        border-radius: 14px;
+        padding: 1.3rem;
+        background: #ffffff;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: 0.2s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    .kpi-value {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+
+    .kpi-label {
+        font-size: .85rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+    }
+
+    .icon-box {
+        font-size: 1.8rem;
+        color: #198754;
+        margin-bottom: 0.2rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: 14px;
+    }
+
+    .table thead th {
+        font-size: 0.73rem;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
+
+    tbody td {
+        font-size: 0.85rem;
+    }
+
+    .btn-sm {
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: .75rem;
+    }
+
+    /* Paginación minimalista */
+    .pagination .page-link {
+        border-radius: 8px !important;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.85rem;
+    }
+</style>
+
 <div class="container mt-4">
 
-    <h2 class="mb-4 text-primary">📊 Reporte de Viajes Completados</h2>
+    <!-- ======================================================
+         Título
+    ====================================================== -->
+    <h2 class="text-primary">📊 Viajes Finalizados</h2>
 
-    <!-- Filtros -->
+
+    <!-- ======================================================
+         KPIs
+    ====================================================== -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="icon-box">📦</div>
+                <div class="kpi-value">{{ total_viajes }}</div>
+                <div class="kpi-label">Viajes completados</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="icon-box">🛣️</div>
+                <div class="kpi-value">{{ total_km|floatformat:2 }}</div>
+                <div class="kpi-label">Km totales</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="icon-box">⚡</div>
+                <div class="kpi-value">{{ vel_prom_global|floatformat:2 }} km/h</div>
+                <div class="kpi-label">Velocidad Promedio</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="icon-box">⏱️</div>
+                <div class="kpi-value">{{ duracion_prom_global|floatformat:2 }} h</div>
+                <div class="kpi-label">Duración Promedio</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ======================================================
+         Filtros
+    ====================================================== -->
     <form method="get" class="card card-body mb-4 shadow-sm">
 
         <div class="row g-3">
@@ -25,9 +141,7 @@
                 <select name="empresa" class="form-select">
                     <option value="0">Todas</option>
                     {% for e in empresas %}
-                        <option value="{{ e.id }}" {% if empresa_id == e.id|stringformat:"s" %}selected{% endif %}>
-                            {{ e.nombre }}
-                        </option>
+                        <option value="{{ e.id }}" {% if empresa_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -37,9 +151,7 @@
                 <select name="chofer" class="form-select">
                     <option value="0">Todos</option>
                     {% for c in choferes %}
-                        <option value="{{ c.id }}" {% if chofer_id == c.id|stringformat:"s" %}selected{% endif %}>
-                            {{ c.nombre }} {{ c.apellido }}
-                        </option>
+                        <option value="{{ c.id }}" {% if chofer_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }} {{ c.apellido }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -47,24 +159,25 @@
         </div>
 
         <div class="text-end mt-3">
-            <button class="btn btn-primary">Filtrar</button>
+            <button class="btn btn-primary me-2">Filtrar</button>
             <a href="{% url 'reporte_viajes_completados' %}" class="btn btn-secondary">Limpiar</a>
         </div>
-
     </form>
 
-    <!-- Tabla -->
+    <!-- ======================================================
+         Tabla
+    ====================================================== -->
     <div class="card shadow-sm">
         <div class="card-body">
 
-            <table class="table table-striped table-hover">
+            <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
                     <tr>
                         <th>Fecha</th>
                         <th>Chofer</th>
                         <th>Vehículo</th>
                         <th>Empresa</th>
-                        <th>Origen → Destino</th>
+                        <th>Ruta</th>
                         <th>Km</th>
                         <th>Duración</th>
                         <th>Vel. Prom</th>
@@ -73,6 +186,7 @@
                 </thead>
 
                 <tbody>
+
                 {% for v in viajes %}
                     <tr>
                         <td>{{ v.fecha_salida|date:"d/m/Y H:i" }}</td>
@@ -80,21 +194,15 @@
                         <td>{{ v.vehiculo }}</td>
                         <td>{{ v.empresa }}</td>
                         <td>{{ v.origen }} → {{ v.destino }}</td>
-
-                        <!-- 🔥 FIX CORRECTO -->
                         <td>{{ v.kilometros_recorridos|floatformat:2 }}</td>
-
                         <td>{{ v.duracion_horas|floatformat:2 }} h</td>
                         <td>{{ v.velocidad_promedio|floatformat:2 }} km/h</td>
-
                         <td>
-                            <a class="btn btn-sm btn-primary"
-                                href="{% url 'ver_mapa_viaje' v.id %}">
-                                Ver mapa
-                            </a>
-
+                            <a href="{% url 'ver_mapa_viaje' v.id %}"
+                               class="btn btn-sm btn-primary">Ver mapa</a>
                         </td>
                     </tr>
+
                 {% empty %}
                     <tr>
                         <td colspan="9" class="text-center py-3 text-muted">
@@ -102,8 +210,37 @@
                         </td>
                     </tr>
                 {% endfor %}
+
                 </tbody>
             </table>
+
+            <!-- ================================================
+                 PAGINACIÓN
+            ================================================= -->
+            <div class="d-flex justify-content-center mt-3">
+                <nav>
+                    <ul class="pagination">
+                        {% if viajes.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ viajes.previous_page_number }}">&laquo;</a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in viajes.paginator.page_range %}
+                            <li class="page-item {% if viajes.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endfor %}
+
+                        {% if viajes.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ viajes.next_page_number }}">&raquo;</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+
         </div>
     </div>
 
