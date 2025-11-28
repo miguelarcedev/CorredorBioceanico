@@ -743,17 +743,18 @@ def ver_mapa_viaje(request, viaje_id):
     })
 
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+)
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from django.http import HttpResponse
-from .models import Viaje, PosicionGPS  # Ajusta si tu modelo de posiciones tiene otro nombre
+from .models import Viaje
+
 
 def exportar_pdf_viaje(request, viaje_id):
     viaje = Viaje.objects.get(id=viaje_id)
-
-    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
 
     # -------- RESPONSE --------
     response = HttpResponse(content_type="application/pdf")
@@ -761,48 +762,134 @@ def exportar_pdf_viaje(request, viaje_id):
 
     doc = SimpleDocTemplate(response, pagesize=A4, title="Reporte del Viaje")
     styles = getSampleStyleSheet()
+
+    # ---- Estilos personalizados ----
+    titulo_estilo = ParagraphStyle(
+        name="TituloPrincipal",
+        parent=styles["Title"],
+        fontSize=22,
+        textColor=colors.HexColor("#003366"),
+        spaceAfter=20,
+    )
+
+    subtitulo = ParagraphStyle(
+        name="Subtitulo",
+        parent=styles["Heading2"],
+        fontSize=15,
+        textColor=colors.HexColor("#004c99"),
+        spaceAfter=10,
+    )
+
+    texto = ParagraphStyle(
+        name="Texto",
+        parent=styles["BodyText"],
+        fontSize=11,
+        leading=15
+    )
+
+    # ---- Separador visual corporativo ----
+    def separador():
+        return Table(
+            [[""]],
+            colWidths=[450],
+            style=[
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#0059b3")),
+                ('INNER_PADDING', (0, 0), (-1, -1), 2),
+            ],
+        )
+
     story = []
 
     # ---------- TITULO ----------
-    story.append(Paragraph(f"<b>Reporte del Viaje</b>", styles["Title"]))
-    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"Reporte del Viaje", titulo_estilo))
+    story.append(separador())
+    story.append(Spacer(1, 15))
 
-    # ---------- DATOS PRINCIPALES ----------
-    texto_info = f"""
-        <b>Chofer:</b> {viaje.chofer.nombre} {viaje.chofer.apellido}<br/>
-        <b>Vehículo:</b> {viaje.vehiculo.patente} - {viaje.vehiculo.marca} {viaje.vehiculo.modelo}<br/>
-        <b>Carga:</b> {viaje.carga.tipo} ({viaje.carga.peso_aprox} tn)<br/>
+    # ---------- INFORMACIÓN DEL VIAJE ----------
+    story.append(Paragraph("Información General", subtitulo))
+    info_text = f"""
         <b>Origen:</b> {viaje.origen}<br/>
         <b>Destino:</b> {viaje.destino}<br/>
         <b>Fecha salida:</b> {viaje.fecha_salida.strftime("%d/%m/%Y %H:%M")}<br/>
         <b>Fecha llegada real:</b> {viaje.fecha_llegada_real.strftime("%d/%m/%Y %H:%M") if viaje.fecha_llegada_real else "—"}<br/>
-        <b>Velocidad promedio:</b> {viaje.velocidad_promedio:.1f} km/h<br/>
-        <b>KM recorridos:</b> {viaje.kilometros_recorridos:.2f} km
+        <b>Estado:</b> {viaje.estado}<br/>
     """
-    story.append(Paragraph(texto_info, styles["Normal"]))
+    story.append(Paragraph(info_text, texto))
+    story.append(Spacer(1, 15))
+    story.append(separador())
+    story.append(Spacer(1, 15))
+
+    # ---------- CHOFER ----------
+    story.append(Paragraph("Chofer", subtitulo))
+    chofer_text = f"""
+        <b>Nombre:</b> {viaje.chofer.nombre} {viaje.chofer.apellido}<br/>
+        <b>Documento:</b> {viaje.chofer.documento}<br/>
+        <b>Licencia:</b> {viaje.chofer.licencia_nro}<br/>
+    """
+    story.append(Paragraph(chofer_text, texto))
+    story.append(Spacer(1, 15))
+    story.append(separador())
+    story.append(Spacer(1, 15))
+
+    # ---------- VEHÍCULO ----------
+    story.append(Paragraph("Vehículo", subtitulo))
+    veh_text = f"""
+        <b>Patente:</b> {viaje.vehiculo.patente}<br/>
+        <b>Marca/Modelo:</b> {viaje.vehiculo.marca} {viaje.vehiculo.modelo}<br/>
+        <b>Capacidad:</b> {viaje.vehiculo.capacidad} tn<br/>
+        <b>Estado:</b> {viaje.vehiculo.estado}<br/>
+    """
+    story.append(Paragraph(veh_text, texto))
+    story.append(Spacer(1, 12))
+
+    # ---------- CARGA ----------
+    story.append(Paragraph("Carga", subtitulo))
+    carga_text = f"""
+        <b>Tipo:</b> {viaje.carga.tipo}<br/>
+        <b>Peso aprox.:</b> {viaje.carga.peso_aprox} tn<br/>
+        <b>Descripción:</b> {viaje.carga.descripcion if viaje.carga.descripcion else "—"}<br/>
+    """
+    story.append(Paragraph(carga_text, texto))
+    story.append(Spacer(1, 20))
+    story.append(separador())
     story.append(Spacer(1, 20))
 
-    # ---------- TABLA DE POSICIONES ----------
-    data = [["Hora", "Latitud", "Longitud", "Velocidad (km/h)"]]
+    # -----------------------------------
+    #           KPIs DEL VIAJE
+    # -----------------------------------
+    story.append(Paragraph("Indicadores del Viaje (KPIs)", subtitulo))
 
-    for p in posiciones:
-        data.append([
-            p.fecha_hora.strftime("%H:%M:%S"),
-            str(p.latitud),
-            str(p.longitud),
-            f"{p.velocidad:.1f}",
-        ])
+    tabla_kpi = [
+        ["Indicador", "Valor"],
+        ["Kilómetros recorridos", f"{viaje.kilometros_recorridos:.2f} km"],
+        ["Velocidad promedio", f"{viaje.velocidad_promedio:.1f} km/h"],
+        ["Duración total", f"{viaje.tiempo_total_horas:.2f} horas"],
+        ["Consumo promedio", f"{viaje.consumo_promedio:.2f} L/100km"],
+        ["Costo total combustible", f"{viaje.costo_combustible:.2f} USD"],
+        ["Costo estimado total", f"{viaje.costo_estimado:.2f} USD"],
+    ]
 
-    tabla = Table(data, colWidths=[80, 90, 90, 90])
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-    ]))
-    story.append(Paragraph("<b>Detalle de posiciones:</b>", styles["Heading2"]))
+    tabla = Table(
+        tabla_kpi,
+        colWidths=[200, 200],
+        style=[
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#004c99")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.7, colors.black),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ]
+    )
+
     story.append(tabla)
+    story.append(Spacer(1, 30))
+
+    # ---- PIE ----
+    story.append(Paragraph(
+        "<i>Reporte generado automáticamente por el sistema de monitoreo de transporte.</i>",
+        styles["Italic"]
+    ))
 
     doc.build(story)
     return response
