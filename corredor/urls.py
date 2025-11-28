@@ -18,6 +18,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# --- Configuración de títulos del Admin ---
+admin.site.site_header = "Administración"  # Texto en la barra superior azul
+#admin.site.site_title = "Portal de Admin"                # Título en la pestaña del navegador
+#admin.site.index_title = "Panel de Control"              # Título en la página principal (Home)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('transporte.urls')),
