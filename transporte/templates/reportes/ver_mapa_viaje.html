@@ -63,7 +63,7 @@
                         <td>{{ p.lat }}</td>
                         <td>{{ p.lon }}</td>
                         <td class="{% if p.vel > 80 %}text-danger fw-bold{% endif %}">
-                            {{ p.vel }}
+                            {{ p.vel|floatformat:1 }}
                         </td>
                     </tr>
                     {% endfor %}
