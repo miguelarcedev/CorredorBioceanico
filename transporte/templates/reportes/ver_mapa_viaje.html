@@ -10,6 +10,10 @@
     <h3 class="text-primary mb-3">
         📍 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
     </h3>
+    <a href="{% url 'exportar_pdf_viaje' viaje.id %}" class="btn btn-danger mt-2">
+    Exportar reporte a PDF
+    </a>
+
         <!-- Datos generales del viaje -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-secondary text-white">

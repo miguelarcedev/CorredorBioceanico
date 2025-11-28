@@ -742,3 +742,67 @@ def ver_mapa_viaje(request, viaje_id):
         "resumen": resumen
     })
 
+
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from django.http import HttpResponse
+from .models import Viaje, PosicionGPS  # Ajusta si tu modelo de posiciones tiene otro nombre
+
+def exportar_pdf_viaje(request, viaje_id):
+    viaje = Viaje.objects.get(id=viaje_id)
+
+    posiciones = PosicionGPS.objects.filter(viaje=viaje).order_by("timestamp")
+
+    # -------- RESPONSE --------
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Reporte_Viaje_{viaje.id}.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=A4, title="Reporte del Viaje")
+    styles = getSampleStyleSheet()
+    story = []
+
+    # ---------- TITULO ----------
+    story.append(Paragraph(f"<b>Reporte del Viaje</b>", styles["Title"]))
+    story.append(Spacer(1, 12))
+
+    # ---------- DATOS PRINCIPALES ----------
+    texto_info = f"""
+        <b>Chofer:</b> {viaje.chofer.nombre} {viaje.chofer.apellido}<br/>
+        <b>Vehículo:</b> {viaje.vehiculo.patente} - {viaje.vehiculo.marca} {viaje.vehiculo.modelo}<br/>
+        <b>Carga:</b> {viaje.carga.tipo} ({viaje.carga.peso_aprox} tn)<br/>
+        <b>Origen:</b> {viaje.origen}<br/>
+        <b>Destino:</b> {viaje.destino}<br/>
+        <b>Fecha salida:</b> {viaje.fecha_salida.strftime("%d/%m/%Y %H:%M")}<br/>
+        <b>Fecha llegada real:</b> {viaje.fecha_llegada_real.strftime("%d/%m/%Y %H:%M") if viaje.fecha_llegada_real else "—"}<br/>
+        <b>Velocidad promedio:</b> {viaje.velocidad_promedio:.1f} km/h<br/>
+        <b>KM recorridos:</b> {viaje.kilometros_recorridos:.2f} km
+    """
+    story.append(Paragraph(texto_info, styles["Normal"]))
+    story.append(Spacer(1, 20))
+
+    # ---------- TABLA DE POSICIONES ----------
+    data = [["Hora", "Latitud", "Longitud", "Velocidad (km/h)"]]
+
+    for p in posiciones:
+        data.append([
+            p.timestamp.strftime("%H:%M:%S"),
+            str(p.latitud),
+            str(p.longitud),
+            f"{p.velocidad:.1f}",
+        ])
+
+    tabla = Table(data, colWidths=[80, 90, 90, 90])
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+    ]))
+    story.append(Paragraph("<b>Detalle de posiciones:</b>", styles["Heading2"]))
+    story.append(tabla)
+
+    doc.build(story)
+    return response
