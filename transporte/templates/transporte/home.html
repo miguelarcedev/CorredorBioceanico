@@ -2,72 +2,60 @@
 
 {% block content %}
   
-<section class="py-2">
-    <div class="container text-center">
-        
+<section class="py-3 text-center">
 
+    <h4 class="home-title">
+        CapriTech – Tecnología a tu alcance
+    </h4>
 
-        <h4 class="text-center fw-bold mb-2 text-primary">CapriTech Tecnología a tu alcance</h4>
+    <p class="home-text mx-auto">
+        Pensamos en vos y estamos para ayudarte. Con esta plataforma vas a poder supervisar tus vehículos 
+        durante todo el recorrido, conocer ubicaciones exactas y recibir información clave para la toma de decisiones. 
+        Una herramienta creada para simplificar procesos y potenciar el crecimiento colectivo de esta gran empresa.
+    </p>
 
-        <p class="text-center mx-auto" style="max-width: 800px;">
-            Pensamos en vos, y estamos para ayudarte, con esta plataforma vas a poder
-            supervisar tus vehículos durante todo el recorrido, conocer ubicaciones exactas y recibir
-            información clave para la toma de decisiones, además de agilizar procesos con la
-            implementación de reportes. Una herramienta creada para impulsar el desarrollo colectivo.
-        </p>
+    <!-- Carrusel de novedades -->
+    <div id="carouselNovedades" class="carousel slide carrusel-capritech" data-bs-ride="carousel">
 
-        <!-- ============================= -->
-        <!--   CARRUSEL DE NOVEDADES       -->
-        <!-- ============================= -->
-        
-
-        {% if novedades %}
-        <div id="carouselNovedades" class="carousel slide mt-4" data-bs-ride="carousel">
-
-            <!-- Indicadores -->
-            <div class="carousel-indicators">
-                {% for item in novedades %}
+        <!-- Indicadores -->
+        <div class="carousel-indicators">
+            {% for item in novedades %}
                 <button type="button" data-bs-target="#carouselNovedades"
                         data-bs-slide-to="{{ forloop.counter0 }}"
-                        class="{% if forloop.first %}active{% endif %}">
+                        {% if forloop.first %}class="active"{% endif %}>
                 </button>
-                {% endfor %}
-            </div>
-
-            <!-- Slides -->
-            <div class="carousel-inner">
-                
-                {% for item in novedades %}
-                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                    <img src="{{ item.imagen.url }}" class="d-block w-100"
-                         style="max-height: 420px; object-fit: cover;">
-
-                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 p-2 rounded">
-                        <h5>{{ item.titulo }}</h5>
-                        <p>{{ item.descripcion }}</p>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Controles -->
-            <button class="carousel-control-prev" type="button"
-                    data-bs-target="#carouselNovedades" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-            </button>
-
-            <button class="carousel-control-next" type="button"
-                    data-bs-target="#carouselNovedades" data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-            </button>
-
+            {% endfor %}
         </div>
-        {% else %}
-            <p class="text-center mt-4 text-muted">No hay novedades cargadas aún.</p>
-        {% endif %}
+
+        <!-- Imágenes -->
+        <div class="carousel-inner">
+            {% for item in novedades %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ item.imagen.url }}" class="d-block w-100"
+                     style="max-height: 420px; object-fit: cover;">
+                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 p-2 rounded">
+                    <h5>{{ item.titulo }}</h5>
+                    <p>{{ item.descripcion }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Flechas -->
+        <button class="carousel-control-prev" type="button"
+            data-bs-target="#carouselNovedades" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+
+        <button class="carousel-control-next" type="button"
+            data-bs-target="#carouselNovedades" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
 
     </div>
+
 </section>
+
 
 {% endblock %}
 
