@@ -547,12 +547,21 @@ def guardar_posicion(request):
 
         viaje = Viaje.objects.get(id=viaje_id)
 
+        # Guardar punto
+        ultima = viaje.posiciones.order_by("-fecha_hora").first()
+
         PosicionGPS.objects.create(
             viaje=viaje,
             latitud=lat,
             longitud=lon,
             velocidad=velocidad
         )
+
+        # Calcular distancia recorrida en tiempo real
+        if ultima:
+            d = haversine(ultima.latitud, ultima.longitud, lat, lon)
+            viaje.kilometros_recorridos += d
+            viaje.save(update_fields=["kilometros_recorridos"])
 
         return JsonResponse({"ok": True})
 
@@ -573,6 +582,33 @@ def finalizar_viaje(request):
         viaje_id = data.get("viaje_id")
 
         viaje = Viaje.objects.get(id=viaje_id)
+        viaje.fecha_llegada_real = timezone.now()
+
+        # Distancia estimada del viaje (origen → destino)
+        if viaje.lat_origen and viaje.lon_origen and viaje.lat_destino and viaje.lon_destino:
+            viaje.distancia_km = haversine(
+                float(viaje.lat_origen),
+                float(viaje.lon_origen),
+                float(viaje.lat_destino),
+                float(viaje.lon_destino),
+            )
+
+        # Kilómetros recorridos (ya acumulados en api_guardar_posicion)
+        km = viaje.kilometros_recorridos
+
+        # Tiempo total
+        delta = viaje.fecha_llegada_real - viaje.fecha_salida
+        viaje.tiempo_total_horas = delta.total_seconds() / 3600
+
+        # Velocidad promedio
+        if viaje.tiempo_total_horas > 0:
+            viaje.velocidad_promedio = km / viaje.tiempo_total_horas
+
+        # Costos (personalizable)
+        PRECIO_COMBUSTIBLE = 1.5  # USD por litro (ejemplo)
+        consumo = viaje.consumo_promedio  # L/100km
+
+        viaje.costo_combustible = (km / 100) * consumo * PRECIO_COMBUSTIBLE
 
         # Cambiar estado a "FINALIZADO"
         viaje.estado = "FINALIZADO"
