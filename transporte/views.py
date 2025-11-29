@@ -491,13 +491,18 @@ def vehiculo_delete(request, pk):
 #  REPORTES -- VIAJES
 # ================================
 
+from django.db.models import Sum, Avg, F, ExpressionWrapper, DurationField
+from django.utils.dateparse import parse_date
+
 def reporte_viajes_completados(request):
-    
+
     viajes = Viaje.objects.filter(estado="FINALIZADO").order_by("-fecha_salida")
     empresas = Empresa.objects.all()
     choferes = Chofer.objects.all()
 
-    # FILTROS (opcionales)
+    # ------------------------
+    # FILTROS
+    # ------------------------
     fecha_desde = request.GET.get("desde")
     fecha_hasta = request.GET.get("hasta")
     empresa_id = request.GET.get("empresa")
@@ -515,17 +520,45 @@ def reporte_viajes_completados(request):
     if chofer_id and chofer_id != "0":
         viajes = viajes.filter(chofer_id=chofer_id)
 
+    # ------------------------
+    # KPI GLOBALS
+    # ------------------------
+
+    # Total viajes
+    total_viajes = viajes.count()
+
+    # Total km (sumado desde campo viaje.kilometros_recorridos)
+    total_km = viajes.aggregate(total=Sum("kilometros_recorridos"))["total"] or 0
+
+    # Velocidad promedio global
+    vel_prom_global = viajes.aggregate(prom=Avg("velocidad_promedio"))["prom"] or 0
+
+    # Duración promedio (horas)
+    duracion_prom_global = viajes.aggregate(prom=Avg("duracion_horas"))["prom"] or 0
+
+    # ------------------------
+    # CONTEXT
+    # ------------------------
     context = {
         "viajes": viajes,
         "empresas": empresas,
         "choferes": choferes,
+
+        # filtros:
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
         "empresa_id": empresa_id,
         "chofer_id": chofer_id,
+
+        # KPIs:
+        "total_viajes": total_viajes,
+        "total_km": total_km,
+        "vel_prom_global": vel_prom_global,
+        "duracion_prom_global": duracion_prom_global,
     }
 
     return render(request, "reportes/reporte_viajes_completados.html", context)
+
 
 
 import json
