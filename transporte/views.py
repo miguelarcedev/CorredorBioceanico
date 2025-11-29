@@ -67,7 +67,7 @@ def viaje_list(request):
     if estado:
         viajes = viajes.filter(estado=estado)
 
-    return render(request, "transporte/viaje_list.html", {
+    return render(request, "viajes/viaje_list.html", {
         "viajes": viajes,
         "choferes": choferes,
         "vehiculos": vehiculos,
