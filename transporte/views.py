@@ -50,10 +50,30 @@ def dashboard(request):
 
 # LISTA
 
-@login_required
 def viaje_list(request):
-    viajes = Viaje.objects.all().order_by('-fecha_salida')
-    return render(request, 'viajes/viaje_list.html', {'viajes': viajes})
+    viajes = Viaje.objects.all()
+    choferes = Chofer.objects.all()
+    vehiculos = Vehiculo.objects.all()
+    estados = Viaje.ESTADOS
+
+    chofer = request.GET.get("chofer")
+    vehiculo = request.GET.get("vehiculo")
+    estado = request.GET.get("estado")
+
+    if chofer:
+        viajes = viajes.filter(chofer_id=chofer)
+    if vehiculo:
+        viajes = viajes.filter(vehiculo_id=vehiculo)
+    if estado:
+        viajes = viajes.filter(estado=estado)
+
+    return render(request, "transporte/viaje_list.html", {
+        "viajes": viajes,
+        "choferes": choferes,
+        "vehiculos": vehiculos,
+        "estados": estados,
+    })
+
 
 
 # CREAR
