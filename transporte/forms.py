@@ -28,7 +28,7 @@ from .models import Viaje
 from django import forms
 from .models import Viaje, Chofer, Vehiculo, Carga # Asegúrate de importar todos
 
-class ViajeForm(forms.ModelForm):
+class FormViaje(forms.ModelForm):
     class Meta:
         model = Viaje
         # Los campos que el usuario DEBE seleccionar
@@ -52,6 +52,36 @@ class ViajeForm(forms.ModelForm):
             self.fields['chofer'].queryset = Chofer.objects.filter(empresa=empresa)
             self.fields['vehiculo'].queryset = Vehiculo.objects.filter(empresa=empresa)
             self.fields['carga'].queryset = Carga.objects.filter(empresa=empresa)
+
+
+from django import forms
+from .models import Viaje
+
+class ViajeForm(forms.ModelForm):
+    class Meta:
+        model = Viaje
+        fields = [
+            "empresa",
+            "chofer",
+            "vehiculo",
+            "carga",
+            "origen",
+            "destino",
+            "lat_origen",
+            "lon_origen",
+            "lat_destino",
+            "lon_destino",
+            "fecha_salida",
+            "fecha_llegada_estimada",
+            "estado",
+        ]
+
+        widgets = {
+            "fecha_salida": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "fecha_llegada_estimada": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+        }
+
+
 
 from .models import EquipoGPS
 
