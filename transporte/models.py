@@ -206,7 +206,7 @@ class Viaje(models.Model):
 # ---------------------------
 
 class PosicionGPS(models.Model):
-    viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE)
+    viaje = models.ForeignKey(Viaje, on_delete=models.CASCADE, related_name="posiciones")
     latitud = models.FloatField()
     longitud = models.FloatField()
     velocidad = models.FloatField(null=True, blank=True)
