@@ -115,6 +115,15 @@ def viaje_delete(request, pk):
         return redirect('viaje_list')
     return render(request, 'viajes/viaje_confirm_delete.html', {'viaje': viaje})
 
+# CANCELAR
+
+def viaje_cancelar(request, pk):
+    viaje = get_object_or_404(Viaje, pk=pk)
+    viaje.estado = "CANCELADO"
+    viaje.save()
+    return redirect("viaje_list")
+
+
 
 # DETALLE
 

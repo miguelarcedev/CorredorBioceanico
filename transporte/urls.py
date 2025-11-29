@@ -39,6 +39,8 @@ urlpatterns = [
     path('viajes/<uuid:pk>/editar/', views.viaje_edit, name='viaje_edit'),
     path('viajes/<uuid:pk>/eliminar/', views.viaje_delete, name='viaje_delete'),
     path('viajes/<uuid:pk>/', views.viaje_detalle, name='viaje_detalle'),
+    path("viajes/<uuid:pk>/cancelar/", views.viaje_cancelar, name="viaje_cancelar"),
+
 
 
     path('viaje/<uuid:viaje_id>/registros_api/', views.registros_api, name='registros_api'),

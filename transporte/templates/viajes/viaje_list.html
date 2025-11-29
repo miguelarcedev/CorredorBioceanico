@@ -86,7 +86,7 @@
                 </a>
 
                 {% if viaje.estado != "CANCELADO" %}
-                <a href="{% url 'viaje_edit' viaje.id %}" 
+                <a href="{% url 'viaje_cancelar' viaje.id %}" 
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Cancelar este viaje?');">
                     <i class="bi bi-x-circle"></i>
