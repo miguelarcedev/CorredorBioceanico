@@ -326,7 +326,7 @@
     border-radius: 18px;
     padding: 20px;
     box-shadow: 0 10px 28px rgba(0,0,0,0.15);
-    transition: transform .25s, box-shadow .25s;
+    transition: transform .35s, box-shadow .35s;
 }
 
 .novedad-card:hover {
@@ -490,6 +490,66 @@ body {
     opacity: 0.9;
 }
 
+.titulo-novedades {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 25px;
+    margin-bottom: 20px;
+    color: #0d47a1;
+    position: relative;
+}
+
+.titulo-novedades::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 3px;
+    background-color: #0d47a1;
+    margin: 8px auto 0;
+    border-radius: 3px;
+}
+
+/* ELIMINA la línea superior indeseada del carrusel */
+.carrusel-wrapper,
+.carrusel-container,
+.carousel-section {
+    border-top: none !important;
+    box-shadow: none !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Asegura que las tarjetas NO se corten arriba */
+.carrusel-card {
+    margin-top: 20px !important; /* separa visualmente el carrusel del título */
+}
+
+/* Esto elimina recortes por overflow */
+.carrusel-wrapper *,
+.carousel-section * {
+    overflow: visible !important;
+}
+
+.novedad-card {
+    /*background: linear-gradient(to bottom, #ffffff 0%, #bbdefb 65%);*/
+    background: linear-gradient(to bottom, #ffffff 40%, #1976d2 70%);
+    border-radius: 22px;
+    padding: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.novedad-title {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+/* Hover lindo */
+.novedad-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(33, 150, 243, 0.35); /* sombra celeste elegante */
+}
+
 
     </style>
 </head>
@@ -644,25 +704,37 @@ var swiper = new Swiper(".mySwiper", {
     },
 });
 </script>
+
+<!-- 🔥 SCRIPT CORRECTO (mantén SOLO este) -->
 <script>
-document.addEventListener("click", function (e) {
-    const card = e.target.closest(".novedad-card");
-    if (!card) return;
+document.addEventListener("DOMContentLoaded", function () {
 
-    const detalle = card.querySelector(".novedad-detalle");
+    document.querySelectorAll(".novedad-card").forEach(card => {
+        card.addEventListener("click", function (e) {
 
-    // Cierra cualquier otra descripción abierta
-    document.querySelectorAll(".novedad-detalle").forEach(d => {
-        if (d !== detalle) d.style.display = "none";
+            e.stopPropagation(); // evita conflictos
+                
+            const detalle = this.querySelector(".novedad-detalle");
+            const isVisible = detalle.style.display === "block";
+
+            // Ocultar todas las demás
+            document.querySelectorAll(".novedad-detalle").forEach(d => d.style.display = "none");
+
+            if (!isVisible) {
+                // Mostrar esta
+                detalle.style.display = "block";
+                swiper.autoplay.stop();   // ⛔ Pausa carrusel
+            } else {
+                // Ocultar esta
+                detalle.style.display = "none";
+                swiper.autoplay.start(); // ▶ Reanudar carrusel
+            }
+        });
     });
 
-    // Alterna visibilidad
-    detalle.style.display = 
-        detalle.style.display === "none" || detalle.style.display === "" 
-        ? "block" 
-        : "none";
 });
 </script>
+
 
 
 </body>

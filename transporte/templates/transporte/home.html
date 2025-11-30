@@ -3,18 +3,12 @@
 {% block content %}
   
 <section class="py-3 text-center">
+   
+    <!-- TÍTULO DEL CARRUSEL -->
+<h2 class="titulo-novedades">Novedades</h2>
 
-    <h4 class="home-title">
-        CapriTech – Tecnología a tu alcance
-    </h4>
 
-    <p class="home-text mx-auto">
-        Pensamos en vos y estamos para ayudarte. Con esta plataforma vas a poder supervisar tus vehículos 
-        durante todo el recorrido, conocer ubicaciones exactas y recibir información clave para la toma de decisiones. 
-        Una herramienta creada para simplificar procesos y potenciar el crecimiento colectivo de esta gran empresa.
-    </p>
 
-    <!-- Carrusel de novedades -->
         <!-- Carrusel de novedades -->
 <div class="swiper mySwiper mt-5">
     <div class="swiper-wrapper">
@@ -44,6 +38,18 @@
     <div class="swiper-button-prev"></div>
 </div>
 
+    <h4 class="home-title">
+        CapriTech – Tecnología a tu alcance
+    </h4>
+
+    <p class="home-text mx-auto">
+        Pensamos en vos y estamos para ayudarte. Con esta plataforma vas a poder supervisar tus vehículos 
+        durante todo el recorrido, conocer ubicaciones exactas y recibir información clave para la toma de decisiones. 
+        Una herramienta creada para simplificar procesos y potenciar el crecimiento colectivo de esta gran empresa.
+    </p>
+
+    
+
 
 <!-- Swiper -->
 <script>
@@ -61,19 +67,28 @@ var swiper = new Swiper(".mySwiper", {
         prevEl: ".swiper-button-prev",
     },
 });
-</script>
 
-<script>
+// --- Mostrar descripción + pausar carrusel ---
 document.addEventListener("DOMContentLoaded", function() {
+
     document.querySelectorAll(".novedad-card").forEach(card => {
+
         card.addEventListener("click", function(e) {
-            e.stopPropagation();
+            e.stopPropagation();  // evita conflictos
 
             const descripcion = this.querySelector(".novedad-detalle");
-            descripcion.style.display = 
-                descripcion.style.display === "block" ? "none" : "block";
+
+            if (descripcion.style.display === "block") {
+                descripcion.style.display = "none";
+                swiper.autoplay.start();   // 🔵 REANUDA EL CARRUSEL
+            } else {
+                descripcion.style.display = "block";
+                swiper.autoplay.stop();    // 🔴 DETIENE EL CARRUSEL
+            }
         });
+
     });
+
 });
 </script>
 
