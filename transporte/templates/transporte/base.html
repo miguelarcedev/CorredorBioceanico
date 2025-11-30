@@ -89,13 +89,16 @@
             background-color: #ffffff;
         }
 
-        /* ========= FOOTER ========= */
+        /* ========= FOOTER =========*/
+        
         footer {
-            margin-top: 40px;
-            background: #9bc7f1;
-            padding: 12px;
-            font-size: 0.85rem;
-        }
+    background: #0d47a1;
+    color: #e3f2fd;
+    padding: 20px;
+    font-size: 0.9rem;
+    letter-spacing: .4px;
+}
+
 
         /* ========= MARCA DE AGUA EN HEADER ========= */
         .watermark-header {
@@ -220,6 +223,8 @@
         .auth-card a:hover {
             text-decoration: underline;
         }
+     
+
 
         /* ========= INPUT PASSWORD + ICONO ========= */
         .password-wrapper {
@@ -315,12 +320,20 @@
             text-shadow: 0 0 6px rgba(255,255,255,0.65);
         }
         /* --- Tarjetas dentro del carrusel --- */
+
 .novedad-card {
-    background: none;
-    width: 95%;
-    text-align: center;
-    transition: transform 0.4s ease, opacity 0.3s ease;
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+    transition: transform .25s, box-shadow .25s;
 }
+
+.novedad-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+}
+
 
 /* Imagen */
 .novedad-img {
@@ -367,6 +380,115 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     text-align: center;
 }
+body {
+    background: linear-gradient(135deg, #e8f1ff, #dbe9ff);
+}
+
+.novedad-detalle {
+    animation: fadeIn .8s ease;
+}
+
+@keyframes fadeIn {
+    from {opacity:0; transform: translateY(-8px);}
+    to {opacity:1; transform: translateY(0);}
+}
+
+/* ===== NAVBAR INFERIOR (submenu) INTERACTIVA ===== */
+.submenu .nav-link {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.25s ease-in-out;
+}
+
+/* Hover */
+.submenu .nav-link:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    color: #ffffff !important;
+}
+
+/* Activo (pestaña seleccionada) */
+.submenu .nav-link.active {
+    background: #ffffff !important;
+    color: #0a3d62 !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    transform: translateY(-1px);
+}
+
+/* Íconos */
+.submenu .nav-link i {
+    margin-right: 6px;
+    font-size: 1.1rem;
+}
+/* Aumenta la altura del submenú */
+.submenu {
+    height: 65px;             /* antes tenía menos */
+    display: flex;
+    align-items: center;
+}
+
+/* Ajustes del link activo */
+.nav-link.active {
+    background: white !important;
+    color: #004a99 !important;
+    border-radius: 14px;
+    padding: 10px 20px !important;  /* aumenta ligeramente */
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+/* === TÍTULO PRINCIPAL DEL HEADER === */
+.header-title {
+    font-size: 1.5rem;       /* 🔹 Cambia el tamaño aquí (antes estaba ~3.2rem) */
+    font-weight: 900;
+    color: white;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+
+    text-shadow: 
+        0px 2px 4px rgba(0,0,0,0.45),
+        0px 4px 12px rgba(0,0,0,0.35);
+
+    display: block;
+    margin-top: 20px;
+}
+
+
+
+@keyframes glowTitle {
+    from { text-shadow: 0 0 4px rgba(0,180,255,0.4); }
+    to   { text-shadow: 0 0 12px rgba(0,180,255,0.8); }
+}
+
+/* --- Caja del usuario en el header --- */
+.header-userbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 20px;
+}
+
+.header-userbox img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+.header-username {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0px 1px 4px rgba(0,0,0,0.5);
+}
+
+.header-userrole {
+    font-size: 0.85rem;
+    color: #d0e4ff;
+    opacity: 0.9;
+}
 
 
     </style>
@@ -375,6 +497,7 @@
 <body>
 
 {% if user.is_authenticated %}
+
 <nav class="navbar navbar-expand-lg navbar-main watermark-header shadow-sm">
     <div class="container d-flex justify-content-between align-items-center">
 
@@ -384,29 +507,33 @@
                 <img src="{% static 'img/logo_capritech.png' %}"
                      alt="CapriTech Logo"
                      style="height: 130px; width: auto;">
-                <span style="font-size: 1.3rem; font-weight: 600;">
+                <!--<span style="font-size: 1.3rem; font-weight: 600;">
                     MONITOREO DE TRANSPORTE
-                </span>
+                </span>-->
+                <span class="header-title">MONITOREO DE TRANSPORTE</span>
+
+
             </a>
         </div>
 
         <!-- USUARIO + BOTÓN SALIR -->
         <div class="d-flex align-items-center">
-            {% if user.photo %}
-                <img src="{{ user.photo.url }}"
-                     style="width: 90px; height: 90px; object-fit: cover; border-radius: 50%; margin-right: 12px;">
-            {% else %}
-                <div style="width: 60px; height: 60px; background:#bbdefb; border-radius:50%;
-                            display:flex; align-items:center; justify-content:center;
-                            font-weight:bold; color:#0d47a1; margin-right:12px;">
-                    {{ user.username|first|upper }}
-                </div>
-            {% endif %}
 
-            <div class="text-white me-3" style="font-size: 1rem;">
-                {{ user.username }} <br>
-                <span style="font-size: 0.8rem;">({{ user.get_rol_display }})</span>
-            </div>
+<div class="header-userbox">
+    
+    {% if user.photo %}
+    <img src="{{ user.photo.url }}">
+    {% else %}
+    <img src="{% static 'img/default.jpg' %}">
+    {% endif %}
+    
+    <div>
+        <div class="header-username">{{ user.username }}</div>
+        <div class="header-userrole">{{ user.get_rol_display }}</div>
+    </div>
+
+</div>
+
 
             <form id="logout-form" method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
