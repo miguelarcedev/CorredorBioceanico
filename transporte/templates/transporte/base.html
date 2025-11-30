@@ -609,6 +609,7 @@ body {
 <nav class="submenu">
     <div class="container">
         <ul class="nav">
+
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
                    href="{% url 'home' %}">
@@ -616,37 +617,38 @@ body {
                 </a>
             </li>
 
-<li class="nav-item">
-    <a class="nav-link {% if 'viajes' in request.resolver_match.url_name %}active{% endif %}"
-        href="{% url 'viaje_list' %}">
-        <i class="bi bi-geo-alt-fill"></i> Viajes
-    </a>
-</li>
-
-<li class="nav-item">
-    <a class="nav-link {% if 'monitoreo' in request.resolver_match.url_name %}active{% endif %}"
-        href="{% url 'monitoreo_demo' %}">
-        <i class="bi bi-broadcast-pin"></i> Monitoreo
-    </a>
-</li>
-
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'viaje_list' %}active{% endif %}"
+                   href="{% url 'viaje_list' %}">
+                    <i class="bi bi-geo-alt-fill"></i> Viajes
+                </a>
+            </li>
 
             <li class="nav-item">
-                <a class="nav-link {% if 'reportes' in request.resolver_match.url_name %}active{% endif %}"
+                <a class="nav-link {% if request.resolver_match.url_name == 'monitoreo_demo' %}active{% endif %}"
+                   href="{% url 'monitoreo_demo' %}">
+                    <i class="bi bi-broadcast-pin"></i> Monitoreo
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'reporte_viajes_completados' %}active{% endif %}"
                    href="{% url 'reporte_viajes_completados' %}">
                     <i class="bi bi-file-bar-graph-fill"></i> Reportes
                 </a>
             </li>
 
             <li class="nav-item">
-                <a class="nav-link {% if 'reportes' in request.resolver_match.url_name %}active{% endif %}"
+                <a class="nav-link {% if request.resolver_match.url_name == 'admin:index' %}active{% endif %}"
                    href="/admin/">
                     <i class="bi bi-gear"></i> Administración
                 </a>
             </li>
+
         </ul>
     </div>
 </nav>
+
 
 <div class="container main-container">
     {% block content %}{% endblock %}
