@@ -1,25 +1,26 @@
 {% extends 'transporte/base.html' %}
 {% load static %}
-{% load widget_tweaks %}  {% block title %}Iniciar Sesión{% endblock %}
+{% load widget_tweaks %}
+
+{% block title %}Iniciar Sesión{% endblock %}
 
 {% block auth_content %}
+
 <div class="auth-container">
     <div class="auth-card">
+
         {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
         {% endif %}
-        <div class="text-center mb-4">
-            <img src="{% static 'img/logo_capritech.png' %}" 
-                alt="CapriTech Logo" 
-                style="height: 80px;">
-        </div>
-        
-        <h4 class="card-title text-center mb-4 text-primary">Iniciar Sesión</h4>
+
+        <img src="{% static 'img/logo_capritech.png' %}" alt="CapriTech Logo" style="height:80px; margin-bottom: 15px;">
+
+        <h4 class="text-center mb-4">Iniciar Sesión</h4>
 
         {% if form.errors %}
             <div class="alert alert-danger" role="alert">
@@ -29,27 +30,62 @@
 
         <form method="post">
             {% csrf_token %}
+
+            <!-- Usuario -->
             <div class="mb-3">
-                <label for="{{ form.username.id_for_label }}" class="form-label">
+                <label class="form-label">
                     <i class="bi bi-person-fill"></i> Usuario
                 </label>
                 {{ form.username|add_class:"form-control" }}
             </div>
+
+            <!-- Contraseña -->
             <div class="mb-4">
                 <label for="{{ form.password.id_for_label }}" class="form-label">
                     <i class="bi bi-lock-fill"></i> Contraseña
                 </label>
-                {{ form.password|add_class:"form-control" }}
+
+                <div class="input-group password-wrapper">
+                    <input type="password" name="password" class="form-control password-input" id="id_password">
+                    <span class="input-group-text password-toggle">
+                        <i class="bi bi-eye-fill"></i>
+                    </span>
+                </div>
             </div>
-            
-            <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm">
+
+            <!-- Botón -->
+            <button type="submit" class="btn btn-primary w-100 shadow-sm rounded-3">
                 <i class="bi bi-box-arrow-in-right"></i> Ingresar
             </button>
-            
-            <div class="text-center mt-3">
-                <small class="text-muted">¿No tienes cuenta? <a href="{% url 'registro' %}" class="text-primary fw-bold">Regístrate aquí</a></small>
-            </div>
+
+            <!-- Link registro -->
+            <p class="text-center mt-3">
+                <small class="text-muted">
+                    ¿No tienes cuenta?
+                    <a href="{% url 'registro' %}" class="fw-bold text-primary">Regístrate aquí</a>
+                </small>
+            </p>
+
         </form>
+
     </div>
 </div>
+
+<script>
+document.querySelector(".password-toggle").addEventListener("click", function () {
+    const input = document.getElementById("id_password");
+    const icon = this.querySelector("i");
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("bi-eye-fill");
+        icon.classList.add("bi-eye-slash-fill");
+    } else {
+        input.type = "password";
+        icon.classList.remove("bi-eye-slash-fill");
+        icon.classList.add("bi-eye-fill");
+    }
+});
+</script>
+
 {% endblock %}

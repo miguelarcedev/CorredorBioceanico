@@ -15,44 +15,70 @@
     </p>
 
     <!-- Carrusel de novedades -->
-    <div id="carouselNovedades" class="carousel slide carrusel-capritech" data-bs-ride="carousel">
+        <!-- Carrusel de novedades -->
+<div class="swiper mySwiper mt-5">
+    <div class="swiper-wrapper">
+        {% for n in novedades %}
+        <div class="swiper-slide">
+            <div class="novedad-card" onclick="toggleDetalle(this)">
 
-        <!-- Indicadores -->
-        <div class="carousel-indicators">
-            {% for item in novedades %}
-                <button type="button" data-bs-target="#carouselNovedades"
-                        data-bs-slide-to="{{ forloop.counter0 }}"
-                        {% if forloop.first %}class="active"{% endif %}>
-                </button>
-            {% endfor %}
-        </div>
+                <img src="{{ n.imagen.url }}" class="novedad-img" alt="Imagen novedad">
 
-        <!-- Imágenes -->
-        <div class="carousel-inner">
-            {% for item in novedades %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <img src="{{ item.imagen.url }}" class="d-block w-100"
-                     style="max-height: 420px; object-fit: cover;">
-                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 p-2 rounded">
-                    <h5>{{ item.titulo }}</h5>
-                    <p>{{ item.descripcion }}</p>
-                </div>
+                <h5 class="novedad-title">
+                    {{ n.titulo }}
+                </h5>
+
+                <!-- Descripción oculta -->
+                <p class="novedad-detalle" style="display: none;">
+    {{ n.descripcion }}
+</p>
+
+
             </div>
-            {% endfor %}
         </div>
-
-        <!-- Flechas -->
-        <button class="carousel-control-prev" type="button"
-            data-bs-target="#carouselNovedades" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </button>
-
-        <button class="carousel-control-next" type="button"
-            data-bs-target="#carouselNovedades" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </button>
-
+        {% endfor %}
     </div>
+
+    <!-- Controles -->
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+</div>
+
+
+<!-- Swiper -->
+<script>
+var swiper = new Swiper(".mySwiper", {
+    slidesPerView: 3,
+    spaceBetween: 40,
+    centeredSlides: true,
+    loop: true,
+    autoplay: {
+        delay: 2500,
+        disableOnInteraction: false,
+    },
+    navigation: {
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev",
+    },
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".novedad-card").forEach(card => {
+        card.addEventListener("click", function(e) {
+            e.stopPropagation();
+
+            const descripcion = this.querySelector(".novedad-detalle");
+            descripcion.style.display = 
+                descripcion.style.display === "block" ? "none" : "block";
+        });
+    });
+});
+</script>
+
+
+
 
 </section>
 
