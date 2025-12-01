@@ -5,107 +5,195 @@
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="container mt-4">
+<style>
+    /* ---- ESTILO PROFESIONAL ---- */
 
-    <h3 class="text-primary mb-3">
+    .section-title {
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #0d47a1;
+        margin-bottom: 20px;
+    }
+
+    .export-btn {
+        float: right;
+        margin-top: -45px;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #0d47a1;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .info-box {
+        background: #f7faff;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 16px;
+        box-shadow: 0 3px 7px rgba(0,0,0,0.08);
+        border-left: 4px solid #1976d2;
+    }
+
+    .summary-box {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        border-top: 4px solid #0d47a1;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 15px 10px;
+    }
+
+    .summary-item strong {
+        font-size: 1.1rem;
+        color: #003c8f;
+    }
+
+    .summary-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #0d47a1;
+    }
+
+    #map {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <!-- TÍTULO + BOTÓN PDF -->
+    <h3 class="section-title">
         📍 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
     </h3>
-    <a href="{% url 'exportar_pdf_viaje' viaje.id %}" class="btn btn-danger mt-2">
-    Exportar reporte a PDF
+
+    <a href="{% url 'exportar_pdf_viaje' viaje.id %}" class="btn btn-danger shadow-sm export-btn">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Exportar PDF
     </a>
 
-        <!-- Datos generales del viaje -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white">
-            Datos del viaje
-        </div>
-        <div class="card-body">
+    <div class="clearfix"></div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <strong>Chofer:</strong><br>
-                    {{ viaje.chofer.nombre }} {{ viaje.chofer.apellido }}<br>
-                    <small>DNI: {{ viaje.chofer.documento }} — Licencia: {{ viaje.chofer.licencia_nro }}</small>
-                </div>
 
-                <div class="col-md-6">
-                    <strong>Vehículo:</strong><br>
-                    {{ viaje.vehiculo.patente }} — {{ viaje.vehiculo.marca }} {{ viaje.vehiculo.modelo }}<br>
-                    <small>Capacidad: {{ viaje.vehiculo.capacidad }} tn</small>
-                </div>
+    <!-- DATOS DEL VIAJE -->
+    <div class="info-box">
+
+        <h5 class="mb-3">
+            <i class="bi bi-info-circle-fill text-primary"></i> Datos Generales del Viaje
+        </h5>
+
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+                <div class="info-label">Chofer</div>
+                <div>{{ viaje.chofer.nombre }} {{ viaje.chofer.apellido }}</div>
+                <small class="text-muted">DNI: {{ viaje.chofer.documento }} — Licencia: {{ viaje.chofer.licencia_nro }}</small>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <strong>Carga transportada:</strong><br>
-                    {{ viaje.carga.tipo }} — {{ viaje.carga.peso_aprox }} tn<br>
-                    <small>{{ viaje.carga.descripcion }}</small>
-                </div>
-
-                <div class="col-md-6">
-                    <strong>Estado del viaje:</strong><br>
-                    <span class="badge bg-info text-dark">{{ viaje.get_estado_display }}</span>
-                </div>
+            <div class="col-md-6 mb-3">
+                <div class="info-label">Vehículo</div>
+                <div>{{ viaje.vehiculo.patente }} — {{ viaje.vehiculo.marca }} {{ viaje.vehiculo.modelo }}</div>
+                <small class="text-muted">Capacidad: {{ viaje.vehiculo.capacidad }} tn</small>
             </div>
 
-            <div class="row">
-                <div class="col-md-4">
-                    <strong>Fecha salida:</strong><br>
-                    {{ viaje.fecha_salida|date:"d/m/Y H:i" }}
-                </div>
-
-                <div class="col-md-4">
-                    <strong>Fecha llegada estimada:</strong><br>
-                    {{ viaje.fecha_llegada_estimada|date:"d/m/Y H:i" }}
-                </div>
-
-                <div class="col-md-4">
-                    <strong>Fecha llegada real:</strong><br>
-                    {% if viaje.fecha_llegada_real %}
-                        {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }}
-                    {% else %}
-                        <span class="text-muted">Aún no finalizado</span>
-                    {% endif %}
-                </div>
+            <div class="col-md-6 mb-3">
+                <div class="info-label">Carga transportada</div>
+                <div>{{ viaje.carga.tipo }} — {{ viaje.carga.peso_aprox }} tn</div>
+                <small class="text-muted">{{ viaje.carga.descripcion }}</small>
             </div>
 
-        </div>
-    </div>
+            <div class="col-md-6 mb-3">
+                <div class="info-label">Estado actual</div>
+                <span class="badge bg-info text-dark px-3 py-2">
+                    {{ viaje.get_estado_display }}
+                </span>
+            </div>
 
+            <div class="col-md-4">
+                <div class="info-label">Fecha salida</div>
+                {{ viaje.fecha_salida|date:"d/m/Y H:i" }}
+            </div>
 
-    <!-- Resumen del viaje -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">Resumen del viaje</div>
-        <div class="card-body">
+            <div class="col-md-4">
+                <div class="info-label">Fecha estimada de llegada</div>
+                {{ viaje.fecha_llegada_estimada|date:"d/m/Y H:i" }}
+            </div>
 
-            <div class="row">
-
-                <div class="col-md-3"><strong>Distancia real:</strong><br>{{ resumen.distancia_total }} km</div>
-                <div class="col-md-3"><strong>Vel. promedio:</strong><br>{{ resumen.velocidad_promedio }} km/h</div>
-                <div class="col-md-3"><strong>Vel. máxima:</strong><br>{{ resumen.velocidad_max }} km/h</div>
-                <div class="col-md-3"><strong>Vel. mínima:</strong><br>{{ resumen.velocidad_min }} km/h</div>
-
+            <div class="col-md-4">
+                <div class="info-label">Fecha real de llegada</div>
+                {% if viaje.fecha_llegada_real %}
+                    {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }}
+                {% else %}
+                    <span class="text-muted">Aún no finalizado</span>
+                {% endif %}
             </div>
 
         </div>
     </div>
 
-    <!-- Mapa -->
+
+    <!-- RESUMEN DEL VIAJE -->
+    <div class="summary-box">
+
+        <h5 class="mb-3">
+            <i class="bi bi-bar-chart-fill text-primary"></i> Resumen del Viaje
+        </h5>
+
+        <div class="row text-center">
+
+            <div class="col-md-3 summary-item">
+                <strong>Distancia real</strong>
+                <div class="summary-value">{{ resumen.distancia_total }} km</div>
+            </div>
+
+            <div class="col-md-3 summary-item">
+                <strong>Vel. promedio</strong>
+                <div class="summary-value">{{ resumen.velocidad_promedio }} km/h</div>
+            </div>
+
+            <div class="col-md-3 summary-item">
+                <strong>Vel. máxima</strong>
+                <div class="summary-value">{{ resumen.velocidad_max }} km/h</div>
+            </div>
+
+            <div class="col-md-3 summary-item">
+                <strong>Vel. mínima</strong>
+                <div class="summary-value">{{ resumen.velocidad_min }} km/h</div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MAPA -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-success text-white">🗺️ Recorrido del vehículo</div>
+        <div class="card-header bg-success text-white">
+            🗺️ Recorrido del vehículo
+        </div>
         <div class="card-body p-0">
             <div id="map" style="height: 550px;"></div>
         </div>
     </div>
 
-    <!-- Gráfico -->
+
+    <!-- GRÁFICO -->
     <div class="card shadow-sm mb-5">
         <div class="card-header bg-dark text-white">📈 Velocidad vs Tiempo</div>
         <div class="card-body">
             <canvas id="velChart" height="120"></canvas>
         </div>
     </div>
-    <!-- Tabla de posiciones -->
+
+    <!-- TABLA -->
     <div class="card shadow-sm mb-5">
         <div class="card-header bg-secondary text-white">📋 Detalle de posiciones</div>
         <div class="card-body p-0">
@@ -134,76 +222,4 @@
         </div>
     </div>
 
-
 </div>
-
-<script>
-
-function agregarTramo(p1, p2, vel, map) {
-    let color = "green";
-    if (vel > 80) color = "red";
-    else if (vel > 50) color = "orange";
-
-    L.polyline([p1, p2], {
-        color: color,
-        weight: 5,
-        opacity: 0.9
-    }).addTo(map);
-}
-
-
-const puntos = {{ puntos|safe }};
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    if (!puntos || puntos.length === 0) {
-        alert("No hay puntos registrados.");
-        return;
-    }
-
-    /* ============================
-           MAPA
-    ============================= */
-    const map = L.map("map").setView([puntos[0].lat, puntos[0].lon], 14);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-    }).addTo(map);
-
-    const ruta = puntos.map(p => [p.lat, p.lon]);
-
-    for (let i = 1; i < puntos.length; i++) {
-    const p1 = [puntos[i-1].lat, puntos[i-1].lon];
-    const p2 = [puntos[i].lat, puntos[i].lon];
-    agregarTramo(p1, p2, puntos[i].vel, map);
-    }
-    map.fitBounds(L.polyline(ruta).getBounds());
-
-
-    L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
-    L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");
-
-    /* ============================
-           GRAFICO VELOCIDAD
-    ============================= */
-    const labels = puntos.map(p => p.t);
-    const velocidades = puntos.map(p => p.vel);
-
-    new Chart(document.getElementById("velChart"), {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Velocidad (km/h)",
-                data: velocidades,
-                borderWidth: 2,
-                fill: false
-            }]
-        }
-    });
-
-});
-
-</script>
-
-{% endblock %}
