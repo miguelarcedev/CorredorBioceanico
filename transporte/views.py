@@ -558,6 +558,7 @@ def reporte_viajes_completados(request):
         "total_km": total_km,
         "vel_prom_global": vel_prom_global,
         "duracion_prom_global": duracion_prom_global,
+        "duracion_global": duracion_global,
     }
 
     return render(request, "reportes/reporte_viajes_completados.html", context)
