@@ -536,6 +536,9 @@ def reporte_viajes_completados(request):
     # Duración promedio (horas)
     duracion_prom_global = viajes.aggregate(prom=Avg("duracion_horas"))["prom"] or 0
 
+    # Duración total (horas)
+    duracion_global = viajes.aggregate(total=Sum("tiempo_total_horas"))["total"] or 0
+
     # ------------------------
     # CONTEXT
     # ------------------------
