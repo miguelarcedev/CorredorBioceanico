@@ -223,4 +223,72 @@
     </div>
 
 </div>
+
+<script>
+
+function agregarTramo(p1, p2, vel, map) {
+    let color = "green";
+    if (vel > 80) color = "red";
+    else if (vel > 50) color = "orange";
+
+    L.polyline([p1, p2], {
+        color: color,
+        weight: 5,
+        opacity: 0.9
+    }).addTo(map);
+}
+
+const puntos = {{ puntos|safe }};
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    if (!puntos || puntos.length === 0) {
+        alert("No hay puntos registrados.");
+        return;
+    }
+
+    // =====================
+    // MAPA
+    // =====================
+    const map = L.map("map").setView([puntos[0].lat, puntos[0].lon], 14);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+    }).addTo(map);
+
+    const ruta = puntos.map(p => [p.lat, p.lon]);
+
+    for (let i = 1; i < puntos.length; i++) {
+        const p1 = [puntos[i-1].lat, puntos[i-1].lon];
+        const p2 = [puntos[i].lat, puntos[i].lon];
+        agregarTramo(p1, p2, puntos[i].vel, map);
+    }
+
+    map.fitBounds(L.polyline(ruta).getBounds());
+    L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
+    L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");
+
+    // =====================
+    // GRAFICO VELOCIDAD
+    // =====================
+    const labels = puntos.map(p => p.t);
+    const velocidades = puntos.map(p => p.vel);
+
+    new Chart(document.getElementById("velChart"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Velocidad (km/h)",
+                data: velocidades,
+                borderWidth: 2,
+                fill: false
+            }]
+        }
+    });
+
+});
+</script>
+
+
 {% endblock %}
