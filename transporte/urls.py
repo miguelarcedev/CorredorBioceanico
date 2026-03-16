@@ -65,6 +65,6 @@ urlpatterns = [
     path("reportes/viaje/<uuid:viaje_id>/mapa/", views.ver_mapa_viaje, name="ver_mapa_viaje"),
     path("viajes/<uuid:viaje_id>/exportar_pdf/", views.exportar_pdf_viaje, name="exportar_pdf_viaje"),
 
-
+    path("ia/viaje/<uuid:viaje_id>/", views.analisis_ia_viaje, name="analisis_ia_viaje")
 
 ]

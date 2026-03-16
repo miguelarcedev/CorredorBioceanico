@@ -173,6 +173,10 @@ class Viaje(models.Model):
     costo_estimado = models.FloatField(default=0)
     costo_combustible = models.FloatField(default=0, help_text="Costo total de combustible en USD")
 
+    litros_consumidos = models.FloatField(default=0, help_text="Litros de combustible utilizados en el viaje")
+    precio_combustible = models.FloatField(default=1.5, help_text="Precio por litro en USD")
+
+
     # ---------------------------------------
     # MÉTODOS
     # ---------------------------------------

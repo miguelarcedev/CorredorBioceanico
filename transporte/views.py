@@ -899,3 +899,61 @@ def exportar_pdf_viaje(request, viaje_id):
 
     doc.build(story)
     return response
+
+
+# =====================================================================
+# Modulo de IA para análisis de eventos logísticos (paradas, demoras, etc)
+# =====================================================================
+
+
+from datetime import timedelta
+from .models import PosicionGPS
+
+def detectar_paradas(viaje):
+
+    puntos = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
+
+    paradas = []
+    inicio = None
+
+    for p in puntos:
+
+        if p.velocidad == 0 and inicio is None:
+            inicio = p.fecha_hora
+
+        elif p.velocidad > 0 and inicio:
+            duracion = (p.fecha_hora - inicio).total_seconds() / 60
+
+            if duracion > 5:  # parada mayor a 5 min
+                paradas.append({
+                    "duracion": round(duracion, 1),
+                    "ubicacion": f"{p.latitud},{p.longitud}"
+                })
+
+            inicio = None
+
+    return paradas
+
+
+from django.shortcuts import get_object_or_404, render
+from .models import Viaje
+from .ia_eventos import analizar_parada
+#from .detector import detectar_paradas
+
+
+def analisis_ia_viaje(request, viaje_id):
+
+    viaje = get_object_or_404(Viaje, id=viaje_id)
+
+    paradas = detectar_paradas(viaje)
+
+    reportes = []
+
+    for p in paradas:
+        texto = analizar_parada(viaje, p["duracion"], p["ubicacion"])
+        reportes.append(texto)
+
+    return render(request, "reportes/analisis_ia.html", {
+        "viaje": viaje,
+        "reportes": reportes
+    })

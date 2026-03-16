@@ -5,6 +5,8 @@ __pycache__/
 *.pyd
 venv/
 env/
+migrations/
+db/migrations/
 
 # Archivos de la base de datos local
 db.sqlite3
@@ -16,7 +18,7 @@ db.sqlite3
 # que no subas, y que contenga variables que no quieres compartir.
 # Ejemplos (ajusta según tu estructura):
 # local_settings.py
-# .env
+.env
 
 # Archivos generados por Django (opcional)
 /static_collected/

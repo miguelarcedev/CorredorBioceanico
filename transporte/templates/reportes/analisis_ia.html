@@ -1,0 +1,27 @@
+{% extends 'transporte/base.html' %}
+
+{% block content %}
+
+<h3>Análisis Inteligente del Viaje</h3>
+
+<p>
+Ruta: {{ viaje.origen }} → {{ viaje.destino }}
+</p>
+
+<hr>
+
+{% for r in reportes %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        {{ r }}
+    </div>
+</div>
+
+{% empty %}
+
+<p>No se detectaron paradas relevantes.</p>
+
+{% endfor %}
+
+{% endblock %}
