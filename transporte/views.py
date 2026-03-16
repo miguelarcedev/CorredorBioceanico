@@ -1,4 +1,4 @@
-
+﻿
 from .forms import ViajeForm, RegistroEmpresaForm, VehiculoForm, EquipoGPSForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -707,10 +707,30 @@ def ver_mapa_viaje(request, viaje_id):
         "velocidad_promedio": round(sum(velocidades)/len(velocidades), 2) if velocidades else 0,
     }
 
+    # -----------------------------
+    # KPIs DE CONSUMO
+    # -----------------------------
+    litros = viaje.litros_consumidos
+    km = total_dist
+    precio = viaje.precio_combustible
+
+    consumo_real = (litros / km * 100) if km > 0 else 0            # L/100 km
+    rendimiento_real = (km / litros) if litros > 0 else 0          # km/L
+    costo_combustible = litros * precio                            # USD
+    costo_km = (costo_combustible / km) if km > 0 else 0           # USD/km
+
+    kpis = {
+        "consumo_real": round(consumo_real, 2),
+        "rendimiento_real": round(rendimiento_real, 2),
+        "costo_combustible": round(costo_combustible, 2),
+        "costo_km": round(costo_km, 3),
+    }
+
     return render(request, "reportes/ver_mapa_viaje.html", {
         "viaje": viaje,
         "puntos": datos,
-        "resumen": resumen
+        "resumen": resumen,
+        "kpis": kpis,
     })
 
 
