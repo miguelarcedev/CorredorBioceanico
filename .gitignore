@@ -1,4 +1,4 @@
-# Directorio de Python compilado y entorno virtual
+﻿# Directorio de Python compilado y entorno virtual
 __pycache__/
 *.pyc
 *.pyo
@@ -18,7 +18,11 @@ db.sqlite3
 # que no subas, y que contenga variables que no quieres compartir.
 # Ejemplos (ajusta según tu estructura):
 # local_settings.py
+<<<<<<< HEAD
 .env
+=======
+ .env
+>>>>>>> 45ff52a780ad62e35d91f3ad2795c0372fa3c7d1
 
 # Archivos generados por Django (opcional)
 /static_collected/
@@ -27,3 +31,7 @@ db.sqlite3
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+
+
+staticfiles/

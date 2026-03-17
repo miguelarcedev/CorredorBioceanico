@@ -1,4 +1,4 @@
-from django.db import models
+﻿from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
 import qrcode
@@ -175,7 +175,6 @@ class Viaje(models.Model):
 
     litros_consumidos = models.FloatField(default=0, help_text="Litros de combustible utilizados en el viaje")
     precio_combustible = models.FloatField(default=1.5, help_text="Precio por litro en USD")
-
 
     # ---------------------------------------
     # MÉTODOS
