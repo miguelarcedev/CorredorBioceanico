@@ -938,16 +938,17 @@ def detectar_paradas(viaje):
 
     for p in puntos:
 
-        if p.velocidad <= 1 and inicio is None:
-            inicio = p.fecha_hora
+        if p.velocidad <= 1:
+            if inicio is None:
+                inicio = p
 
-        elif p.velocidad > 0 and inicio:
-            duracion = (p.fecha_hora - inicio).total_seconds() / 60
+        elif p.velocidad > 1 and inicio:
+            duracion = (p.fecha_hora - inicio.fecha_hora).total_seconds() / 60
 
-            if duracion > 0.5:  # parada mayor a 5 min
+            if duracion > 1:  # bajamos umbral
                 paradas.append({
                     "duracion": round(duracion, 1),
-                    "ubicacion": f"{p.latitud},{p.longitud}"
+                    "ubicacion": f"{inicio.latitud},{inicio.longitud}"
                 })
 
             inicio = None
