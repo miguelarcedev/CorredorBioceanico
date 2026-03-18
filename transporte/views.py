@@ -934,24 +934,26 @@ def detectar_paradas(viaje):
     puntos = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
 
     paradas = []
-    inicio = None
+    buffer = []
 
     for p in puntos:
 
-        if p.velocidad <= 1:
-            if inicio is None:
-                inicio = p
+        if p.velocidad <= 3:
+            buffer.append(p)
+        else:
+            if len(buffer) >= 5:
+                inicio = buffer[0]
+                fin = buffer[-1]
 
-        elif p.velocidad > 1 and inicio:
-            duracion = (p.fecha_hora - inicio.fecha_hora).total_seconds() / 60
+                duracion = (fin.fecha_hora - inicio.fecha_hora).total_seconds() / 60
 
-            if duracion > 1:  # bajamos umbral
-                paradas.append({
-                    "duracion": round(duracion, 1),
-                    "ubicacion": f"{inicio.latitud},{inicio.longitud}"
-                })
+                if duracion >= 0.05:  # 👈 ajustado a simulación
+                    paradas.append({
+                        "duracion": round(duracion, 2),
+                        "ubicacion": f"{inicio.latitud},{inicio.longitud}"
+                    })
 
-            inicio = None
+            buffer = []
 
     return paradas
 
@@ -970,7 +972,7 @@ def analisis_ia_viaje(request, viaje_id):
 
     reportes = []
 
-    for p in paradas:
+    for p in paradas[:2]:  # 👈 límite clave
         texto = analizar_parada(viaje, p["duracion"], p["ubicacion"])
         reportes.append(texto)
 

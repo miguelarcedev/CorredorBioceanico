@@ -19,12 +19,12 @@ def analizar_parada(viaje, duracion, ubicacion):
     Vehículo detenido durante {duracion} minutos
     Ubicación aproximada: {ubicacion}
 
-    Genera un breve análisis explicando posibles causas operativas de esta detención.
+    Genera un breve análisis en 5 lineas como máximo explicando posibles causas operativas de esta detención.
     """
 
     respuesta = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
     )
 
     return respuesta.choices[0].message.content
