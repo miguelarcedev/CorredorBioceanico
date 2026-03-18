@@ -938,7 +938,7 @@ def detectar_paradas(viaje):
 
     for p in puntos:
 
-        if p.velocidad == 0 and inicio is None:
+        if p.velocidad <= 1 and inicio is None:
             inicio = p.fecha_hora
 
         elif p.velocidad > 0 and inicio:
