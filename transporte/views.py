@@ -944,7 +944,7 @@ def detectar_paradas(viaje):
         elif p.velocidad > 0 and inicio:
             duracion = (p.fecha_hora - inicio).total_seconds() / 60
 
-            if duracion > 5:  # parada mayor a 5 min
+            if duracion > 1:  # parada mayor a 5 min
                 paradas.append({
                     "duracion": round(duracion, 1),
                     "ubicacion": f"{p.latitud},{p.longitud}"
