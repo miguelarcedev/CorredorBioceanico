@@ -1,7 +1,7 @@
 ﻿{% extends "transporte/base.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,10 +15,10 @@
         margin-bottom: 20px;
     }
 
-    .export-btn {
+    /* .export-btn {
         float: right;
         margin-top: -45px;
-    }
+    } */
 
     .info-label {
         font-size: 0.85rem;
@@ -33,7 +33,7 @@
         border-radius: 12px;
         padding: 18px;
         margin-bottom: 16px;
-        box-shadow: 0 3px 7px rgba(0,0,0,0.08);
+        box-shadow: 0 3px 7px rgba(0, 0, 0, 0.08);
         border-left: 4px solid #1976d2;
     }
 
@@ -41,7 +41,7 @@
         background: #ffffff;
         border-radius: 12px;
         padding: 22px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
         border-top: 4px solid #0d47a1;
     }
@@ -66,21 +66,32 @@
         border-radius: 12px;
         overflow: hidden;
     }
-
 </style>
 
 <div class="container mt-4 mb-5">
 
     <!-- TÍTULO + BOTÓN PDF -->
-    <h3 class="section-title">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+    <h3 class="section-title m-0">
         📍 Recorrido del viaje — {{ viaje.origen }} → {{ viaje.destino }}
     </h3>
 
-    <a href="{% url 'exportar_pdf_viaje' viaje.id %}" class="btn btn-danger shadow-sm export-btn">
-        <i class="bi bi-file-earmark-pdf-fill"></i> Exportar PDF
-    </a>
+    <div class="d-flex gap-2">
 
-    <div class="clearfix"></div>
+        <a href="{% url 'analisis_ia_viaje' viaje.id %}"
+           class="btn btn-success shadow-sm">
+            🤖 IA
+        </a>
+
+        <a href="{% url 'exportar_pdf_viaje' viaje.id %}"
+           class="btn btn-danger shadow-sm">
+            <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+        </a>
+
+    </div>
+
+</div>
 
 
     <!-- DATOS DEL VIAJE -->
@@ -130,9 +141,9 @@
             <div class="col-md-4">
                 <div class="info-label">Fecha real de llegada</div>
                 {% if viaje.fecha_llegada_real %}
-                    {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }}
+                {{ viaje.fecha_llegada_real|date:"d/m/Y H:i" }}
                 {% else %}
-                    <span class="text-muted">Aún no finalizado</span>
+                <span class="text-muted">Aún no finalizado</span>
                 {% endif %}
             </div>
 
@@ -173,38 +184,75 @@
 
     </div>
 
-<!-- KPIs DE CONSUMO -->
-<div class="summary-box">
+    <div id="analisis-ia" class="summary-box">
 
     <h5 class="mb-3">
-        <i class="bi bi-fuel-pump-fill text-primary"></i> Rendimiento y Consumo
+        🤖 Análisis Inteligente del Viaje
     </h5>
 
-    <div class="row text-center">
+    <form method="post" action="#analisis-ia">
+        {% csrf_token %}
 
-        <div class="col-md-3 summary-item">
-            <strong>Consumo real</strong>
-            <div class="summary-value">{{ kpis.consumo_real }} L/100 km</div>
-        </div>
+        <textarea name="prompt" class="form-control mb-2"
+                  placeholder="Ej: detectar ineficiencias, evaluar consumo, etc."></textarea>
 
-        <div class="col-md-3 summary-item">
-            <strong>Rendimiento real</strong>
-            <div class="summary-value">{{ kpis.rendimiento_real }} km/L</div>
-        </div>
+        <button class="btn btn-success btn-sm">
+            Generar análisis
+        </button>
+    </form>
 
-        <div class="col-md-3 summary-item">
-            <strong>Costo combustible</strong>
-            <div class="summary-value">USD {{ kpis.costo_combustible }}</div>
-        </div>
+    {% if analisis_ia %}
+    <hr>
 
-        <div class="col-md-3 summary-item">
-            <strong>Costo por km</strong>
-            <div class="summary-value">USD {{ kpis.costo_km }}</div>
+    <!-- 🔥 SCORE -->
+    {% if score %}
+    <div class="alert alert-{{ score_color }} text-center mt-3">
+        <h4 class="mb-0">
+            Score del viaje: {{ score }}/100
+        </h4>
+    </div>
+    {% endif %}
+
+    <!-- TEXTO IA -->
+    <div style="white-space: pre-line;">
+        {{ analisis_ia }}
+    </div>
+{% endif %}
+
+</div>
+
+    <!-- KPIs DE CONSUMO -->
+    <div class="summary-box">
+
+        <h5 class="mb-3">
+            <i class="bi bi-fuel-pump-fill text-primary"></i> Rendimiento y Consumo
+        </h5>
+
+        <div class="row text-center">
+
+            <div class="col-md-3 summary-item">
+                <strong>Consumo real</strong>
+                <div class="summary-value">{{ kpis.consumo_real }} L/100 km</div>
+            </div>
+
+            <div class="col-md-3 summary-item">
+                <strong>Rendimiento real</strong>
+                <div class="summary-value">{{ kpis.rendimiento_real }} km/L</div>
+            </div>
+
+            <div class="col-md-3 summary-item">
+                <strong>Costo combustible</strong>
+                <div class="summary-value">USD {{ kpis.costo_combustible }}</div>
+            </div>
+
+            <div class="col-md-3 summary-item">
+                <strong>Costo por km</strong>
+                <div class="summary-value">USD {{ kpis.costo_km }}</div>
+            </div>
+
         </div>
 
     </div>
-
-</div>
 
 
     <!-- MAPA -->
@@ -259,68 +307,68 @@
 
 <script>
 
-function agregarTramo(p1, p2, vel, map) {
-    let color = "green";
-    if (vel > 80) color = "red";
-    else if (vel > 50) color = "orange";
+    function agregarTramo(p1, p2, vel, map) {
+        let color = "green";
+        if (vel > 80) color = "red";
+        else if (vel > 50) color = "orange";
 
-    L.polyline([p1, p2], {
-        color: color,
-        weight: 5,
-        opacity: 0.9
-    }).addTo(map);
-}
-
-const puntos = {{ puntos|safe }};
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    if (!puntos || puntos.length === 0) {
-        alert("No hay puntos registrados.");
-        return;
+        L.polyline([p1, p2], {
+            color: color,
+            weight: 5,
+            opacity: 0.9
+        }).addTo(map);
     }
 
-    // =====================
-    // MAPA
-    // =====================
-    const map = L.map("map").setView([puntos[0].lat, puntos[0].lon], 14);
+    const puntos = {{ puntos| safe }};
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-    }).addTo(map);
+    document.addEventListener("DOMContentLoaded", function () {
 
-    const ruta = puntos.map(p => [p.lat, p.lon]);
-
-    for (let i = 1; i < puntos.length; i++) {
-        const p1 = [puntos[i-1].lat, puntos[i-1].lon];
-        const p2 = [puntos[i].lat, puntos[i].lon];
-        agregarTramo(p1, p2, puntos[i].vel, map);
-    }
-
-    map.fitBounds(L.polyline(ruta).getBounds());
-    L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
-    L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");
-
-    // =====================
-    // GRAFICO VELOCIDAD
-    // =====================
-    const labels = puntos.map(p => p.t);
-    const velocidades = puntos.map(p => p.vel);
-
-    new Chart(document.getElementById("velChart"), {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Velocidad (km/h)",
-                data: velocidades,
-                borderWidth: 2,
-                fill: false
-            }]
+        if (!puntos || puntos.length === 0) {
+            alert("No hay puntos registrados.");
+            return;
         }
-    });
 
-});
+        // =====================
+        // MAPA
+        // =====================
+        const map = L.map("map").setView([puntos[0].lat, puntos[0].lon], 14);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+        }).addTo(map);
+
+        const ruta = puntos.map(p => [p.lat, p.lon]);
+
+        for (let i = 1; i < puntos.length; i++) {
+            const p1 = [puntos[i - 1].lat, puntos[i - 1].lon];
+            const p2 = [puntos[i].lat, puntos[i].lon];
+            agregarTramo(p1, p2, puntos[i].vel, map);
+        }
+
+        map.fitBounds(L.polyline(ruta).getBounds());
+        L.marker(ruta[0]).addTo(map).bindPopup("Inicio");
+        L.marker(ruta[ruta.length - 1]).addTo(map).bindPopup("Fin");
+
+        // =====================
+        // GRAFICO VELOCIDAD
+        // =====================
+        const labels = puntos.map(p => p.t);
+        const velocidades = puntos.map(p => p.vel);
+
+        new Chart(document.getElementById("velChart"), {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Velocidad (km/h)",
+                    data: velocidades,
+                    borderWidth: 2,
+                    fill: false
+                }]
+            }
+        });
+
+    });
 </script>
 
 

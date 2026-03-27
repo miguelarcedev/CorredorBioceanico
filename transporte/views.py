@@ -677,6 +677,28 @@ def ver_mapa_viaje(request, viaje_id):
     viaje = get_object_or_404(Viaje, pk=viaje_id)
     puntos = PosicionGPS.objects.filter(viaje=viaje).order_by("fecha_hora")
 
+    analisis = None
+    score = None
+    color = "secondary"
+
+    if request.method == "POST":
+        prompt_usuario = request.POST.get("prompt")
+        analisis = analizar_viaje_completo(viaje, prompt_usuario)
+        import re
+
+
+        if analisis:
+            match = re.search(r"Score:\s*(\d+)", analisis)
+            if match:
+                score = int(match.group(1))
+
+                if score >= 70:
+                    color = "success"   # verde
+                elif score >= 40:
+                    color = "warning"   # amarillo
+                else:
+                    color = "danger"    # rojo
+
     datos = []
     total_dist = 0
     velocidades = []
@@ -731,6 +753,9 @@ def ver_mapa_viaje(request, viaje_id):
         "puntos": datos,
         "resumen": resumen,
         "kpis": kpis,
+        "analisis_ia": analisis,
+        "score": score,
+        "score_color": color,
     })
 
 
@@ -960,7 +985,7 @@ def detectar_paradas(viaje):
 
 from django.shortcuts import get_object_or_404, render
 from .models import Viaje
-from .ia_eventos import analizar_parada
+from .ia_eventos import analizar_parada, analizar_viaje_completo
 #from .detector import detectar_paradas
 
 
